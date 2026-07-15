@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment files
+.env
+.env.*
+*.local
+
+# Build and output folders
+dist/
+build/
+coverage/
+.cache/
+.vite/
+.tmp/
+.tmp*/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editors
+.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# OS artifacts
+._*
+
+# Test / runtime caches
+.pytest_cache/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Blockchain artifacts
+artifacts/
+cache/
+coverage/
+typechain-types/
+ignition/deployments/
+
+# Local uploads and temporary storage
+uploads/
+tmp/
+
+# Python virtual environments
+venv/
+.venv/
+
+# Docker generated data
+docker/**/data/

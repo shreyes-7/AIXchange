@@ -1,0 +1,19 @@
+{
+  "name": "aixchange",
+  "version": "1.0.0",
+  "description": "A Blockchain-Powered Marketplace for AI Datasets, Models, and AI Services with AI Provenance and Automated Royalty Distribution.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^10.0.3",
+    "eslint": "^10.7.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "prettier": "^3.9.5"
+  }
+}
