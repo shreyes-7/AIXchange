@@ -18,3 +18,10 @@ ignition/deployments/
 
 # Local logs
 *.log
+
+node_modules
+artifacts
+cache
+coverage
+.env
+typechain-types
