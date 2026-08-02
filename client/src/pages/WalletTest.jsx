@@ -15,7 +15,6 @@ import {
   switchNetwork,
   addNetwork,
   signVerificationMessage,
-  verifySignatureDetails,
   SUPPORTED_CHAINS,
 } from "../services/blockchain/wallet";
 
@@ -23,7 +22,7 @@ const API_BASE_URL = "http://localhost:5000/api/v1";
 
 export default function WalletTest() {
   // ---------------------------------------------------------------------------
-  // Dashboard State
+  // Dashboard Core State
   // ---------------------------------------------------------------------------
   const [account, setAccount] = useState(null);
   const [chainId, setChainId] = useState(null);
@@ -62,11 +61,8 @@ export default function WalletTest() {
   const [consoleLogs, setConsoleLogs] = useState([]);
   const [latestError, setLatestError] = useState(null);
 
-  // Local Storage State Mirror
-  const [storageMirror, setStorageMirror] = useState({});
-
   // ---------------------------------------------------------------------------
-  // Logging & Error Helpers
+  // Logging & Error Helpers (Stable useCallback with no state dependency loops)
   // ---------------------------------------------------------------------------
   const addLog = useCallback((type, message, meta = null) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -76,46 +72,26 @@ export default function WalletTest() {
     ]);
   }, []);
 
-  const addEventLog = useCallback((event, payload) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setMetamaskEvents((prev) => [
-      `[${timestamp}] ${event}: ${JSON.stringify(payload)}`,
-      ...prev.slice(0, 49),
-    ]);
-  }, []);
-
   const handleError = useCallback((title, err, code = null) => {
     const timestamp = new Date().toLocaleTimeString();
-    const message = err?.response?.data?.message || err?.message || String(err);
-    const status = code || err?.code || err?.response?.status || "ERROR";
+    const errorMessage = err?.response?.data?.message || err?.message || String(err);
+    const statusCode = code || err?.code || err?.response?.status || "ERROR";
+
     setLatestError({
       title,
-      code: status,
-      message,
+      code: statusCode,
+      message: errorMessage,
       timestamp,
       raw: err,
     });
-    addLog("ERROR", `[${title}] ${message}`);
+
+    addLog("ERROR", `[${title}] ${errorMessage}`);
   }, [addLog]);
 
   // ---------------------------------------------------------------------------
-  // Storage Refresh
+  // Wallet State Refresher
   // ---------------------------------------------------------------------------
-  const refreshStorageMirror = useCallback(() => {
-    setStorageMirror({
-      accessToken: localStorage.getItem("accessToken") || "null",
-      refreshToken: localStorage.getItem("refreshToken") || "null",
-      walletAddress: account || "null",
-      nonce: nonceData.nonce || "null",
-      verificationStatus: linkedState?.verified ? "Verified" : "Unverified",
-      connectedNetwork: network?.name || "null",
-    });
-  }, [account, nonceData.nonce, linkedState, network]);
-
-  // ---------------------------------------------------------------------------
-  // Wallet & Network Refresh Logic
-  // ---------------------------------------------------------------------------
-  const refreshWalletState = useCallback(async () => {
+  const refreshWalletState = useCallback(async (isManual = false) => {
     try {
       const activeAccount = await getCurrentAccount();
       setAccount(activeAccount);
@@ -129,7 +105,7 @@ export default function WalletTest() {
         setNetwork(currentNet);
         setIsSupported(supported);
 
-        // ENS Lookup (safely)
+        // ENS Lookup
         try {
           const provider = getProvider();
           const ens = await provider.lookupAddress(activeAccount);
@@ -138,41 +114,50 @@ export default function WalletTest() {
           setEnsName(null);
         }
 
-        addLog("INFO", `Wallet state refreshed: ${activeAccount} (Chain: ${currentChain})`);
+        if (isManual) {
+          addLog("INFO", `Wallet state refreshed: ${activeAccount} (Chain: ${currentChain})`);
+        }
       } else {
         setChainId(null);
         setNetwork(null);
         setIsSupported(false);
         setEnsName(null);
+        if (isManual) {
+          addLog("INFO", "No active wallet account connected.");
+        }
       }
     } catch (err) {
-      handleError("Refresh Wallet", err);
+      if (isManual) handleError("Refresh Wallet State", err);
     }
   }, [addLog, handleError]);
 
-  // Initial Load & Event Subscribers
+  // ---------------------------------------------------------------------------
+  // Single Mount Effect (Strictly runs ONCE on load, no 1-second re-render loop)
+  // ---------------------------------------------------------------------------
   useEffect(() => {
-    refreshWalletState();
-    refreshStorageMirror();
+    refreshWalletState(false);
 
-    // MetaMask Live Event Listeners
+    // Event listeners
     const handleAccounts = (accounts) => {
-      addEventLog("accountsChanged", accounts);
-      setAccount(accounts.length ? accounts[0] : null);
-      addLog("EVENT", `Account changed: ${accounts[0] || "Disconnected"}`);
+      const active = accounts.length ? accounts[0] : null;
+      setAccount(active);
+      const ts = new Date().toLocaleTimeString();
+      setMetamaskEvents((prev) => [`[${ts}] accountsChanged: ${active || "Disconnected"}`, ...prev.slice(0, 49)]);
+      addLog("EVENT", `Account changed: ${active || "Disconnected"}`);
     };
 
     const handleChain = (newChainId) => {
-      addEventLog("chainChanged", newChainId);
-      refreshWalletState();
+      const ts = new Date().toLocaleTimeString();
+      setMetamaskEvents((prev) => [`[${ts}] chainChanged: ${newChainId}`, ...prev.slice(0, 49)]);
       addLog("EVENT", `Chain changed to ${newChainId}`);
+      refreshWalletState(false);
     };
 
     try {
       onAccountsChanged(handleAccounts);
       onChainChanged(handleChain);
     } catch (err) {
-      // Ignore if MetaMask not installed
+      // MetaMask not installed
     }
 
     return () => {
@@ -181,17 +166,17 @@ export default function WalletTest() {
         removeChainChangedListener(handleChain);
       } catch (err) {}
     };
-  }, [refreshWalletState, refreshStorageMirror, addEventLog, addLog]);
+  }, [refreshWalletState, addLog]);
 
   // ---------------------------------------------------------------------------
   // Card 1 — Wallet Operations
   // ---------------------------------------------------------------------------
   const handleConnect = async () => {
     try {
-      addLog("ACTION", "Initiating eth_requestAccounts...");
+      addLog("ACTION", "Requesting eth_requestAccounts via MetaMask...");
       const addr = await connectWallet();
       setAccount(addr);
-      await refreshWalletState();
+      await refreshWalletState(false);
       addLog("SUCCESS", `Connected to wallet: ${addr}`);
     } catch (err) {
       handleError("Connect Wallet", err);
@@ -201,17 +186,17 @@ export default function WalletTest() {
   const handleDisconnect = () => {
     disconnectWallet();
     setAccount(null);
-    addLog("INFO", "Wallet disconnected from client session.");
+    addLog("INFO", "Cleared wallet session on client.");
   };
 
   // ---------------------------------------------------------------------------
-  // Card 2 — Network Management
+  // Card 2 — Network Operations
   // ---------------------------------------------------------------------------
   const handleSwitchSepolia = async () => {
     try {
-      addLog("ACTION", "Switching to Sepolia Testnet...");
+      addLog("ACTION", "Switching to Sepolia Testnet (11155111)...");
       await switchNetwork(SUPPORTED_CHAINS.SEPOLIA);
-      await refreshWalletState();
+      await refreshWalletState(false);
       addLog("SUCCESS", "Switched network to Sepolia.");
     } catch (err) {
       handleError("Switch Network", err);
@@ -220,7 +205,7 @@ export default function WalletTest() {
 
   const handleAddHardhat = async () => {
     try {
-      addLog("ACTION", "Adding Local Hardhat Network...");
+      addLog("ACTION", "Adding Hardhat Local Network (31337)...");
       await addNetwork({
         chainHex: "0x7A69",
         name: "Hardhat Local Network",
@@ -228,22 +213,22 @@ export default function WalletTest() {
         rpcUrls: ["http://127.0.0.1:8545"],
         blockExplorerUrls: [],
       });
-      await refreshWalletState();
-      addLog("SUCCESS", "Added Hardhat network.");
+      await refreshWalletState(false);
+      addLog("SUCCESS", "Added Hardhat network to MetaMask.");
     } catch (err) {
       handleError("Add Network", err);
     }
   };
 
   // ---------------------------------------------------------------------------
-  // Card 3 & 5 — Backend Wallet API Endpoints
+  // Card 3 & 5 — REST API Core Execution
   // ---------------------------------------------------------------------------
   const executeApiCall = async (name, url, method, body = null, requireAuth = true) => {
     const startTime = performance.now();
     const cleanToken = jwtToken.trim().replace(/\\+$/, "");
 
     if (requireAuth && !cleanToken) {
-      alert("JWT Token required. Please log in first.");
+      alert("JWT Token required. Please log in or enter token in Card 4 first.");
       return null;
     }
 
@@ -265,7 +250,7 @@ export default function WalletTest() {
 
       setApiResult({
         endpoint: `${method} ${url}`,
-        status: `${res.status} ${res.statusText}`,
+        status: `${res.status} ${res.statusText || ""}`,
         timeMs,
         requestPayload: body,
         responsePayload: data,
@@ -284,11 +269,12 @@ export default function WalletTest() {
   };
 
   const handleGenerateNonce = async () => {
-    if (!account) return alert("Connect wallet first.");
+    if (!account) return alert("Connect wallet first in Card 1.");
     const data = await executeApiCall("Generate Nonce", "/wallet/nonce", "POST", {
       address: account,
       chainId: chainId || 11155111,
     });
+
     if (data?.data) {
       setNonceData({
         nonce: data.data.nonce,
@@ -300,27 +286,28 @@ export default function WalletTest() {
   };
 
   const handleSignMessage = async () => {
-    if (!nonceData.message) return alert("Generate nonce first.");
+    if (!nonceData.message) return alert("Generate nonce first in Step 1.");
     try {
-      addLog("ACTION", "Prompting MetaMask signature...");
+      addLog("ACTION", "Prompting signature in MetaMask...");
       const signed = await signVerificationMessage(nonceData.message);
       setSignature(signed.signature);
       setDebugSig(signed.signature);
-      addLog("SUCCESS", `Message signed cleanly! Signature: ${signed.signature.slice(0, 16)}...`);
+      addLog("SUCCESS", `Message signed cleanly! Signature: ${signed.signature.slice(0, 18)}...`);
     } catch (err) {
       handleError("Sign Message", err);
     }
   };
 
   const handleVerifyWallet = async () => {
-    if (!signature || !account) return alert("Sign message first.");
+    if (!signature || !account) return alert("Sign message first in Step 2.");
     const data = await executeApiCall("Verify Wallet", "/wallet/verify", "POST", {
       address: account,
       signature,
     });
+
     if (data?.data) {
       setLinkedState(data.data.wallet);
-      addLog("SUCCESS", `Wallet verified & linked in MongoDB!`);
+      addLog("SUCCESS", "Wallet verified & linked in MongoDB!");
     }
   };
 
@@ -342,7 +329,7 @@ export default function WalletTest() {
   };
 
   // ---------------------------------------------------------------------------
-  // Card 4 — JWT Auth Actions
+  // Card 4 — JWT Actions
   // ---------------------------------------------------------------------------
   const handleLoginTest = async () => {
     const data = await executeApiCall("Login", "/auth/login", "POST", {
@@ -357,8 +344,7 @@ export default function WalletTest() {
       setCurrentUser(user);
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-      refreshStorageMirror();
-      addLog("SUCCESS", `LoggedIn as ${user.email}`);
+      addLog("SUCCESS", `Logged in successfully as ${user.email}`);
     }
   };
 
@@ -377,8 +363,7 @@ export default function WalletTest() {
     if (data?.data) {
       setJwtToken(data.data.accessToken);
       localStorage.setItem("accessToken", data.data.accessToken);
-      refreshStorageMirror();
-      addLog("SUCCESS", "Access Token refreshed!");
+      addLog("SUCCESS", "Access token refreshed successfully.");
     }
   };
 
@@ -392,12 +377,11 @@ export default function WalletTest() {
     setCurrentUser(null);
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    refreshStorageMirror();
     addLog("INFO", "User logged out.");
   };
 
   // ---------------------------------------------------------------------------
-  // Card 6 — Signature Debugger (Ethers verifyMessage)
+  // Card 6 — Signature Debugger
   // ---------------------------------------------------------------------------
   const handleDebugVerify = () => {
     if (!debugMessage || !debugSig) return alert("Provide message and signature.");
@@ -405,39 +389,38 @@ export default function WalletTest() {
       const recovered = ethers.verifyMessage(debugMessage, debugSig);
       setDebugRecovered(recovered);
       const isMatch = account && recovered.toLowerCase() === account.toLowerCase();
-      addLog("DEBUG", `Signature Debug Result: ${isMatch ? "MATCH" : "MISMATCH"} (Recovered: ${recovered})`);
+      addLog("DEBUG", `Debugger Result: ${isMatch ? "MATCH ✅" : "MISMATCH ❌"} (Recovered: ${recovered})`);
     } catch (err) {
       handleError("Signature Debugger", err);
     }
   };
 
   // ---------------------------------------------------------------------------
-  // Card 8 — Local Storage Inspection
+  // Card 8 — Local Storage Helper
   // ---------------------------------------------------------------------------
   const handleClearStorage = () => {
     localStorage.clear();
     setJwtToken("");
     setRefreshTokenVal("");
-    refreshStorageMirror();
-    addLog("WARN", "Local Storage cleared.");
+    addLog("WARN", "Local storage cleared.");
   };
 
   // ---------------------------------------------------------------------------
-  // UI Render
+  // Render Interface
   // ---------------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 font-sans">
-      {/* Header Banner */}
+      {/* Top Header */}
       <header className="mb-8 border-b border-slate-800 pb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-extrabold text-sky-400 tracking-tight">AIXchange</h1>
-            <span className="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-xs px-2.5 py-1 rounded-full font-mono font-semibold">
-              Developer Dashboard v1.0
+            <span className="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-xs px-3 py-1 rounded-full font-mono font-semibold">
+              Developer Wallet Dashboard
             </span>
           </div>
           <p className="text-slate-400 text-sm mt-1">
-            Manual Blockchain, Ethers.js Signature & REST API Testing Suite
+            Manual Testing & Debugging Interface for Web3 Wallet Authentication & REST APIs
           </p>
         </div>
 
@@ -454,12 +437,10 @@ export default function WalletTest() {
         </div>
       </header>
 
-      {/* Main Grid: 10 Cards Layout */}
+      {/* Grid of 10 Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-        {/* =================================================================== */}
         {/* CARD 1 — Wallet Connection */}
-        {/* =================================================================== */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -498,15 +479,13 @@ export default function WalletTest() {
             <button onClick={handleDisconnect} className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-lg text-sm font-medium transition">
               Disconnect
             </button>
-            <button onClick={refreshWalletState} className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-lg text-sm font-medium transition">
+            <button onClick={() => refreshWalletState(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 px-3 rounded-lg text-sm font-medium transition">
               🔄
             </button>
           </div>
         </div>
 
-        {/* =================================================================== */}
-        {/* CARD 2 — Network Information */}
-        {/* =================================================================== */}
+        {/* CARD 2 — Network Info */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -527,7 +506,7 @@ export default function WalletTest() {
               </div>
               <div>
                 <span className="text-slate-500 block text-xs">RPC URL:</span>
-                <span className="text-slate-400 text-xs break-all">http://127.0.0.1:8545 / Sepolia Provider</span>
+                <span className="text-slate-400 text-xs break-all">http://127.0.0.1:8545 / Sepolia RPC</span>
               </div>
             </div>
           </div>
@@ -542,9 +521,7 @@ export default function WalletTest() {
           </div>
         </div>
 
-        {/* =================================================================== */}
-        {/* CARD 4 — JWT Authentication */}
-        {/* =================================================================== */}
+        {/* CARD 4 — JWT Auth */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -596,9 +573,7 @@ export default function WalletTest() {
           </div>
         </div>
 
-        {/* =================================================================== */}
         {/* CARD 3 — Wallet Authentication Flow */}
-        {/* =================================================================== */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg lg:col-span-2 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -611,19 +586,19 @@ export default function WalletTest() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
               <div className="space-y-2">
                 <div>
-                  <span className="text-slate-500 block">1. Generated Nonce:</span>
-                  <input readOnly value={nonceData.nonce} placeholder="Click 'Generate Nonce'" className="w-full bg-slate-950 border border-slate-800 p-2 rounded text-amber-300" />
+                  <span className="text-slate-500 block mb-1">1. Nonce:</span>
+                  <input readOnly value={nonceData.nonce} placeholder="Click '1. Generate Nonce'" className="w-full bg-slate-950 border border-slate-800 p-2 rounded text-amber-300" />
                 </div>
                 <div>
-                  <span className="text-slate-500 block">2. EIP-191 Signature:</span>
-                  <textarea readOnly rows={3} value={signature} placeholder="Click 'Sign Message'" className="w-full bg-slate-950 border border-slate-800 p-2 rounded text-sky-300 break-all" />
+                  <span className="text-slate-500 block mb-1">2. EIP-191 Signature:</span>
+                  <textarea readOnly rows={3} value={signature} placeholder="Click '2. Sign Message'" className="w-full bg-slate-950 border border-slate-800 p-2 rounded text-sky-300 break-all" />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div>
-                  <span className="text-slate-500 block">Challenge Message Text:</span>
-                  <textarea readOnly rows={4} value={nonceData.message} placeholder="Backend generated message..." className="w-full bg-slate-950 border border-slate-800 p-2 rounded text-slate-300" />
+                  <span className="text-slate-500 block mb-1">Generated Challenge Text:</span>
+                  <textarea readOnly rows={4} value={nonceData.message} placeholder="Challenge message from backend..." className="w-full bg-slate-950 border border-slate-800 p-2 rounded text-slate-300" />
                 </div>
                 <div className="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-1">
                   <div><span className="text-slate-500">Linked Address:</span> <span className="text-slate-200">{linkedState?.address || "None"}</span></div>
@@ -649,24 +624,19 @@ export default function WalletTest() {
           </div>
         </div>
 
-        {/* =================================================================== */}
-        {/* CARD 8 — Local Storage Inspector */}
-        {/* =================================================================== */}
+        {/* CARD 8 — Storage Inspector */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
               <h2 className="text-lg font-bold text-slate-100">Card 8 — Storage Inspector</h2>
-              <button onClick={refreshStorageMirror} className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded">
-                🔄 Refresh
-              </button>
             </div>
 
             <div className="space-y-2 text-xs font-mono bg-slate-950 p-3 rounded border border-slate-800 overflow-x-auto">
-              <div><span className="text-slate-500">accessToken:</span> <span className="text-sky-400">{storageMirror.accessToken?.slice(0, 20)}...</span></div>
-              <div><span className="text-slate-500">refreshToken:</span> <span className="text-slate-400">{storageMirror.refreshToken?.slice(0, 20)}...</span></div>
-              <div><span className="text-slate-500">walletAddress:</span> <span className="text-amber-400">{storageMirror.walletAddress}</span></div>
-              <div><span className="text-slate-500">nonce:</span> <span className="text-slate-400">{storageMirror.nonce}</span></div>
-              <div><span className="text-slate-500">status:</span> <span className="text-emerald-400">{storageMirror.verificationStatus}</span></div>
+              <div><span className="text-slate-500">accessToken:</span> <span className="text-sky-400">{jwtToken ? `${jwtToken.slice(0, 20)}...` : "null"}</span></div>
+              <div><span className="text-slate-500">refreshToken:</span> <span className="text-slate-400">{refreshTokenVal ? `${refreshTokenVal.slice(0, 20)}...` : "null"}</span></div>
+              <div><span className="text-slate-500">walletAddress:</span> <span className="text-amber-400">{account || "null"}</span></div>
+              <div><span className="text-slate-500">nonce:</span> <span className="text-slate-400">{nonceData.nonce || "null"}</span></div>
+              <div><span className="text-slate-500">status:</span> <span className="text-emerald-400">{linkedState?.verified ? "Verified" : "Unverified"}</span></div>
             </div>
           </div>
 
@@ -675,9 +645,7 @@ export default function WalletTest() {
           </button>
         </div>
 
-        {/* =================================================================== */}
-        {/* CARD 5 — API Testing Suite */}
-        {/* =================================================================== */}
+        {/* CARD 5 — REST API Tester */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg lg:col-span-2 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -692,7 +660,7 @@ export default function WalletTest() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
               <button onClick={handleGetWalletMe} className="bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 py-1.5 px-3 rounded text-xs font-mono">
                 GET /wallet/me
               </button>
@@ -710,13 +678,13 @@ export default function WalletTest() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
               <div>
                 <span className="text-slate-500 block mb-1">Request Payload:</span>
-                <pre className="bg-slate-950 p-2.5 rounded border border-slate-800 h-32 overflow-auto text-slate-300">
+                <pre className="bg-slate-950 p-2.5 rounded border border-slate-800 h-32 overflow-auto text-slate-300 select-all">
                   {JSON.stringify(apiResult.requestPayload, null, 2) || "// No Request Body"}
                 </pre>
               </div>
               <div>
                 <span className="text-slate-500 block mb-1">Response JSON:</span>
-                <pre className="bg-slate-950 p-2.5 rounded border border-slate-800 h-32 overflow-auto text-emerald-400">
+                <pre className="bg-slate-950 p-2.5 rounded border border-slate-800 h-32 overflow-auto text-emerald-400 select-all">
                   {JSON.stringify(apiResult.responsePayload, null, 2) || "// No Response Yet"}
                 </pre>
               </div>
@@ -724,9 +692,7 @@ export default function WalletTest() {
           </div>
         </div>
 
-        {/* =================================================================== */}
-        {/* CARD 6 — Signature Debugger (Ethers verifyMessage) */}
-        {/* =================================================================== */}
+        {/* CARD 6 — Signature Debugger */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -740,15 +706,15 @@ export default function WalletTest() {
 
             <div className="space-y-2 text-xs font-mono">
               <div>
-                <span className="text-slate-500 block">Original Message:</span>
+                <span className="text-slate-500 block mb-1">Original Message:</span>
                 <input value={debugMessage} onChange={(e) => setDebugMessage(e.target.value)} className="w-full bg-slate-950 border border-slate-800 p-1.5 rounded text-slate-200" />
               </div>
               <div>
-                <span className="text-slate-500 block">Signature:</span>
+                <span className="text-slate-500 block mb-1">Signature:</span>
                 <input value={debugSig} onChange={(e) => setDebugSig(e.target.value)} placeholder="0x..." className="w-full bg-slate-950 border border-slate-800 p-1.5 rounded text-sky-300" />
               </div>
               <div className="bg-slate-950 p-2 rounded border border-slate-800">
-                <span className="text-slate-500 block">Recovered Address:</span>
+                <span className="text-slate-500 block mb-1">Recovered Address:</span>
                 <span className="text-amber-300 break-all">{debugRecovered || "None"}</span>
               </div>
             </div>
@@ -759,9 +725,7 @@ export default function WalletTest() {
           </button>
         </div>
 
-        {/* =================================================================== */}
-        {/* CARD 7 — MetaMask Events Log */}
-        {/* =================================================================== */}
+        {/* CARD 7 — MetaMask Events */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -779,9 +743,7 @@ export default function WalletTest() {
           </div>
         </div>
 
-        {/* =================================================================== */}
-        {/* CARD 10 — Error & Security Panel */}
-        {/* =================================================================== */}
+        {/* CARD 10 — Error Panel */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg lg:col-span-2 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
@@ -809,29 +771,27 @@ export default function WalletTest() {
           </div>
 
           <div className="flex items-center gap-2 mt-4 text-xs font-mono text-slate-500">
-            <span>Security Policies: EIP-191 Verified</span> • <span>JWT Bearer Protected</span> • <span>5-Min Nonce Expiry</span>
+            <span>Security: EIP-191 Verified</span> • <span>JWT Protected</span> • <span>5-Min TTL Nonce</span>
           </div>
         </div>
 
       </div>
 
-      {/* =================================================================== */}
-      {/* CARD 9 — Console Logs Terminal (Bottom Panel) */}
-      {/* =================================================================== */}
+      {/* CARD 9 — Terminal Console Feed */}
       <footer className="mt-8 bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full bg-rose-500"></span>
             <span className="w-3 h-3 rounded-full bg-amber-500"></span>
             <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-            <h2 className="text-sm font-bold text-slate-200 font-mono ml-2">Card 9 — Terminal Console Feed</h2>
+            <h2 className="text-sm font-bold text-slate-200 font-mono ml-2">Card 9 — Terminal Console Log Feed</h2>
           </div>
           <button onClick={() => setConsoleLogs([])} className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded font-mono">
-            Clear Logs
+            Clear Console
           </button>
         </div>
 
-        <div className="bg-slate-950 p-4 rounded-lg h-56 overflow-y-auto font-mono text-xs space-y-1.5 border border-slate-800/80">
+        <div className="bg-slate-950 p-4 rounded-lg h-56 overflow-y-auto font-mono text-xs space-y-1.5 border border-slate-800/80 select-all">
           {consoleLogs.length ? consoleLogs.map((log, idx) => (
             <div key={idx} className="flex items-start gap-2">
               <span className="text-slate-600 shrink-0">[{log.timestamp}]</span>
@@ -840,7 +800,7 @@ export default function WalletTest() {
               </span>
               <span className="text-slate-300 break-all">{log.message}</span>
             </div>
-          )) : <span className="text-slate-600">// Operational logs will appear here...</span>}
+          )) : <span className="text-slate-600">// Ready. Action logs will appear here...</span>}
         </div>
       </footer>
     </div>
