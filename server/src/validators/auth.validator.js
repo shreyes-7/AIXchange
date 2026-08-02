@@ -56,3 +56,26 @@ export const resetPasswordSchema = Joi.object({
                 "Password must contain uppercase, lowercase, number and special character.",
         }),
 });
+
+export const forgotPasswordSchema = Joi.object({
+    email: Joi.string()
+        .email()
+        .lowercase()
+        .trim()
+        .required(),
+});
+
+export const resetPasswordSchema = Joi.object({
+    token: Joi.string()
+        .required(),
+
+    password: Joi.string()
+        .min(8)
+        .max(128)
+        .required(),
+});
+
+export const verifyEmailSchema = Joi.object({
+    token: Joi.string()
+        .required(),
+});

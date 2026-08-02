@@ -85,3 +85,96 @@ export const getWalletByUserId = (userId) => {
         "wallet"
     );
 };
+
+export const savePasswordResetToken = (
+    userId,
+    token,
+    expiresAt
+) => {
+    return User.findByIdAndUpdate(
+        userId,
+        {
+            passwordResetToken: token,
+            passwordResetExpiresAt: expiresAt,
+        },
+        { new: true }
+    );
+};
+
+export const findByEmailWithResetToken = (
+    email
+) => {
+    return User.findOne({ email }).select(
+        "+passwordResetToken"
+    );
+};
+
+export const findByPasswordResetToken = (
+    token
+) => {
+    return User.findOne({
+        passwordResetToken: token,
+        passwordResetExpiresAt: {
+            $gt: new Date(),
+        },
+    }).select("+passwordHash +passwordResetToken");
+};
+
+export const resetPassword = (
+    userId,
+    passwordHash
+) => {
+    return User.findByIdAndUpdate(
+        userId,
+        {
+            passwordHash,
+
+            passwordResetToken: null,
+
+            passwordResetExpiresAt: null,
+        },
+        {
+            new: true,
+        }
+    );
+};
+
+export const saveEmailVerificationToken = (
+    userId,
+    token,
+    expiresAt
+) => {
+    return User.findByIdAndUpdate(
+        userId,
+        {
+            emailVerificationToken: token,
+            emailVerificationExpiresAt: expiresAt,
+        },
+        { new: true }
+    );
+};
+
+export const findByEmailVerificationToken = (
+    token
+) => {
+    return User.findOne({
+        emailVerificationToken: token,
+        emailVerificationExpiresAt: {
+            $gt: new Date(),
+        },
+    }).select("+emailVerificationToken");
+};
+
+export const verifyEmail = (userId) => {
+    return User.findByIdAndUpdate(
+        userId,
+        {
+            isEmailVerified: true,
+            emailVerifiedAt: new Date(),
+
+            emailVerificationToken: null,
+            emailVerificationExpiresAt: null,
+        },
+        { new: true }
+    );
+};

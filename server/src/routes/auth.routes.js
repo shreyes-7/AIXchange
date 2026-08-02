@@ -168,4 +168,150 @@ router.post(
     authController.logoutAll
 );
 
+/**
+ * @swagger
+ * /api/v1/auth/profile:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Get user profile
+ *     description: Used to get users information
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User Profile
+ *       401:
+ *         description: Unauthorized
+ */
+router.get(
+    "/profile",
+    auth,
+    authController.getProfile
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/forgot-password:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Request password reset
+ *     description: Sends a password reset email to the registered user.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "john@example.com"
+ *     responses:
+ *       200:
+ *         description: Password reset email sent successfully
+ *       404:
+ *         description: User not found
+ */
+router.post(
+    "/forgot-password",
+    validate(forgotPasswordSchema),
+    authController.forgotPassword
+);
+
+
+/**
+ * @swagger
+ * /api/v1/auth/reset-password:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Reset password
+ *     description: Resets the user's password using a valid reset token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - password
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "abc123def456"
+ *               password:
+ *                 type: string
+ *                 example: "NewStrongPassword123"
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *       400:
+ *         description: Invalid or expired token
+ */
+router.post(
+    "/reset-password",
+    validate(resetPasswordSchema),
+    authController.resetPassword
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/verify-email:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Verify email address
+ *     description: Verifies the user's email using a verification token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: "abc123xyz"
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *       400:
+ *         description: Invalid or expired token
+ */
+router.post(
+    "/verify-email",
+    validate(verifyEmailSchema),
+    authController.verifyEmail
+);
+
+
+/**
+ * @swagger
+ * /api/v1/auth/resend-verification:
+ *   post:
+ *     tags:
+ *       - Authentication
+ *     summary: Resend verification email
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Verification email sent
+ *       400:
+ *         description: Email already verified
+ */
+router.post(
+    "/resend-verification",
+    auth,
+    authController.resendVerification
+);
+
 export default router;

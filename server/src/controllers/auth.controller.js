@@ -80,3 +80,104 @@ export const logoutAll = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getProfile = async (
+    req,
+    res,
+    next
+) => {
+    try {
+        const profile =
+            await authService.getProfile(
+                req.user.userId
+            );
+
+        res.status(200).json({
+            success: true,
+            data: profile,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const forgotPassword = async (
+    req,
+    res,
+    next
+) => {
+    try {
+        const result =
+            await authService.forgotPassword(
+                req.body.email
+            );
+
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const resetPassword = async (
+    req,
+    res,
+    next
+) => {
+    try {
+        const result =
+            await authService.resetPassword(
+                req.body.token,
+                req.body.password
+            );
+
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const verifyEmail = async (
+    req,
+    res,
+    next
+) => {
+    try {
+        const result =
+            await authService.verifyEmail(
+                req.body.token
+            );
+
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const resendVerification = async (
+    req,
+    res,
+    next
+) => {
+    try {
+        const result =
+            await authService.sendVerification(
+                req.user.userId
+            );
+
+        res.status(200).json({
+            success: true,
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
