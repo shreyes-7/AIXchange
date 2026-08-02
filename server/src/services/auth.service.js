@@ -17,7 +17,11 @@ import {
     generateExpiry,
 } from "../utils/token.util.js";
 
-import { sendPasswordResetEmail } from "./email.service.js";
+import logger from "../config/logger.js";
+import {
+    sendPasswordResetEmail,
+    sendVerificationEmail,
+} from "./email.service.js";
 
 import ApiError from "../utils/ApiError.js";
 

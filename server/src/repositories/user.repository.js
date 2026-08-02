@@ -8,6 +8,12 @@ export const findById = (id) => {
     return User.findById(id);
 };
 
+export const findByIdWithWalletNonce = (id) => {
+    return User.findById(id).select(
+        "+wallet.verificationNonce +wallet.nonceExpiresAt"
+    );
+};
+
 export const create = (payload) => {
     return User.create(payload);
 };

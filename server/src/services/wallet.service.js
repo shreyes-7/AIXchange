@@ -5,6 +5,10 @@ import * as userRepository from "../repositories/user.repository.js";
 
 import ApiError from "../utils/ApiError.js";
 
+const constructVerificationMessage = (address, nonce) => {
+    return `Sign this message to verify wallet ownership on AIXchange.\n\nWallet Address:\n${address.toLowerCase()}\n\nNonce:\n${nonce}`;
+};
+
 export const generateNonce = async (
     userId,
     address,
@@ -41,10 +45,10 @@ export const generateNonce = async (
         chainId
     );
 
-    return {
-        message:
-            "Sign this message to verify wallet ownership.",
+    const message = constructVerificationMessage(address, nonce);
 
+    return {
+        message,
         nonce,
     };
 };
@@ -54,7 +58,7 @@ export const verifyWallet = async (
     signature
 ) => {
     const user =
-        await userRepository.findById(userId);
+        await userRepository.findByIdWithWalletNonce(userId);
 
     if (!user) {
         throw new ApiError(
@@ -84,9 +88,11 @@ export const verifyWallet = async (
         );
     }
 
+    const message = constructVerificationMessage(wallet.address, wallet.verificationNonce);
+
     const recoveredAddress =
         ethers.verifyMessage(
-            wallet.verificationNonce,
+            message,
             signature
         );
 
