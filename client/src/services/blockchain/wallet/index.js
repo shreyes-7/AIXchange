@@ -11,10 +11,29 @@
 export * from "./wallet.service.js";
 
 // MetaMask
-export * from "./metamask.service.js";
+export {
+  getEthereumProvider,
+  isMetaMaskInstalled,
+  connectWallet,
+  getCurrentAccount,
+  getProvider,
+  getSigner,
+  disconnectWallet,
+  getChainId,
+  getNetwork,
+  onAccountsChanged,
+  removeAccountsChangedListener,
+  onChainChanged,
+  removeChainChangedListener,
+} from "./metamask.service.js";
 
 // Network Utilities
-export * from "./network.service.js";
+export {
+  isSupportedNetwork,
+  switchNetwork,
+  addNetwork,
+  ensureSupportedNetwork,
+} from "./network.service.js";
 
 // Message Builder
 export * from "./message.service.js";
