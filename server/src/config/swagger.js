@@ -52,6 +52,10 @@ const options = {
                 name: "Blockchain",
                 description: "Blockchain Interaction APIs",
             },
+            {
+                name: "Wallet",
+                description: "Wallet linking and verification endpoints",
+            },
         ],
     },
 
