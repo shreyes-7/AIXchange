@@ -1,45 +1,45 @@
-# AIXchange Blockchain
+# AIXchange Blockchain Layer
 
-The **AIXchange Blockchain Module** is responsible for implementing the decentralized core of the AIXchange platform using **Solidity**, **Hardhat**, and **Ethers.js**.
+The **AIXchange Blockchain Module** is the decentralized trust layer of the AIXchange platform, built using **Solidity**, **Hardhat**, **OpenZeppelin Contracts**, and **Ethers.js**.
 
-This module manages ownership verification, token transactions, royalty distribution, dataset and AI model registration, licensing, provenance, and other on-chain operations. It serves as the immutable source of truth for all blockchain-backed assets within the AIXchange ecosystem.
-
----
-
-# Objectives
-
-The blockchain layer provides:
-
-- Native AIX utility token
-- Dataset ownership registration
-- AI model ownership registration
-- Smart contract based licensing
-- Automated royalty distribution
-- AI provenance tracking
-- Marketplace transaction validation
-- Treasury management
-- Immutable ownership records
+It provides immutable asset ownership records, automated token economy operations, vault security, decentralized marketplace clearing, and transparent provenance tracking.
 
 ---
 
-# Technology Stack
+## 🚀 Phase 3 – AIX Token Economy (Completed)
 
-- Solidity
-- Hardhat
-- Ethers.js
-- OpenZeppelin Contracts
-- Hardhat Toolbox
-- Mocha & Chai
-- Solidity Coverage
-- dotenv
+Phase 3 establishes the native ERC20 token ecosystem (`AIXToken`) and the central platform treasury (`Treasury`).
+
+### Implemented Contracts
+
+1. **`AIXToken.sol` (`contracts/tokens/AIXToken.sol`)**
+   - **Type**: Standard ERC20 with Burnable and Owner Access Control extensions.
+   - **Name**: `AIXchange Token`
+   - **Symbol**: `AIX`
+   - **Decimals**: `18`
+   - **Initial Supply**: 1,000,000,000 AIX (minted to contract owner/deployer).
+   - **Minting**: Restricted to contract owner via `mint(address to, uint256 amount)`.
+   - **Burning**: Supported via `burn(uint256 amount)` and `burnFrom(address account, uint256 amount)`.
+
+2. **`Treasury.sol` (`contracts/governance/Treasury.sol`)**
+   - **Type**: Vault contract for holding platform AIX tokens and native ETH.
+   - **Ownership**: Controlled via OpenZeppelin `Ownable`.
+   - **Withdrawals**: Owner-restricted token withdrawal `withdrawToken(address token, address to, uint256 amount)` and ETH withdrawal `withdrawETH(address payable to, uint256 amount)`.
+   - **Deposits**: Receives ERC20 transfers and native ETH deposits (`receive()` and `fallback()`).
+   - **Balance Queries**: `getTokenBalance(address token)` and `getETHBalance()`.
+
+3. **Supporting Architecture**
+   - **`IAIXToken.sol`**: Interface contract defining AIX Token methods.
+   - **`ITreasury.sol`**: Interface contract defining Treasury vault methods.
+   - **`Errors.sol`**: Custom errors (`ZeroAddress`, `ZeroAmount`, `InsufficientBalance`, `UnauthorizedAccount`, `TransferFailed`).
+   - **`Events.sol`**: Custom events (`TokensMinted`, `TokensBurned`, `TokenDeposited`, `TokenWithdrawn`, `ETHDeposited`, `ETHWithdrawn`).
 
 ---
 
-# Project Structure
+## 🛠️ Project Structure
 
 ```text
 blockchain/
-│
 ├── contracts/
 │   ├── governance/
 │   │   └── Treasury.sol
@@ -65,358 +65,91 @@ blockchain/
 │   │   └── AIXToken.sol
 │   └── utils/
 │       └── AccessControl.sol
-│
 ├── ignition/
+│   └── modules/
+│       ├── AIXToken.js
+│       ├── Treasury.js
+│       └── Phase3.js
 ├── scripts/
+│   ├── deploy.js
+│   ├── mint.js
+│   ├── balance.js
+│   └── transfer.js
 ├── test/
+│   ├── governance/
+│   │   └── Treasury.test.js
+│   └── tokens/
+│       └── AIXToken.test.js
 ├── hardhat.config.js
 ├── README.md
-├── ARCHITECTURE.md
-├── .env.example
+├── architecture.md
 └── package.json
 ```
 
 ---
 
-# Smart Contract Architecture
+## 💻 Commands & Execution
 
-The blockchain consists of several independent smart contracts.
-
-## Token
-
-Responsible for
-
-- AIX token creation
-- Token transfers
-- Balance management
-- Allowances
-
----
-
-## Dataset Registry
-
-Responsible for
-
-- Dataset ownership
-- Dataset metadata hash
-- Dataset licensing
-- Dataset royalty configuration
-- Dataset registration
-
----
-
-## Model Registry
-
-Responsible for
-
-- AI model ownership
-- Model metadata
-- Dataset lineage
-- Model registration
-
----
-
-## Marketplace
-
-Responsible for
-
-- Asset purchases
-- Ownership transfer
-- Payment validation
-- Purchase history
-
----
-
-## Royalty Engine
-
-Responsible for
-
-- Automatic royalty distribution
-- Revenue splitting
-- Creator rewards
-- Treasury allocation
-
----
-
-## Treasury
-
-Responsible for
-
-- Platform treasury
-- Fee collection
-- Withdrawals
-- Governance-controlled funds
-
----
-
-# Development Workflow
-
-Development follows a phase-wise approach.
-
-Phase 1
-
-- Project setup
-- Hardhat configuration
-- Contract architecture
-- Shared libraries
-- Interfaces
-- Base contracts
-
-Phase 2
-
-- Wallet authentication
-- MetaMask integration
-- Wallet verification
-
-Phase 3
-
-- AIX ERC20 token
-
-Phase 4
-
-- Dataset Registry
-
-Phase 5
-
-- Licensing System
-
-Phase 6
-
-- Marketplace
-
-Phase 7
-
-- Royalty Engine
-
-Phase 8
-
-- Model Registry
-
-Phase 9
-
-- Provenance Engine
-
----
-
-# Folder Responsibilities
-
-## contracts/
-
-Contains all Solidity smart contracts.
-
----
-
-## scripts/
-
-Deployment and utility scripts.
-
----
-
-## test/
-
-Unit tests for smart contracts.
-
----
-
-## ignition/
-
-Hardhat Ignition deployment modules.
-
----
-
-# Installation
-
-Clone the repository
-
-```bash
-git clone https://github.com/shreyes-7/AIXchange.git
-```
-
-Navigate to the blockchain module
-
-```bash
-cd blockchain
-```
-
-Install dependencies
-
+### 1. Install Dependencies
 ```bash
 npm install
 ```
 
----
-
-# Environment Variables
-
-Create a `.env` file.
-
-Example
-
-```env
-PRIVATE_KEY=
-
-SEPOLIA_RPC_URL=
-
-ETHERSCAN_API_KEY=
-
-CHAIN_ID=11155111
-
-TOKEN_NAME=AIX Token
-
-TOKEN_SYMBOL=AIX
-```
-
----
-
-# Available Commands
-
-Install dependencies
-
+### 2. Compile Contracts
 ```bash
-npm install
+npx hardhat compile
 ```
 
-Compile contracts
-
+### 3. Run Automated Tests
 ```bash
-npm run compile
+npx hardhat test
 ```
 
-Run tests
-
+### 4. Deploy Contracts (Local Network)
 ```bash
-npm run test
+npx hardhat run scripts/deploy.js --network localhost
 ```
 
-Start local blockchain
-
+### 5. Execute Hardhat Ignition Module
 ```bash
-npm run node
+npx hardhat ignition deploy ignition/modules/Phase3.js --network localhost
 ```
 
-Clean artifacts
-
+### 6. Run Helper Scripts
 ```bash
-npm run clean
-```
+# Mint tokens
+npx hardhat run scripts/mint.js
 
-Run coverage
+# Check balances
+npx hardhat run scripts/balance.js
 
-```bash
-npm run coverage
-```
-
-Deploy locally
-
-```bash
-npm run deploy:local
+# Transfer tokens
+npx hardhat run scripts/transfer.js
 ```
 
 ---
 
-# Development Standards
+## 🌐 Frontend Blockchain Service
 
-- Solidity version: 0.8.28
-- SPDX license in every contract
-- One contract per file
-- Reusable interfaces
-- Shared structs and events
-- Custom errors instead of string-based require messages
-- Comprehensive unit tests for every contract
-- OpenZeppelin contracts wherever applicable
+The frontend service layer provides an `ethers.js` v6 interface to interact with `AIXToken`:
 
----
-
-# Blockchain Data Responsibilities
-
-## Stored On-Chain
-
-- Ownership
-- Royalty configuration
-- Licenses
-- Purchase records
-- Provenance
-- Token balances
-- Token transfers
-- Treasury transactions
+- **Path**: `client/src/services/blockchain/token/`
+- **Modules**:
+  - `token.service.js`: High-level functions (`initializeContract`, `getBalance`, `transfer`, `approve`, `allowance`, `getTokenMetadata`, `mint`, `burn`).
+  - `token.abi.js`: Human-readable ABI for `AIXToken`.
+  - `index.js`: Service export entrypoint.
 
 ---
 
-## Stored Off-Chain (MongoDB)
+## 🔒 Security Considerations
 
-- User profiles
-- Dataset descriptions
-- Reviews
-- Ratings
-- Analytics
-- Search metadata
-- Categories
-- Tags
+- **OpenZeppelin Contracts**: Inherits audited, battle-tested `ERC20`, `ERC20Burnable`, `Ownable`, and `SafeERC20`.
+- **Access Control**: Owner-only modifiers protect token minting and treasury withdrawals.
+- **Input Validation**: All functions check for `address(0)` and zero amounts before state modifications.
+- **Checks-Effects-Interactions**: State updates precede token or ETH transfers.
 
 ---
 
-## Stored on IPFS
+## 📄 License
 
-- Datasets
-- AI models
-- Large files
-- Metadata files
-
----
-
-# Testing Strategy
-
-Each contract will have an independent test suite.
-
-```
-test/
-│
-├── governance/
-├── marketplace/
-├── registry/
-├── royalty/
-├── tokens/
-└── utils/
-```
-
-Testing includes
-
-- Deployment
-- Ownership
-- Access Control
-- Events
-- Error Handling
-- Token Transfers
-- Royalty Distribution
-- Marketplace Transactions
-
----
-
-# Future Enhancements
-
-- Multi-signature treasury
-- DAO governance
-- Upgradeable contracts
-- Cross-chain support
-- Batch transactions
-- Gas optimizations
-- Advanced royalty strategies
-
----
-
-# Contributing
-
-Follow the project coding standards.
-
-- Keep contracts modular.
-- Avoid duplicated logic.
-- Write unit tests for every feature.
-- Update documentation whenever contracts are modified.
-
----
-
-# License
-
-This project is developed as part of the **AIXchange** research project.
-
-All rights reserved.
+Developed as part of the **AIXchange** project. All rights reserved.
