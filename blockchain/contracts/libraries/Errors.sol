@@ -72,4 +72,29 @@ library Errors {
 
     /// @dev Thrown when an unsupported asset type is queried or registered.
     error AssetTypeNotSupported(uint8 assetType);
+
+    // ==========================================
+    // Phase 6 Purchase Engine Errors
+    // ==========================================
+
+    /// @dev Thrown when a queried purchase ID does not exist.
+    error PurchaseNotFound(uint256 purchaseId);
+
+    /// @dev Thrown when a license does not match the target asset.
+    error InvalidLicenseForAsset(uint256 licenseId, uint256 assetId);
+
+    /// @dev Thrown when attempting to purchase an exclusive license that has already been purchased.
+    error ExclusiveLicenseSold(uint256 licenseId);
+
+    /// @dev Thrown when a buyer attempts to duplicate an already active purchase for the same license.
+    error AlreadyPurchased(address buyer, uint256 assetId, uint256 licenseId);
+
+    /// @dev Thrown when an asset owner/licensor attempts to purchase their own asset.
+    error SelfPurchaseNotAllowed(address caller);
+
+    /// @dev Thrown when an invalid platform fee rate is configured (e.g. > 1000 basis points / 10%).
+    error InvalidFeeRate(uint256 feeBps);
+
+    /// @dev Thrown when an ERC20 payment transfer fails.
+    error PaymentTransferFailed();
 }

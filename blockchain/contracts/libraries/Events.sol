@@ -92,4 +92,35 @@ library Events {
         uint8 previousStatus,
         uint8 newStatus
     );
+
+    // ==========================================
+    // Phase 6 Purchase Engine Events
+    // ==========================================
+
+    /// @dev Emitted when an asset license purchase is successfully executed on-chain.
+    event DatasetPurchased(
+        uint256 indexed purchaseId,
+        uint256 indexed datasetId,
+        uint256 licenseId,
+        address indexed buyer,
+        address licensor,
+        uint256 price,
+        uint256 feeAmount,
+        uint256 licensorAmount,
+        uint256 timestamp
+    );
+
+    /// @dev Emitted when purchase settlement triggers royalty and platform fee splits.
+    event RoyaltyTriggered(
+        uint256 indexed purchaseId,
+        uint256 indexed assetId,
+        uint256 licenseId,
+        address indexed licensor,
+        uint256 licensorAmount,
+        uint256 feeAmount,
+        uint256 timestamp
+    );
+
+    /// @dev Emitted when the platform fee basis points are modified by admin.
+    event PlatformFeeUpdated(uint256 oldFeeBps, uint256 newFeeBps);
 }

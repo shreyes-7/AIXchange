@@ -109,4 +109,19 @@ library Structs {
         uint256 validFrom;
         uint256 validUntil;
     }
+
+    /// @dev Record of a completed on-chain purchase transaction.
+    struct PurchaseRecord {
+        uint256 purchaseId;
+        uint256 assetId;
+        AssetType assetType;
+        uint256 licenseId;
+        address buyer;
+        address licensor;
+        uint256 price;
+        uint256 feeAmount;
+        uint256 licensorAmount;
+        uint256 timestamp;
+        bool active;
+    }
 }

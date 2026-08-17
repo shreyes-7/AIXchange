@@ -2,7 +2,7 @@
 
 The **AIXchange Blockchain Module** is the decentralized trust layer of the AIXchange platform, built using **Solidity ^0.8.28**, **Hardhat**, **OpenZeppelin Contracts**, and **Ethers.js**.
 
-It provides immutable asset ownership records, automated token economy operations, vault security, decentralized marketplace clearing, verifiable dataset provenance, and flexible AI licensing.
+It provides immutable asset ownership records, automated token economy operations, vault security, decentralized marketplace clearing, verifiable dataset provenance, flexible AI licensing, and atomic purchase settlement.
 
 ---
 
@@ -19,19 +19,24 @@ It provides immutable asset ownership records, automated token economy operation
   - **Registration & Lookups**: Auto-incrementing IDs, `msg.sender` derived ownership, `getDataset(id)`, `getDatasetOwner(id)`, `getDatasetsByOwner(owner)`, `getTotalDatasets()`.
   - **Management**: Owner-restricted metadata updates (`updateDataset`), status toggle (`setDatasetStatus`), and index-preserving ownership transfers (`transferDatasetOwnership`).
 
-### Phase 5 – Licensing System (Current)
+### Phase 5 – Licensing System
 - **`LicenseRegistry.sol` (`contracts/licensing/LicenseRegistry.sol`)**:
   - **License Types**: `ACADEMIC`, `COMMERCIAL`, `EXCLUSIVE`, `CUSTOM`.
-  - **Pricing Models**:
-    - `FIXED`: One-time fixed fee in AIX token units (wei).
-    - `ROYALTY`: Percentage royalty rate represented in basis points (0–10000 BPS, where 1000 = 10.00%).
-  - **Asset Integration & Authorization**: Verifies asset ownership against Phase 4 `DatasetRegistry.getDatasetOwner(assetId)`. Only the verified asset owner can create, update, or revoke licenses for that asset. Extensible for future Phase 8 `ModelRegistry`.
+  - **Pricing Models**: `FIXED` (in AIX token units), `ROYALTY` (basis points 0–10000).
+  - **Asset Integration & Authorization**: Validates asset ownership with `DatasetRegistry`. Only the verified asset owner can create, update, or revoke licenses for that asset.
   - **Rights & Restrictions**: Explicit permissions struct (`canView`, `canDownload`, `canModify`, `canTrain`, `canInfer`, `canCommercialUse`, `canDistribute`, `canSublicense`) and restriction descriptions.
-  - **Lifecycle & Validity**: Supports start (`validFrom`) and expiration (`validUntil`) timestamps. Provides dynamic `isLicenseActive(licenseId)` check and revocation management (`revokeLicense`, `setLicenseStatus`).
-  - **Integration Hooks**:
-    - **Phase 6 Purchase Engine Hook**: `getLicensePricing(licenseId)` returns `(pricingModel, fixedPrice, royaltyRate)`.
-    - **Phase 10 Royalty Engine Hook**: `getLicensesByAsset(assetType, assetId)` and `getLicensesByLicensor(licensor)`.
-- **`ILicenseRegistry.sol` (`contracts/interfaces/ILicenseRegistry.sol`)**: Comprehensive interface definition.
+  - **Lifecycle & Validity**: Start (`validFrom`) and expiration (`validUntil`) timestamps, `isLicenseActive(licenseId)`, and revocation management.
+
+### Phase 6 – Purchase Engine (Current)
+- **`PurchaseEngine.sol` (`contracts/marketplace/PurchaseEngine.sol`)**:
+  - **Purchase Execution**: Converts active license terms into atomic purchases using `purchaseDataset(datasetId, licenseId)`.
+  - **Authoritative On-Chain Pricing**: Pulls authoritative price directly from `LicenseRegistry.getLicensePricing(licenseId)`.
+  - **Settlement & Fee Splitting**: Routes platform fees (e.g. 2.50% / 250 BPS) to `Treasury` and remaining amount to dataset licensor using `AIXToken.safeTransferFrom`.
+  - **Entitlement & Access Tracking**: Records immutable buyer entitlement (`hasAccess(buyer, datasetId, licenseId)`) without transferring underlying dataset ownership.
+  - **Exclusivity Enforcement**: Automatically locks `EXCLUSIVE` licenses upon first purchase (`isExclusiveLicenseSold`).
+  - **Duplicate Prevention**: Reverts redundant purchases of active unexpired licenses.
+  - **Security**: Built with OpenZeppelin `ReentrancyGuard`, `Pausable`, and checks-effects-interactions.
+- **`IPurchaseEngine.sol` (`contracts/interfaces/IPurchaseEngine.sol`)**: Comprehensive interface definition.
 
 ---
 
@@ -48,6 +53,7 @@ blockchain/
 │   │   ├── ILicenseRegistry.sol
 │   │   ├── IMarketplace.sol
 │   │   ├── IModelRegistry.sol
+│   │   ├── IPurchaseEngine.sol
 │   │   ├── IRoyaltyEngine.sol
 │   │   └── ITreasury.sol
 │   ├── libraries/
@@ -57,7 +63,8 @@ blockchain/
 │   ├── licensing/
 │   │   └── LicenseRegistry.sol
 │   ├── marketplace/
-│   │   └── Marketplace.sol
+│   │   ├── Marketplace.sol
+│   │   └── PurchaseEngine.sol
 │   ├── registry/
 │   │   ├── DatasetRegistry.sol
 │   │   └── ModelRegistry.sol
@@ -75,11 +82,14 @@ blockchain/
 │       ├── DatasetRegistry.js
 │       ├── Phase4.js
 │       ├── LicenseRegistry.js
-│       └── Phase5.js
+│       ├── Phase5.js
+│       ├── PurchaseEngine.js
+│       └── Phase6.js
 ├── scripts/
 │   ├── deploy.js
 │   ├── deployDatasetRegistry.js
 │   ├── deployLicenseRegistry.js
+│   ├── deployPurchaseEngine.js
 │   ├── mint.js
 │   ├── balance.js
 │   └── transfer.js
@@ -88,6 +98,8 @@ blockchain/
 │   │   └── Treasury.test.js
 │   ├── licensing/
 │   │   └── LicenseRegistry.test.js
+│   ├── marketplace/
+│   │   └── PurchaseEngine.test.js
 │   ├── registry/
 │   │   └── DatasetRegistry.test.js
 │   └── tokens/
@@ -111,15 +123,15 @@ npx hardhat compile
 ```bash
 npx hardhat test
 ```
-*Executes all 85 unit tests across Treasury, AIXToken, DatasetRegistry, and LicenseRegistry.*
+*Executes all 115 unit tests across Treasury, AIXToken, DatasetRegistry, LicenseRegistry, and PurchaseEngine.*
 
 ### 3. Deploy Contracts (Local Network)
 ```bash
-# Deploy LicenseRegistry (and DatasetRegistry if not configured)
-npx hardhat run scripts/deployLicenseRegistry.js --network localhost
+# Deploy PurchaseEngine (and dependencies if not configured)
+npx hardhat run scripts/deployPurchaseEngine.js --network localhost
 
-# Deploy via Hardhat Ignition Master Module (Phases 3, 4, 5)
-npx hardhat ignition deploy ignition/modules/Phase5.js --network localhost
+# Deploy via Hardhat Ignition Master Module (Phases 3, 4, 5, 6)
+npx hardhat ignition deploy ignition/modules/Phase6.js --network localhost
 ```
 
 ---
@@ -127,28 +139,34 @@ npx hardhat ignition deploy ignition/modules/Phase5.js --network localhost
 ## 🔒 Security & Architecture Model
 
 ```text
-Dataset Owner / Licensor
-         │
-         ▼
-LicenseRegistry.sol  ──────────►  DatasetRegistry.sol (Ownership Verification)
-         │
-  [Terms Stored On-Chain]
-  - LicenseType: ACADEMIC | COMMERCIAL | EXCLUSIVE | CUSTOM
-  - PricingModel: FIXED (AIX) | ROYALTY (BPS)
-  - Rights & Restrictions
-  - Validity Window (validFrom, validUntil)
-         │
-         ├─────────────────────────────────────────┐
-         ▼                                         ▼
-Phase 6 (Purchase Engine)              Phase 10 (Royalty Engine)
-"What is the price & rights?"          "What is the royalty rate & licensor?"
+                    Buyer
+                      │
+                      │ approve(PurchaseEngine, price)
+                      ▼
+               PurchaseEngine.sol
+                      │
+        ┌─────────────┼─────────────┐
+        ▼             ▼             ▼
+ DatasetRegistry  LicenseRegistry AIXToken (safeTransferFrom)
+  [Valid, Active] [Valid, Active]   ├── Platform Fee (2.5%) ──► Treasury.sol
+                                    └── Creator Payout (97.5%) ─► Licensor Address
+                      │
+                      ▼
+                PurchaseRecord
+                      │
+             ┌────────┴────────┐
+             ▼                 ▼
+     Access Entitlement   Events Emitted
+   hasAccess(buyer,...)   ├── DatasetPurchased
+                          └── RoyaltyTriggered ──► Backend Indexer & Phase 10
 ```
 
 - **Separation of Concerns**:
-  - Phase 5 configures and registers commercial terms.
-  - Phase 6 executes token payments and issues access grants.
-  - Phase 10 executes automated revenue splits.
-- **Zero Secret Leakage**: Private keys, database secrets, and raw datasets are never committed or stored on-chain.
+  - `DatasetRegistry`: Dataset identity, ownership, and CID references.
+  - `LicenseRegistry`: Commercial and legal terms definition.
+  - `PurchaseEngine`: Atomic payment settlement, fee routing, access grants, and exclusivity enforcement.
+  - `Treasury`: Platform fee vault.
+- **Zero Secret Leakage**: Private keys, database credentials, and raw dataset files are never stored on-chain.
 
 ---
 
