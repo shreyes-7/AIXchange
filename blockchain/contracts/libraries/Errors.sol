@@ -20,4 +20,22 @@ library Errors {
 
     /// @dev Thrown when a transfer operation fails.
     error TransferFailed();
+
+    /// @dev Thrown when a queried dataset ID does not exist in the registry.
+    error DatasetNotFound(uint256 datasetId);
+
+    /// @dev Thrown when an empty or invalid IPFS CID/hash is provided.
+    error InvalidCID();
+
+    /// @dev Thrown when an empty license identifier is provided.
+    error InvalidLicense();
+
+    /// @dev Thrown when an invalid royalty value is provided (e.g. > 10000 basis points).
+    error InvalidRoyalty(uint256 royalty);
+
+    /// @dev Thrown when an operation is attempted on an inactive dataset.
+    error DatasetInactive(uint256 datasetId);
+
+    /// @dev Thrown when a caller is not authorized for a dataset modification.
+    error UnauthorizedCaller(address caller);
 }

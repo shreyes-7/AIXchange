@@ -58,3 +58,7 @@ venv/
 
 # Docker generated data
 docker/**/data/
+
+# Local architectural files (not tracked in repository)
+ARCHITECT_RULES.md
+TASKS.md

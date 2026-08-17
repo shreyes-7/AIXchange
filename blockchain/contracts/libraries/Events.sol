@@ -23,4 +23,32 @@ library Events {
 
     /// @dev Emitted when ETH is withdrawn from the Treasury.
     event ETHWithdrawn(address indexed recipient, uint256 amount);
+
+    /// @dev Emitted when a new dataset is registered on-chain.
+    event DatasetRegistered(
+        uint256 indexed datasetId,
+        address indexed owner,
+        string cid,
+        string license,
+        uint256 royalty,
+        uint256 createdAt
+    );
+
+    /// @dev Emitted when an existing dataset's metadata/CID/license/royalty is updated.
+    event DatasetUpdated(
+        uint256 indexed datasetId,
+        string newCid,
+        string newLicense,
+        uint256 newRoyalty
+    );
+
+    /// @dev Emitted when a dataset's active status is toggled.
+    event DatasetStatusChanged(uint256 indexed datasetId, bool active);
+
+    /// @dev Emitted when dataset ownership is transferred.
+    event DatasetOwnershipTransferred(
+        uint256 indexed datasetId,
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 }

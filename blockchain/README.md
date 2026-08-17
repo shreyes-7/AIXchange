@@ -2,37 +2,25 @@
 
 The **AIXchange Blockchain Module** is the decentralized trust layer of the AIXchange platform, built using **Solidity**, **Hardhat**, **OpenZeppelin Contracts**, and **Ethers.js**.
 
-It provides immutable asset ownership records, automated token economy operations, vault security, decentralized marketplace clearing, and transparent provenance tracking.
+It provides immutable asset ownership records, automated token economy operations, vault security, decentralized marketplace clearing, and transparent dataset provenance.
 
 ---
 
-## 🚀 Phase 3 – AIX Token Economy (Completed)
+## 🚀 Completed Phases
 
-Phase 3 establishes the native ERC20 token ecosystem (`AIXToken`) and the central platform treasury (`Treasury`).
+### Phase 3 – AIX Token Economy
+- **`AIXToken.sol` (`contracts/tokens/AIXToken.sol`)**: ERC-20 utility token ("AIXchange Token" / "AIX", 18 decimals, 1 Billion initial supply, burnable, owner minting).
+- **`Treasury.sol` (`contracts/governance/Treasury.sol`)**: Secure vault for holding platform AIX tokens and native ETH.
+- **Interfaces & Libraries**: `IAIXToken.sol`, `ITreasury.sol`, `Errors.sol`, `Events.sol`, `Structs.sol`.
 
-### Implemented Contracts
-
-1. **`AIXToken.sol` (`contracts/tokens/AIXToken.sol`)**
-   - **Type**: Standard ERC20 with Burnable and Owner Access Control extensions.
-   - **Name**: `AIXchange Token`
-   - **Symbol**: `AIX`
-   - **Decimals**: `18`
-   - **Initial Supply**: 1,000,000,000 AIX (minted to contract owner/deployer).
-   - **Minting**: Restricted to contract owner via `mint(address to, uint256 amount)`.
-   - **Burning**: Supported via `burn(uint256 amount)` and `burnFrom(address account, uint256 amount)`.
-
-2. **`Treasury.sol` (`contracts/governance/Treasury.sol`)**
-   - **Type**: Vault contract for holding platform AIX tokens and native ETH.
-   - **Ownership**: Controlled via OpenZeppelin `Ownable`.
-   - **Withdrawals**: Owner-restricted token withdrawal `withdrawToken(address token, address to, uint256 amount)` and ETH withdrawal `withdrawETH(address payable to, uint256 amount)`.
-   - **Deposits**: Receives ERC20 transfers and native ETH deposits (`receive()` and `fallback()`).
-   - **Balance Queries**: `getTokenBalance(address token)` and `getETHBalance()`.
-
-3. **Supporting Architecture**
-   - **`IAIXToken.sol`**: Interface contract defining AIX Token methods.
-   - **`ITreasury.sol`**: Interface contract defining Treasury vault methods.
-   - **`Errors.sol`**: Custom errors (`ZeroAddress`, `ZeroAmount`, `InsufficientBalance`, `UnauthorizedAccount`, `TransferFailed`).
-   - **`Events.sol`**: Custom events (`TokensMinted`, `TokensBurned`, `TokenDeposited`, `TokenWithdrawn`, `ETHDeposited`, `ETHWithdrawn`).
+### Phase 4 – Dataset Marketplace Registry (Current)
+- **`DatasetRegistry.sol` (`contracts/registry/DatasetRegistry.sol`)**:
+  - **Storage Model**: Stores verifiable dataset metadata on-chain (`datasetId`, `owner`, `cid`, `license`, `royalty` in basis points 0-10000, `createdAt`, `active`). Raw payloads remain off-chain on IPFS/Pinata.
+  - **Registration**: Auto-incrementing IDs, `msg.sender` derived ownership, boundary validations.
+  - **Lookups**: `getDataset(id)`, `getDatasetOwner(id)`, `getDatasetsByOwner(owner)`, `getTotalDatasets()`.
+  - **Management**: Owner-restricted metadata updates (`updateDataset`), status toggle (`setDatasetStatus`), and index-preserving ownership transfers (`transferDatasetOwnership`).
+- **`IDatasetRegistry.sol` (`contracts/interfaces/IDatasetRegistry.sol`)**: Full interface specification.
+- **Custom Errors & Events**: `InvalidCID`, `InvalidLicense`, `InvalidRoyalty`, `DatasetNotFound`, `DatasetInactive`, `UnauthorizedCaller`, `DatasetRegistered`, `DatasetUpdated`, `DatasetStatusChanged`, `DatasetOwnershipTransferred`.
 
 ---
 
@@ -69,15 +57,20 @@ blockchain/
 │   └── modules/
 │       ├── AIXToken.js
 │       ├── Treasury.js
-│       └── Phase3.js
+│       ├── Phase3.js
+│       ├── DatasetRegistry.js
+│       └── Phase4.js
 ├── scripts/
 │   ├── deploy.js
+│   ├── deployDatasetRegistry.js
 │   ├── mint.js
 │   ├── balance.js
 │   └── transfer.js
 ├── test/
 │   ├── governance/
 │   │   └── Treasury.test.js
+│   ├── registry/
+│   │   └── DatasetRegistry.test.js
 │   └── tokens/
 │       └── AIXToken.test.js
 ├── hardhat.config.js
@@ -107,46 +100,34 @@ npx hardhat test
 
 ### 4. Deploy Contracts (Local Network)
 ```bash
+# Deploy DatasetRegistry
+npx hardhat run scripts/deployDatasetRegistry.js --network localhost
+
+# Deploy Token and Treasury
 npx hardhat run scripts/deploy.js --network localhost
 ```
 
-### 5. Execute Hardhat Ignition Module
+### 5. Execute Hardhat Ignition Modules
 ```bash
-npx hardhat ignition deploy ignition/modules/Phase3.js --network localhost
-```
-
-### 6. Run Helper Scripts
-```bash
-# Mint tokens
-npx hardhat run scripts/mint.js
-
-# Check balances
-npx hardhat run scripts/balance.js
-
-# Transfer tokens
-npx hardhat run scripts/transfer.js
+npx hardhat ignition deploy ignition/modules/Phase4.js --network localhost
 ```
 
 ---
 
-## 🌐 Frontend Blockchain Service
+## 🔒 Security & Architecture Model
 
-The frontend service layer provides an `ethers.js` v6 interface to interact with `AIXToken`:
+```text
+Actual Dataset Payload  --> Backend Server (Encryption) --> Pinata / IPFS (Off-chain)
+                                                                 |
+                                                                CID
+                                                                 |
+                                                                 v
+                                                       DatasetRegistry.sol (On-chain)
+```
 
-- **Path**: `client/src/services/blockchain/token/`
-- **Modules**:
-  - `token.service.js`: High-level functions (`initializeContract`, `getBalance`, `transfer`, `approve`, `allowance`, `getTokenMetadata`, `mint`, `burn`).
-  - `token.abi.js`: Human-readable ABI for `AIXToken`.
-  - `index.js`: Service export entrypoint.
-
----
-
-## 🔒 Security Considerations
-
-- **OpenZeppelin Contracts**: Inherits audited, battle-tested `ERC20`, `ERC20Burnable`, `Ownable`, and `SafeERC20`.
-- **Access Control**: Owner-only modifiers protect token minting and treasury withdrawals.
-- **Input Validation**: All functions check for `address(0)` and zero amounts before state modifications.
-- **Checks-Effects-Interactions**: State updates precede token or ETH transfers.
+- **Off-chain Privacy**: Sensitive dataset payloads and encryption keys are NEVER stored on-chain or in client source code.
+- **On-chain Integrity**: The blockchain stores the dataset CID hash, owner address, license terms, and royalty parameters.
+- **Authorization**: All update and transfer functions enforce caller authorization (`msg.sender == dataset.owner`).
 
 ---
 

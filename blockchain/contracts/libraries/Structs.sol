@@ -23,4 +23,15 @@ library Structs {
         uint256 timestamp;
         bool isWithdrawal;
     }
+
+    /// @dev Structure describing an on-chain dataset registration record.
+    struct Dataset {
+        uint256 datasetId;
+        address owner;
+        string cid;
+        string license;
+        uint256 royalty; // In basis points: 500 = 5.00%, max 10000 = 100%
+        uint256 createdAt;
+        bool active;
+    }
 }
