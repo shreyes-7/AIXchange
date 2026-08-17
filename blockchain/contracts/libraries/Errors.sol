@@ -38,4 +38,38 @@ library Errors {
 
     /// @dev Thrown when a caller is not authorized for a dataset modification.
     error UnauthorizedCaller(address caller);
+
+    // ==========================================
+    // Phase 5 Licensing Errors
+    // ==========================================
+
+    /// @dev Thrown when an invalid or zero asset ID is supplied.
+    error InvalidAsset(uint256 assetId);
+
+    /// @dev Thrown when a caller is not authorized to create/modify licenses for an asset.
+    error UnauthorizedLicensor(address caller, uint256 assetId);
+
+    /// @dev Thrown when a queried license ID does not exist.
+    error LicenseNotFound(uint256 licenseId);
+
+    /// @dev Thrown when an operation requires an active license but the license is inactive or expired.
+    error LicenseInactive(uint256 licenseId);
+
+    /// @dev Thrown when an invalid fixed price is provided for a FIXED pricing model.
+    error InvalidFixedPrice();
+
+    /// @dev Thrown when an invalid royalty rate is provided (e.g. > 10000 basis points or 0 when ROYALTY model).
+    error InvalidRoyaltyRate(uint256 rate);
+
+    /// @dev Thrown when the validity end timestamp precedes the start timestamp.
+    error InvalidValidityPeriod(uint256 validFrom, uint256 validUntil);
+
+    /// @dev Thrown when attempting to revoke an already revoked license.
+    error LicenseAlreadyRevoked(uint256 licenseId);
+
+    /// @dev Thrown when an empty or invalid metadata URI/CID is passed for a license.
+    error InvalidMetadataURI();
+
+    /// @dev Thrown when an unsupported asset type is queried or registered.
+    error AssetTypeNotSupported(uint8 assetType);
 }

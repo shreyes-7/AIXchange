@@ -51,4 +51,45 @@ library Events {
         address indexed previousOwner,
         address indexed newOwner
     );
+
+    // ==========================================
+    // Phase 5 Licensing Events
+    // ==========================================
+
+    /// @dev Emitted when a new license is created.
+    event LicenseCreated(
+        uint256 indexed licenseId,
+        uint256 indexed assetId,
+        uint8 assetType,
+        address indexed licensor,
+        uint8 licenseType,
+        uint8 pricingModel,
+        uint256 fixedPrice,
+        uint256 royaltyRate,
+        uint256 createdAt
+    );
+
+    /// @dev Emitted when an existing license's terms are updated.
+    event LicenseUpdated(
+        uint256 indexed licenseId,
+        uint256 fixedPrice,
+        uint256 royaltyRate,
+        string metadataURI,
+        uint256 version,
+        uint256 updatedAt
+    );
+
+    /// @dev Emitted when a license is revoked by the licensor.
+    event LicenseRevoked(
+        uint256 indexed licenseId,
+        address indexed licensor,
+        uint256 updatedAt
+    );
+
+    /// @dev Emitted when a license status is explicitly changed.
+    event LicenseStatusChanged(
+        uint256 indexed licenseId,
+        uint8 previousStatus,
+        uint8 newStatus
+    );
 }
