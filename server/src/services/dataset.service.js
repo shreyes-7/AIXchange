@@ -21,6 +21,13 @@ const encryptionKey = () => {
     if (key.length !== 32) throw new ApiError(503, "DATASET_ENCRYPTION_KEY must be a base64-encoded 32-byte key.");
     return key;
 };
+export const decryptDatasetBuffer = (ciphertext, encryption) => {
+    try {
+        const decipher = crypto.createDecipheriv("aes-256-gcm", encryptionKey(), Buffer.from(encryption.iv, "base64"));
+        decipher.setAuthTag(Buffer.from(encryption.authTag, "base64"));
+        return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    } catch { throw new ApiError(502, "Dataset decryption failed."); }
+};
 
 const ownerFilter = (dataset, user) => {
     if (!dataset) throw new ApiError(404, "Dataset not found.");

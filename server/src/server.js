@@ -5,6 +5,7 @@ import logger from "./config/logger.js";
 import connectDB from "./config/database.js";
 import tokenEventIndexer from "./jobs/token-event-indexer.js";
 import licenseEventIndexer from "./jobs/license-event-indexer.js";
+import purchaseEventIndexer from "./jobs/purchase-event-indexer.js";
 
 const startServer = async () => {
     try {
@@ -18,6 +19,7 @@ const startServer = async () => {
 
         const indexerTimer = tokenEventIndexer.start();
         const licenseIndexerTimer = licenseEventIndexer.start();
+        const purchaseIndexerTimer = purchaseEventIndexer.start();
 
 
         const shutdown = (signal) => {
@@ -26,6 +28,7 @@ const startServer = async () => {
             server.close(() => {
                 clearInterval(indexerTimer);
                 if (licenseIndexerTimer) clearInterval(licenseIndexerTimer);
+                if (purchaseIndexerTimer) clearInterval(purchaseIndexerTimer);
                 logger.info("Server closed successfully.");
                 process.exit(0);
             });

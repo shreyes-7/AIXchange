@@ -4,7 +4,9 @@ import env from "../config/env.js";
 import auth from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validation.middleware.js";
 import * as controller from "../controllers/dataset.controller.js";
+import * as purchaseController from "../controllers/purchase.controller.js";
 import { blockchainSchema, createDatasetSchema, listDatasetSchema, reviewSchema, updateDatasetSchema, versionSchema } from "../validators/dataset.validator.js";
+import { downloadQuerySchema, paginationSchema } from "../validators/purchase.validator.js";
 import ApiError from "../utils/ApiError.js";
 
 const router = Router();
@@ -33,6 +35,16 @@ router.route("/").get(validate(listDatasetSchema, "query"), controller.list).pos
  *   get: { tags: [Datasets], summary: List active dataset categories with counts }
  */
 router.get("/categories", controller.categories);
+/** @swagger
+ * /api/v1/datasets/{id}/purchases:
+ *   get: { tags: [Transactions], summary: List purchases for a dataset owner, security: [{ bearerAuth: [] }] }
+ */
+router.get("/:id/purchases", auth, validate(paginationSchema, "query"), purchaseController.datasetHistory);
+/** @swagger
+ * /api/v1/datasets/{id}/download:
+ *   get: { tags: [Datasets], summary: Download an encrypted dataset after authoritative entitlement verification, security: [{ bearerAuth: [] }] }
+ */
+router.get("/:id/download", auth, validate(downloadQuerySchema, "query"), purchaseController.download);
 /** @swagger
  * /api/v1/datasets/{id}/preview:
  *   get: { tags: [Datasets], summary: Get a sanitized dataset preview; never returns protected file bytes }

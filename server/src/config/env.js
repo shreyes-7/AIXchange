@@ -23,6 +23,7 @@ const env = {
     LICENSE_REGISTRY_ADDRESS: process.env.LICENSE_REGISTRY_ADDRESS,
     PINATA_JWT: process.env.PINATA_JWT,
     PINATA_API_URL: process.env.PINATA_API_URL || "https://api.pinata.cloud/pinning/pinFileToIPFS",
+    PINATA_GATEWAY_URL: process.env.PINATA_GATEWAY_URL || "https://gateway.pinata.cloud/ipfs",
     DATASET_ENCRYPTION_KEY: process.env.DATASET_ENCRYPTION_KEY,
     DATASET_MAX_UPLOAD_BYTES: number(process.env.DATASET_MAX_UPLOAD_BYTES, 50 * 1024 * 1024),
     BLOCKCHAIN_CONFIRMATIONS: number(process.env.BLOCKCHAIN_CONFIRMATIONS, 1),

@@ -1,6 +1,7 @@
 import { ethers } from "ethers";
 
 import env from "./env.js";
+import { PURCHASE_ENGINE_ABI } from "./purchase-abi.js";
 
 const requiredAddress = (value, name) => {
     if (!ethers.isAddress(value || "")) {
@@ -27,10 +28,7 @@ export const AIX_TOKEN_ABI = [
     "event TokensBurned(address indexed from, uint256 amount)",
 ];
 
-export const PURCHASE_ENGINE_ABI = [
-    "function purchaseDataset(uint256 datasetId, uint256 licenseId) returns (uint256)",
-    "event DatasetPurchased(uint256 indexed purchaseId, uint256 indexed datasetId, uint256 licenseId, address indexed buyer, address licensor, uint256 price, uint256 feeAmount, uint256 licensorAmount, uint256 timestamp)",
-];
+export { PURCHASE_ENGINE_ABI } from "./purchase-abi.js";
 
 export const aixTokenContract = new ethers.Contract(
     aixTokenAddress,

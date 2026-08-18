@@ -8,6 +8,7 @@ import treasuryRoutes from "./treasury.route.js";
 import dashboardRoutes from "./dashboard.route.js";
 import datasetRoutes from "./dataset.route.js";
 import licenseRoutes from "./license.route.js";
+import purchaseRoutes from "./purchase.route.js";
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use("/treasury", treasuryRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/datasets", datasetRoutes);
 router.use("/licenses", licenseRoutes);
+router.use("/purchases", purchaseRoutes);
 
 export default router;
