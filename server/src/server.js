@@ -3,6 +3,8 @@ import app from "./app.js";
 import env from "./config/env.js";
 import logger from "./config/logger.js";
 import connectDB from "./config/database.js";
+import tokenEventIndexer from "./jobs/token-event-indexer.js";
+import licenseEventIndexer from "./jobs/license-event-indexer.js";
 
 const startServer = async () => {
     try {
@@ -14,11 +16,16 @@ const startServer = async () => {
             );
         });
 
+        const indexerTimer = tokenEventIndexer.start();
+        const licenseIndexerTimer = licenseEventIndexer.start();
+
 
         const shutdown = (signal) => {
             logger.info(`${signal} received. Shutting down server...`);
 
             server.close(() => {
+                clearInterval(indexerTimer);
+                if (licenseIndexerTimer) clearInterval(licenseIndexerTimer);
                 logger.info("Server closed successfully.");
                 process.exit(0);
             });

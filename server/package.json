@@ -9,7 +9,7 @@
     "start": "node src/server.js",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "echo \"Tests not implemented yet\""
+    "test": "node --test tests/**/*.test.js"
   },
   "keywords": [
     "AIXchange",

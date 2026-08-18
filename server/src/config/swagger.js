@@ -19,6 +19,16 @@ const options = {
             },
         ],
 
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT",
+                },
+            },
+        },
+
         tags: [
             {
                 name: "Health",

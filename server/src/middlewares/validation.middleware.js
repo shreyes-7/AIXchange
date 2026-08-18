@@ -1,8 +1,10 @@
 import ApiError from "../utils/ApiError.js";
 
-const validate = (schema) => {
+const validate = (schema, source = "body") => {
     return (req, res, next) => {
-        const { error } = schema.validate(req.body, {
+        const data = req[source];
+
+        const { error, value } = schema.validate(data, {
             abortEarly: false,
             stripUnknown: true,
         });
@@ -20,6 +22,8 @@ const validate = (schema) => {
                 )
             );
         }
+
+        req[source] = value;
 
         next();
     };

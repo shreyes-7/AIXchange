@@ -37,16 +37,12 @@ const auth = async (req, res, next) => {
             userId: user._id,
             role: user.role,
             email: user.email,
+            wallet: user.wallet,
         };
 
         next();
     } catch (error) {
-        next(
-            new ApiError(
-                401,
-                "Invalid or expired token."
-            )
-        );
+        next(error instanceof ApiError ? error : new ApiError(401, "Invalid or expired token."));
     }
 };
 

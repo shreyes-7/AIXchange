@@ -23,6 +23,10 @@ const errorHandler = (err, req, res, next) => {
         response.stack = err.stack;
     }
 
+    if (err.errors) {
+        response.errors = err.errors;
+    }
+
     return res.status(statusCode).json(response);
 };
 
