@@ -1,0 +1,72 @@
+# ==============================================================================
+# AIXchange - Docker Build Context Ignore (.dockerignore)
+# ------------------------------------------------------------------------------
+# Excludes unnecessary large directories, temporary files, and secrets
+# from being transferred to the Docker build context.
+# ==============================================================================
+
+# Version Control & IDEs
+.git
+.github
+.gitignore
+.gitattributes
+.vscode
+.idea
+*.swp
+*.swo
+
+# Node.js & JavaScript Dependencies
+**/node_modules
+node_modules
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# Python Virtual Environments & Caches
+**/venv
+**/env
+**/ENV
+**/.venv
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache
+**/.coverage
+**/htmlcov
+**/.tox
+
+# Frontend Builds & Static Bundles
+client/dist
+client/build
+**/dist
+**/build
+
+# Blockchain Artifacts & Caches
+blockchain/artifacts
+blockchain/cache
+blockchain/coverage
+blockchain/coverage.json
+blockchain/typechain-types
+
+# Environment & Secrets (Security)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Temporary Workspaces, Checkpoints, & Logs
+workspace/
+**/workspace/**
+**/logs/**
+**/checkpoints/**
+*.tmp
+*.temp
+
+# Knowledge Base & Project Documentation
+knowledge/
+docs/
+
+# OS Specific Files
+.DS_Store
+Thumbs.db
+ehthumbs.db

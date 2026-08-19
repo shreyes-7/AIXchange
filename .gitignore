@@ -51,6 +51,8 @@ ignition/deployments/
 # Local uploads and temporary storage
 uploads/
 tmp/
+workspace/
+python-services/workspace/
 
 # Python virtual environments
 venv/

@@ -1,0 +1,35 @@
+services:
+  ai-sandbox:
+    build:
+      context: ../
+      dockerfile: docker/sandbox/Dockerfile
+    container_name: aixchange-ai-sandbox
+    restart: unless-stopped
+    ports:
+      - "8000:8000"   # AI Execution REST API
+      - "8888:8888"   # Isolated JupyterLab
+    environment:
+      - NODE_ENV=development
+      - JUPYTER_PORT=8888
+      - JUPYTER_TOKEN=aixchange_sandbox_token
+      - AI_SERVICE_PORT=8000
+      - WORKSPACE_DIR=/workspace
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8192M
+          pids: 100
+        reservations:
+          cpus: '1.0'
+          memory: 2048M
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    networks:
+      - sandbox-net
+
+networks:
+  sandbox-net:
+    driver: bridge
