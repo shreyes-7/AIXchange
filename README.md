@@ -1,6 +1,6 @@
 # AIXchange
 
-**AIXchange** is a decentralized, blockchain-powered marketplace for AI datasets, machine learning models, and AI workflows. It establishes verifiable on-chain ownership, trustless licensing, atomic token-based settlement, automated royalty distribution, secure authentication, and decentralized storage for artificial intelligence assets.
+**AIXchange** is a decentralized, blockchain-powered marketplace and execution substrate for AI datasets, machine learning models, and AI workflows. It establishes verifiable on-chain ownership, trustless licensing, atomic token-based settlement, automated royalty distribution, secure authentication, decentralized storage, and containerized AI sandboxes for training, Jupyter development, and model inference.
 
 ---
 
@@ -13,7 +13,7 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 │                          AIXchange Platform                            │
 ├─────────────────┬─────────────────┬──────────────────┬─────────────────┤
 │  1. Foundation  │ 2. Auth & Web3  │ 3. Token Economy │ 4. Marketplace  │
-│  5. Licensing   │ 6. Purchase Eng │ 7. Sandbox (WIP) │ 8. Models (WIP) │
+│  5. Licensing   │ 6. Purchase Eng │ 7. AI Sandbox    │ 8. Models (WIP) │
 └─────────────────┴─────────────────┴──────────────────┴─────────────────┘
 ```
 
@@ -35,7 +35,6 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
   - Hardhat development environment with Solidity `^0.8.28`.
   - Shared smart contract libraries (`Structs.sol`, `Errors.sol`, `Events.sol`).
   - Access control and base interfaces.
-- **Docker Orchestration**: `docker-compose.yml` for unified local containerized execution.
 
 ---
 
@@ -77,7 +76,7 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 - **Frontend Marketplace UI (`client/src/pages/`)**:
   - **Marketplace Catalog (`/datasets` / `/`)**: Live on-chain catalog, metrics stats bar, search filter, license filter, IPFS preview modal, and gateway links.
   - **Dataset Details & Creator Controls (`/datasets/:id`)**: Comprehensive on-chain provenance record, IPFS link, active status badge, and an owner management panel (edit metadata, toggle active status, transfer ownership).
-  - **Register Dataset (`/datasets/register`)**: Multi-step registration form with live marketplace card preview and interactive multi-stage transaction lifecycle modal (`CHECKING_WALLET` -> `WAITING_FOR_SIGNATURE` -> `SUBMITTED` -> `CONFIRMED`).
+  - **Register Dataset (`/datasets/register`)**: Multi-step registration form with live marketplace card preview and interactive multi-stage transaction lifecycle modal.
   - `dataset.service.js`: Frontend blockchain service for DatasetRegistry.
   - `datasetApi.service.js`: Integration boundary for backend REST endpoints.
 
@@ -100,13 +99,26 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
   - `PurchaseEngine.sol`: Decentralized on-chain purchase settlement engine:
     - **Atomic Purchases**: Executes `purchaseDataset(datasetId, licenseId)` using AIX tokens.
     - **Authoritative Pricing**: Reads price directly from `LicenseRegistry.getLicensePricing(licenseId)`.
-    - **Fee & Royalty Splits**: Deducts configurable platform fees (default 2.50% / 250 BPS) to `Treasury` and sends creator share to the licensor via OpenZeppelin `SafeERC20`.
+    - **Fee & Royalty Splits**: Deducts platform fee (default 2.50% / 250 BPS) to `Treasury` and sends creator share to the licensor via OpenZeppelin `SafeERC20`.
     - **Entitlement Tracking**: Grants usage rights via `hasAccess(buyer, datasetId, licenseId)` without transferring underlying dataset ownership.
     - **Exclusivity Enforcement**: Auto-locks `EXCLUSIVE` licenses upon first purchase to reject subsequent buyers.
     - **Duplicate Prevention**: Blocks redundant purchases of active unexpired licenses.
     - **Security**: Built with OpenZeppelin `ReentrancyGuard`, `Pausable`, and checks-effects-interactions.
   - `IPurchaseEngine.sol`: Interface with access checks, purchase getters, and platform fee management.
 - **Events**: `DatasetPurchased` and `RoyaltyTriggered` for backend indexers and royalty accounting.
+
+---
+
+### Phase 7 — Docker Sandbox & AI Execution Substrate
+- **AI Infrastructure & Container Sandbox (`docker/sandbox/`, `python-services/`)**:
+  - **Docker Sandbox Image**: Reproducible, multi-stage Linux container running under unprivileged user `aixuser` (UID 1000) with CPU limits, memory limits, and PID limits.
+  - **Interactive JupyterLab**: Hardened JupyterLab server locked to `/workspace` with token authentication and terminal execution controls.
+  - **PyTorch Training Runtime**: Structured training loop with `DynamicMLP`, mini-batch loaders, optimizers (Adam, AdamW, SGD, RMSprop), StepLR decay, gradient clipping, live metrics logging, and timeout enforcement.
+  - **Atomic Checkpoint Manager**: Atomic `.pt` checkpoint persistence and automatic top-$k$ lowest loss rotation.
+  - **Model Exporter & Phase 9 Provenance**: Exports to Hugging Face `.safetensors` and PyTorch `.pt` formats with SHA-256 checksums and `model_metadata.json` capturing execution lineage.
+  - **Model Artifact Validator**: Verifies file existence, SHA-256 checksums, safe weight deserialization (`weights_only=True`), and forward-pass smoke testing on dummy tensors.
+  - **Decoupled Inference Engine**: Standalone prediction engine for single and batch feature vectors with probability scoring and latency measurement.
+  - **AI Execution Contract REST API**: FastAPI server exposing endpoints for training, status polling, model validation, inference, and Jupyter lifecycle.
 
 ---
 
@@ -127,23 +139,34 @@ AIXchange/
 │   ├── ignition/        # Hardhat Ignition deployment modules (Phases 3-6)
 │   ├── scripts/         # Standalone deployment and CLI scripts
 │   └── test/            # 115 automated unit tests across all contract modules
-├── client/              # React + Vite frontend application
+├── client/              # React 19 + Vite frontend application
 │   ├── src/
-│   │   ├── components/  # Navbar, UI components
+│   │   ├── components/  # Navbar, IPFS preview modal, UI components
 │   │   ├── pages/       # DatasetMarketplace, DatasetDetails, RegisterDataset, WalletTest
 │   │   ├── services/    # Blockchain services (Ethers.js v6) and API clients
 │   │   └── types/       # JSDoc type definitions and constants
-├── server/              # Node.js + Express backend API services
+├── server/              # Node.js 22 + Express 5 backend API services
 │   └── src/
 │       ├── config/      # Database, environment, logger, swagger
-│       ├── controllers/ # Auth, wallet controllers
+│       ├── controllers/ # Auth, dataset, license, purchase, wallet controllers
+│       ├── jobs/        # Blockchain event indexers (license, purchase, token)
 │       ├── middlewares/ # Auth, error, role, validation middlewares
-│       ├── models/      # User, session models
-│       ├── routes/      # Auth, wallet, health routes
-│       └── services/    # Auth, wallet, email services
-├── python-services/     # Python AI inference & evaluation services
-├── database/            # Database schemas and seed data
-├── docker-compose.yml   # Multi-service local orchestration
+│       ├── models/      # User, dataset, license, purchase, session models
+│       ├── routes/      # REST API route handlers
+│       └── services/    # Business logic and blockchain providers
+├── python-services/     # Python 3.12 AI Execution Substrate & Sandbox Services
+│   ├── app/
+│   │   ├── api/         # FastAPI execution endpoints (train, infer, validate-model, jupyter)
+│   │   ├── core/        # SandboxManager, JupyterManager, DockerRunner, settings
+│   │   ├── inference/   # SafeModelLoader, InferenceEngine
+│   │   ├── models/      # ModelExporter, ModelValidator
+│   │   ├── schemas/     # Pydantic schemas (training, inference, execution)
+│   │   └── training/    # PyTorchTrainer, CheckpointManager, TrainingPipeline
+│   ├── tests/           # Automated pytest suite (22 passing tests)
+│   └── main.py          # FastAPI application entrypoint
+├── docker/              # Docker configurations (sandbox, ipfs, mongodb, nginx)
+│   └── sandbox/         # Dockerfile and jupyter_server_config.py
+├── knowledge/           # Complete Obsidian Knowledge Vault
 └── README.md            # Master documentation
 ```
 
@@ -151,21 +174,18 @@ AIXchange/
 
 ## 📋 Prerequisites
 
-Before running the project, ensure you have the following installed:
+Before running the project, ensure you have:
 
-- **Node.js**: `v18.0.0` or higher
-- **npm**: `v9.0.0` or higher
-- **Python**: `v3.10` or higher (for AI services)
+- **Node.js**: `v20.0.0` or higher
+- **npm**: `v10.0.0` or higher
+- **Python**: `v3.12` or higher (for AI services)
+- **Docker Desktop**: Installed and running (for containerized AI execution)
 - **MetaMask**: Browser extension installed
-- **MongoDB**: Local MongoDB instance or Docker-based MongoDB (`mongodb://localhost:27017`)
-- **Git**: Installed and configured
-- **Docker Desktop** (Optional, for containerized multi-service deployment)
+- **MongoDB**: Local MongoDB instance (`mongodb://localhost:27017`)
 
 ---
 
 ## ⚙️ Installation Guide
-
-Clone the repository and install dependencies for all subsystems:
 
 ```bash
 # 1. Clone the repository
@@ -184,10 +204,10 @@ npm install
 cd ../server
 npm install
 
-# 5. Setup Python AI Services virtual environment
+# 5. Setup Python AI Services
 cd ../python-services
 python -m venv venv
-# Windows (PowerShell):
+# Windows:
 .\venv\Scripts\Activate.ps1
 # Linux / macOS:
 # source venv/bin/activate
@@ -197,78 +217,13 @@ cd ..
 
 ---
 
-## 🔑 Environment Configuration
+## 🧪 Comprehensive Automated Test Suites
 
-Each subsystem contains an `.env.example` template. Copy them to `.env`:
-
-### 1. Blockchain (`blockchain/.env`)
-```bash
-cp blockchain/.env.example blockchain/.env
-```
-```env
-PRIVATE_KEY=your_private_key
-SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_API_KEY
-ETHERSCAN_API_KEY=your_etherscan_key
-CHAIN_ID=31337
-TOKEN_NAME=AIX Token
-TOKEN_SYMBOL=AIX
-
-AIX_TOKEN_ADDRESS=
-TREASURY_ADDRESS=
-DATASET_REGISTRY_ADDRESS=
-LICENSE_REGISTRY_ADDRESS=
-PURCHASE_ENGINE_ADDRESS=
-```
-
-### 2. Client (`client/.env`)
-```bash
-cp client/.env.example client/.env
-```
-```env
-VITE_API_BASE_URL=http://localhost:5000/api/v1
-VITE_BLOCKCHAIN_RPC_URL=http://127.0.0.1:8545
-VITE_CHAIN_ID=31337
-VITE_BLOCK_EXPLORER_URL=https://sepolia.etherscan.io
-
-VITE_AIX_TOKEN_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
-VITE_TREASURY_ADDRESS=0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
-VITE_DATASET_REGISTRY_ADDRESS=0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
-VITE_LICENSE_REGISTRY_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
-VITE_PURCHASE_ENGINE_ADDRESS=0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
-
-VITE_IPFS_GATEWAY_URL=https://ipfs.io/ipfs
-```
-
-### 3. Server (`server/.env`)
-```bash
-cp server/.env.example server/.env
-```
-```env
-PORT=5000
-NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/aixchange
-JWT_SECRET=your_jwt_secret_key_here
-JWT_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:5173
-```
-
----
-
-## 🧪 Testing Smart Contracts
-
-Run the complete automated unit test suite inside the `blockchain/` directory:
-
+### 1. Smart Contract Test Suite (115 Tests)
 ```bash
 cd blockchain
-
-# Compile all smart contracts
-npx hardhat compile
-
-# Run all 115 unit tests
 npx hardhat test
 ```
-
-### Expected Test Output:
 ```text
   Treasury Smart Contract: 12 passing
   LicenseRegistry Smart Contract: 32 passing
@@ -279,29 +234,53 @@ npx hardhat test
   115 passing (4s)
 ```
 
+### 2. Python AI Execution & Sandbox Test Suite (22 Tests)
+```bash
+cd python-services
+.\venv\Scripts\pytest tests/ -v
+```
+```text
+  tests/test_api_execution.py::test_health_check_endpoint PASSED
+  tests/test_api_execution.py::test_api_training_and_inference_flow PASSED
+  tests/test_container_isolation.py::test_dockerfile_security_hardening PASSED
+  tests/test_container_isolation.py::test_docker_security_spec_flags PASSED
+  tests/test_container_isolation.py::test_container_to_container_workspace_isolation PASSED
+  tests/test_docker_sandbox.py::test_workspace_provisioning PASSED
+  tests/test_docker_sandbox.py::test_path_traversal_prevention PASSED
+  tests/test_docker_sandbox.py::test_deterministic_cleanup PASSED
+  tests/test_e2e_workflow.py::test_full_ai_sandbox_lifecycle PASSED
+  tests/test_inference.py::test_safe_model_loader PASSED
+  tests/test_inference.py::test_inference_prediction_single PASSED
+  tests/test_inference.py::test_inference_prediction_batch PASSED
+  tests/test_jupyter_runtime.py::test_jupyter_manager_lifecycle PASSED
+  tests/test_model_export.py::test_model_export PASSED
+  tests/test_model_export.py::test_model_validator_success PASSED
+  tests/test_model_export.py::test_model_validator_corrupted_file PASSED
+  tests/test_resource_limits.py::test_training_timeout_enforcement PASSED
+  tests/test_resource_limits.py::test_resource_settings_bounds PASSED
+  tests/test_training.py::test_dynamic_mlp_construction PASSED
+  tests/test_training.py::test_pytorch_training_loop PASSED
+  tests/test_training.py::test_checkpoint_rotation PASSED
+  tests/test_training.py::test_training_cancellation PASSED
+
+  22 passed in 4.5s
+```
+
 ---
 
-## 🚀 How to Run the Project Locally
-
-Follow these steps to run the complete local environment across all services:
+## 🚀 How to Run the Complete Platform Locally
 
 ### Terminal 1: Start Local Blockchain Node
 ```bash
 cd blockchain
 npx hardhat node
 ```
-*Starts a local Ethereum node at `http://127.0.0.1:8545` with 20 pre-funded test accounts (10,000 ETH each).*
+*Starts local Ethereum node at `http://127.0.0.1:8545` with 20 pre-funded test accounts.*
 
 ### Terminal 2: Deploy Smart Contracts (Phases 3–6)
-Deploy all contracts to the running local node:
 ```bash
 cd blockchain
-
-# Option A: Deploy via Hardhat Ignition Master Module (Phases 3, 4, 5, 6)
 npx hardhat ignition deploy ignition/modules/Phase6.js --network localhost
-
-# Option B: Or run the standalone Phase 6 deployment script
-npx hardhat run scripts/deployPurchaseEngine.js --network localhost
 ```
 
 ### Terminal 3: Start the Backend Server
@@ -309,54 +288,38 @@ npx hardhat run scripts/deployPurchaseEngine.js --network localhost
 cd server
 npm run dev
 ```
-*Express API runs at `http://localhost:5000`. Swagger API docs available at `http://localhost:5000/api-docs`.*
+*Express API runs at `http://localhost:5000`. Swagger docs at `http://localhost:5000/api-docs`.*
 
 ### Terminal 4: Start the Frontend Client
 ```bash
 cd client
 npm run dev
 ```
-*React application launches at `http://localhost:5173`.*
+*React marketplace launches at `http://localhost:5173`.*
 
-### Terminal 5: Start Python AI Services (Optional)
+### Terminal 5: Start the AI Sandbox Container
 ```bash
+# Option A: Run via Docker Compose
+docker compose -f docker/docker-compose.sandbox.yml up -d
+
+# Option B: Run locally via Python
 cd python-services
-# Activate virtual environment
-.\venv\Scripts\Activate.ps1   # Windows
-# source venv/bin/activate    # Linux / macOS
-python main.py
+.\venv\Scripts\python.exe main.py
 ```
-*FastAPI service runs at `http://localhost:8000`.*
+*AI Execution API runs at `http://localhost:8000/docs`, JupyterLab runs at `http://localhost:8888/lab?token=aixchange_sandbox_token`.*
 
 ---
 
-## 🦊 Configuring MetaMask for Local Testing
+## 📑 Service Ports & Endpoints
 
-1. Open your browser with MetaMask installed and navigate to `http://localhost:5173`.
-2. Add a new custom network in MetaMask:
-   - **Network Name**: `Hardhat Local`
-   - **RPC URL**: `http://127.0.0.1:8545`
-   - **Chain ID**: `31337`
-   - **Currency Symbol**: `ETH`
-3. Import one of the private keys printed in **Terminal 1** (e.g. Account #0: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`).
-4. Click **"Connect Wallet"** on the navbar to interact with the marketplace, register datasets, and test purchases!
-
----
-
-## 📑 Command Cheat-Sheet
-
-| Task | Command | Directory |
-| --- | --- | --- |
-| **Compile Contracts** | `npx hardhat compile` | `blockchain/` |
-| **Run Blockchain Tests** | `npx hardhat test` | `blockchain/` |
-| **Start Local Blockchain** | `npx hardhat node` | `blockchain/` |
-| **Deploy All Contracts** | `npx hardhat ignition deploy ignition/modules/Phase6.js --network localhost` | `blockchain/` |
-| **Deploy Purchase Engine** | `npx hardhat run scripts/deployPurchaseEngine.js --network localhost` | `blockchain/` |
-| **Start Frontend** | `npm run dev` | `client/` |
-| **Build Frontend** | `npm run build` | `client/` |
-| **Start Backend** | `npm run dev` | `server/` |
-| **Start AI Service** | `python main.py` | `python-services/` |
-| **Docker Multi-service** | `docker-compose up --build` | Root |
+| Service | URL / Port | Description |
+| :--- | :--- | :--- |
+| **Frontend Marketplace** | `http://localhost:5173` | React 19 UI (Catalog, Details, Registration) |
+| **Backend REST API** | `http://localhost:5000/api/v1` | Express 5 Backend |
+| **Backend Swagger Docs** | `http://localhost:5000/api-docs` | OpenAPI 3.0 Backend Documentation |
+| **AI Execution API** | `http://localhost:8000/docs` | FastAPI AI Execution Contract Swagger |
+| **AI Sandbox JupyterLab** | `http://localhost:8888/lab` | Isolated Interactive Jupyter Workspace |
+| **Blockchain Node** | `http://127.0.0.1:8545` | Hardhat Local JSON-RPC Node (Chain ID `31337`) |
 
 ---
 
