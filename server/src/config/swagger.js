@@ -78,6 +78,7 @@ const swaggerDocs = (app) => {
     const prefix = process.env.API_PREFIX || "/api/v1";
     app.use(`${prefix}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
     app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 };
 
 export default swaggerDocs;
