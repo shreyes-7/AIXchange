@@ -2,44 +2,60 @@
 
 ## Overview
 
-The AI layer in AIXchange is planned to handle automated dataset profiling, machine learning model evaluation, secure inference, and embeddings-based semantic discovery.
+The AI layer in AIXchange provides an isolated, reproducible execution substrate for dataset preparation, neural network training, model export to Safetensors, artifact validation, JupyterLab interactive sessions, and decoupled model inference.
 
-> [!WARNING]
-> **Implementation State: Scaffold / Setup**
-> The Python AI services directory (`python-services/`) contains a pinned dependency manifest in `requirements.txt` and an application directory skeleton. The core execution engine is planned for development in subsequent phases.
+> [!NOTE]
+> **Implementation State: Implemented (Phase 7 — Docker Sandbox AI Substrate)**
+> The Python AI services layer (`python-services/`) provides the core execution substrate, Docker sandbox environment, PyTorch training pipelines, model export to `.safetensors` with Phase 9 provenance metadata, and standalone inference runtime.
 
 ---
 
-## Directory Skeleton (`python-services/`)
+## Directory Layout (`python-services/`)
 
 ```text
 python-services/
-├── requirements.txt      # 130 pinned dependencies (PyTorch, Safetensors, Uvicorn, etc.)
-├── README.md             # Overview and virtual environment setup guide
-├── app/                  # Application package skeleton
-│   ├── api/              # API router stubs (.gitkeep)
-│   ├── core/             # Core configurations & settings (.gitkeep)
-│   ├── evaluation/       # Benchmark and metric evaluation stubs (.gitkeep)
-│   ├── inference/        # Model execution & inference stubs (.gitkeep)
-│   ├── models/           # PyTorch / Safetensors model wrappers (.gitkeep)
-│   ├── pipelines/        # Data preprocessing pipelines (.gitkeep)
-│   ├── schemas/          # Pydantic data schemas (.gitkeep)
-│   ├── training/         # Fine-tuning & training stubs (.gitkeep)
-│   └── utils/            # Mathematical & data utilities (.gitkeep)
-└── tests/                # Test suite directory (.gitkeep)
+├── app/
+│   ├── api/              # FastAPI execution router (train, infer, validate-model, jupyter)
+│   ├── core/             # SandboxManager, JupyterManager, config settings
+│   ├── inference/        # SafeModelLoader, InferenceEngine
+│   ├── models/           # ModelExporter, ModelValidator
+│   ├── schemas/          # Pydantic schemas (training, inference, execution)
+│   ├── training/         # BaseTrainer, PyTorchTrainer, CheckpointManager, TrainingPipeline
+│   └── utils/            # Math and tensor helpers
+├── tests/                # Automated pytest suite (16 passing tests)
+├── requirements.txt      # 130 pinned dependencies
+├── pytest.ini            # Pytest configuration
+├── README.md             # Setup guide
+└── main.py               # FastAPI application entrypoint
 ```
 
 ---
 
-## Planned Architecture
+## AI Execution Architecture
 
 ```text
-[ User / Marketplace ] ────> [ Express API ] ────> [ Python FastAPI Service ]
-                                                          │
-                               ┌──────────────────────────┴──────────────────────────┐
-                               ▼                                                     ▼
-                     [ Quality Profiler ]                                  [ Model Evaluator ]
-                     - Data distributions                                  - MMLU / Benchmarks
-                     - Schema consistency                                  - Inference latency
-                     - Missing values check                                - Accuracy metrics
+[ Application Backend / User ] ────> [ AI Execution API (FastAPI) ]
+                                                │
+                                                ▼
+                                    [ Docker Sandbox Manager ]
+                                                │
+                     ┌──────────────────────────┴──────────────────────────┐
+                     ▼                                                     ▼
+           [ Training Pipeline ]                                 [ Inference Engine ]
+           - PyTorch neural network                              - Safe weights loading
+           - DynamicMLP construction                             - Input preprocessing
+           - Atomic checkpoint manager                           - Tensor forward pass
+           - Safetensors model export                            - Confidence calibration
+           - Provenance metadata generator                       - Latency measurement
 ```
+
+---
+
+## Related Links
+
+- [[Docker Sandbox]]
+- [[Jupyter Environment]]
+- [[Training Engine]]
+- [[Model Export]]
+- [[Inference Engine]]
+- [[AI Execution Contract]]

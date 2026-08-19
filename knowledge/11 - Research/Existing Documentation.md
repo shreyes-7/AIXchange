@@ -7,9 +7,9 @@ This note summarizes the documentation already present within the AIXchange repo
 ---
 
 ## 1. Root `README.md` (`/README.md`)
-- Detailed full-stack architecture overview covering implemented Phases 1 through 6.
-- 5-terminal local setup and startup guide.
-- Complete testing instructions and command cheat-sheet.
+- Detailed full-stack architecture overview covering implemented Phases 1 through 7 (Blockchain, Backend, Frontend, and AI Sandbox Execution Substrate).
+- 5-terminal local setup, Docker Compose, and startup guide.
+- Complete testing instructions and command cheat-sheet for Hardhat (115 tests) and Pytest (22 tests).
 
 ---
 
@@ -26,7 +26,8 @@ This note summarizes the documentation already present within the AIXchange repo
 ---
 
 ## 4. Python Services `README.md` (`python-services/README.md`)
-- Package structure overview and virtual environment activation instructions.
+- Comprehensive AI Execution Substrate guide: Docker sandbox, interactive JupyterLab, PyTorch training pipelines, Safetensors model export, validation, and decoupled inference.
+- Test breakdown and commands for running the 22 automated pytest tests.
 
 ---
 

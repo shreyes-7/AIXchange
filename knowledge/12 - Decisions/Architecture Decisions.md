@@ -34,5 +34,14 @@ This document records architectural decisions that are explicitly documented or 
 
 ---
 
-## 5. Technology Selection Rationale
-*Specific reasons for selecting Express 5 vs NestJS, or Vite vs Next.js, are not explicitly documented in the repository comments.*
+## 5. Decoupling Training Runtime from Standalone Inference Engine (Phase 7)
+- **Decision**: Architect the AI inference engine as a standalone runtime that loads exported `.safetensors` artifacts independently from the training process.
+- **Evidence**: `python-services/app/inference/engine.py`, `python-services/app/training/pipeline.py`.
+- **Rationale**: Training jobs are ephemeral and resource-heavy, whereas inference requires lightweight, persistent, and low-latency execution without training dependencies running.
+
+---
+
+## 6. Safetensors Format & Weights-Only Loading for Safe Deserialization (Phase 7)
+- **Decision**: Adopt Hugging Face Safetensors format as the primary model export standard and enforce `weights_only=True` for PyTorch state dicts.
+- **Evidence**: `python-services/app/models/exporter.py`, `python-services/app/inference/loader.py`.
+- **Rationale**: Eliminates arbitrary code execution vulnerabilities inherent to Python's standard `pickle` deserialization during model loading from untrusted marketplace creators.

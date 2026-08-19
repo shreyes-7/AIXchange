@@ -44,10 +44,15 @@ This document provides an itemized matrix of all platform features, their exact 
 | **Purchase Engine** | Duplicate Purchase Prevention | **Implemented** | `blockchain/contracts/marketplace/PurchaseEngine.sol` (`AlreadyPurchased`) |
 | **Purchase Engine** | Access Entitlement Validation | **Implemented** | `blockchain/contracts/marketplace/PurchaseEngine.sol` (`hasAccess`) |
 | **Purchase Engine** | Backend Purchase Event Indexer | **Implemented** | `server/src/jobs/purchase-event-indexer.js`, `server/src/routes/purchase.route.js` |
+| **Execution Sandbox** | Docker Sandbox Execution Environment | **Implemented** | `docker/sandbox/Dockerfile`, `docker/docker-compose.sandbox.yml`, `python-services/app/core/sandbox.py` |
+| **Execution Sandbox** | JupyterLab Interactive Session Manager | **Implemented** | `docker/sandbox/jupyter_server_config.py`, `python-services/app/core/jupyter.py` |
+| **AI Training** | Structured PyTorch Training Pipeline | **Implemented** | `python-services/app/training/pytorch_trainer.py`, `python-services/app/training/pipeline.py` |
+| **AI Training** | Checkpoint Management & Top-k Rotation | **Implemented** | `python-services/app/training/checkpoints.py` |
+| **Model Export** | Multi-Format Serialization (.safetensors, .pt)| **Implemented** | `python-services/app/models/exporter.py` |
+| **Model Validation** | SHA-256 Checksum & Smoke Test Forward Pass | **Implemented** | `python-services/app/models/validator.py` |
+| **AI Inference** | Decoupled Safe Deserialization & Prediction Engine | **Implemented** | `python-services/app/inference/loader.py`, `python-services/app/inference/engine.py` |
+| **AI Execution API** | AI Execution Contract REST API | **Implemented** | `python-services/app/api/execution.py`, `python-services/main.py` |
 | **Model Marketplace**| Model Registry Smart Contract | **Placeholder / Stub** | `blockchain/contracts/registry/ModelRegistry.sol` (empty placeholder) |
 | **Model Marketplace**| Model Listing & Trading Frontend | **Planned / Not Found** | No files found in `client/` |
-| **Execution Sandbox** | Docker Sandbox Execution Environment | **Planned / Not Found** | Phase 7 planned; no files found in repository |
-| **AI Provenance** | Lineage Graph & Model Training Provenance | **Planned / Not Found** | Phase 9 planned; no files found in repository |
+| **AI Provenance** | Lineage Graph & Model Training Provenance | **Partially Implemented** | Metadata saved in `model_metadata.json` (Phase 7); On-chain DAG is Phase 9 planned |
 | **Royalty System** | Secondary Automated Royalty Engine | **Placeholder / Stub** | `blockchain/contracts/royalty/RoyaltyEngine.sol` (empty placeholder) |
-| **AI Services** | Python Model Inference / Evaluation API | **Scaffold / Setup** | `python-services/requirements.txt`, package directory skeleton |
-| **DevOps** | Containerized Local Docker Setup | **Placeholder / Incomplete** | `docker-compose.yml` (0 bytes), empty directories in `docker/` |

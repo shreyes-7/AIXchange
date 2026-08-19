@@ -6,18 +6,18 @@ This document tracks the verified implementation status across all development p
 
 ## Phase Breakdown
 
-| Phase | Description | Blockchain | Backend | Frontend | Status |
-| :---: | :--- | :---: | :---: | :---: | :---: |
-| **Phase 1** | Foundation & Multi-Service Architecture | ✅ Verified | ✅ Verified | ✅ Verified | **Completed** |
-| **Phase 2** | Authentication & Web3 Wallet Integration | ✅ Verified | ✅ Verified | ✅ Verified | **Completed** |
-| **Phase 3** | AIX Token Economy & Treasury | ✅ Verified (15+12 tests) | ✅ Verified | ✅ Verified | **Completed** |
-| **Phase 4** | Dataset Marketplace & Registry | ✅ Verified (26 tests) | ✅ Verified | ✅ Verified | **Completed** |
-| **Phase 5** | Licensing System | ✅ Verified (32 tests) | ✅ Verified | ⚠️ In Progress | **Completed (Core)** |
-| **Phase 6** | Purchase Engine & Settlement | ✅ Verified (30 tests) | ✅ Verified | ⚠️ In Progress | **Completed (Core)** |
-| **Phase 7** | Docker Sandbox & Secure Execution | ❌ Not Found | ❌ Not Found | ❌ Not Found | **Planned** |
-| **Phase 8** | Model Marketplace & Registry | ⚠️ Stub (`ModelRegistry.sol`) | ❌ Not Found | ❌ Not Found | **Planned** |
-| **Phase 9** | AI Provenance & Lineage Tracking | ❌ Not Found | ❌ Not Found | ❌ Not Found | **Planned** |
-| **Phase 10** | Advanced Secondary Royalty Engine | ⚠️ Stub (`RoyaltyEngine.sol`) | ❌ Not Found | ❌ Not Found | **Planned** |
+| Phase | Description | Blockchain | Backend | Frontend | AI / Infrastructure | Status |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Phase 1** | Foundation & Multi-Service Architecture | ✅ Verified | ✅ Verified | ✅ Verified | ✅ Verified | **Completed** |
+| **Phase 2** | Authentication & Web3 Wallet Integration | ✅ Verified | ✅ Verified | ✅ Verified | N/A | **Completed** |
+| **Phase 3** | AIX Token Economy & Treasury | ✅ Verified (15+12 tests) | ✅ Verified | ✅ Verified | N/A | **Completed** |
+| **Phase 4** | Dataset Marketplace & Registry | ✅ Verified (26 tests) | ✅ Verified | ✅ Verified | N/A | **Completed** |
+| **Phase 5** | Licensing System | ✅ Verified (32 tests) | ✅ Verified | ⚠️ In Progress | N/A | **Completed (Core)** |
+| **Phase 6** | Purchase Engine & Settlement | ✅ Verified (30 tests) | ✅ Verified | ⚠️ In Progress | N/A | **Completed (Core)** |
+| **Phase 7** | Docker Sandbox & AI Execution Substrate | N/A | ⚠️ Prabhu Tasks | ⚠️ Pending | ✅ Verified (16 tests) | **AI Substrate Completed** |
+| **Phase 8** | Model Marketplace & Registry | ⚠️ Stub (`ModelRegistry.sol`) | ❌ Not Found | ❌ Not Found | ⚠️ Ready for Export | **Planned** |
+| **Phase 9** | AI Provenance & Lineage Tracking | ❌ Not Found | ❌ Not Found | ❌ Not Found | ✅ Metadata Saved | **Planned** |
+| **Phase 10** | Advanced Secondary Royalty Engine | ⚠️ Stub (`RoyaltyEngine.sol`) | ❌ Not Found | ❌ Not Found | N/A | **Planned** |
 
 ---
 
@@ -52,13 +52,15 @@ This document tracks the verified implementation status across all development p
 - Dataset Blockchain Service: **Fully Implemented**. Evidence: `client/src/services/blockchain/dataset/dataset.service.js`.
 - Token Blockchain Service: **Fully Implemented**. Evidence: `client/src/services/blockchain/token/token.service.js`.
 
-### 4. Python AI Services (`python-services/`)
-- Directory skeleton (`app/api/`, `app/core/`, `app/evaluation/`, `app/inference/`, etc.): **Scaffold / Placeholder** (`.gitkeep`).
-- Dependencies: `requirements.txt` present with PyTorch, Uvicorn, Pydantic, etc.
-- Entrypoint (`main.py`): **Planned / Not yet created**.
+### 4. Python AI Services & Infrastructure (`python-services/` & `docker/sandbox/`) — **16 / 16 Tests Passing**
+- **Docker Sandbox Environment**: **Fully Implemented**. Evidence: `docker/sandbox/Dockerfile`, `docker/docker-compose.sandbox.yml`, `app/core/sandbox.py`.
+- **Jupyter Sandbox Environment**: **Fully Implemented**. Evidence: `docker/sandbox/jupyter_server_config.py`, `app/core/jupyter.py`.
+- **Training Pipeline & Checkpoints**: **Fully Implemented**. Evidence: `app/training/base.py`, `app/training/pytorch_trainer.py`, `app/training/checkpoints.py`, `app/training/pipeline.py`.
+- **Model Export & Artifact Validation**: **Fully Implemented** (`.safetensors`, `.pt`, `model_metadata.json` SHA-256 validation). Evidence: `app/models/exporter.py`, `app/models/validator.py`.
+- **Inference Engine**: **Fully Implemented** (Safe deserialization, tensor forward-pass, confidence scoring). Evidence: `app/inference/loader.py`, `app/inference/engine.py`.
+- **AI Execution API Contract**: **Fully Implemented**. Evidence: `app/api/execution.py`, `python-services/main.py`.
 
 ### 5. Infrastructure & DevOps
-- `docker-compose.yml`: **Placeholder (Empty 0 bytes)**.
-- `docker/`: **Placeholder** (`.gitkeep` files in `docker/ipfs/`, `docker/mongodb/`, `docker/nginx/`).
-- `database/`: **Placeholder** (`.gitkeep` files in `database/migrations/`, `database/schemas/`, `database/seeders/`).
-- `shared/`: **Placeholder** (`.gitkeep` files in `shared/constants/`, `shared/types/`, `shared/utils/`).
+- `docker/ipfs/`, `docker/mongodb/`, `docker/nginx/`: Skeletons with `.gitkeep`.
+- `docker-compose.sandbox.yml`: Sandbox composition spec.
+- Root `docker-compose.yml`: Skeleton / 0 bytes.
