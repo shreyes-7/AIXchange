@@ -13,21 +13,8 @@
  * ============================================================================
  */
 
-// import { BrowserProvider } from "ethers";
 import { SUPPORTED_CHAINS } from "./constants.js";
 import { getProvider } from "./metamask.service.js";
-/**
- * Returns an ethers BrowserProvider.
- *
-//  * @returns {BrowserProvider}
-//  */
-// function getProvider() {
-//   if (!window.ethereum) {
-//     throw new Error("MetaMask is not installed.");
-//   }
-
-//   return new BrowserProvider(window.ethereum);
-// }
 
 /**
  * Returns current chain ID.
@@ -82,13 +69,13 @@ export async function switchNetwork(networkConfig) {
   await window.ethereum.request({
     method: "wallet_switchEthereumChain",
     params: [
-        {
-            chainId: networkConfig.chainHex,
-        },
+      {
+        chainId: networkConfig.chainHex,
+      },
     ],
-});
+  });
 
-return true;
+  return true;
 }
 
 /**

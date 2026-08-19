@@ -1,0 +1,36 @@
+# Background Jobs
+
+## Overview
+
+The AIXchange backend runs persistent background event indexers in `server/src/jobs/` that listen to smart contract events on the Ethereum blockchain and synchronize state into MongoDB collections.
+
+---
+
+## Implemented Indexers
+
+### 1. `purchase-event-indexer.js`
+- **Target Contract**: `PurchaseEngine.sol`
+- **Tracked Events**:
+  - `DatasetPurchased`: Captures `purchaseId`, `datasetId`, `buyer`, `licenseId`, `price`, `platformFee`, `licensorShare`, and `timestamp`.
+  - `RoyaltyTriggered`: Captures secondary royalty payout events.
+- **Actions**:
+  1. Queries historical events starting from `lastProcessedBlock` stored in `IndexerState`.
+  2. Inserts purchase record into `purchases` collection.
+  3. Increments `purchaseCount` on the corresponding dataset in `datasets` collection.
+  4. Records ledger entry in `transactions` collection.
+  5. Updates block cursor in `indexer-state.repository.js`.
+
+### 2. `license-event-indexer.js`
+- **Target Contract**: `LicenseRegistry.sol`
+- **Tracked Events**:
+  - `LicenseCreated`: Captures `licenseId`, `assetId`, `licensor`, `licenseType`, `pricingModel`, `fixedPrice`, `royaltyBps`, `rights`, `restrictions`, `validFrom`, `validUntil`.
+  - `LicenseUpdated`: Updates price, metadata, or rights and increments version.
+  - `LicenseRevoked`: Sets `isRevoked: true` and `isActive: false`.
+- **Actions**:
+  - Upserts license document into MongoDB `licenses` collection.
+
+### 3. `token-event-indexer.js`
+- **Target Contract**: `AIXToken.sol`
+- **Tracked Events**:
+  - `Transfer(from, to, value)`: Tracks token velocity, burns, and large balance transfers.
+  - `Approval(owner, spender, value)`: Tracks spending approvals.
