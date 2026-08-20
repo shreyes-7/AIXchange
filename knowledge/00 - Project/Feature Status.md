@@ -46,6 +46,11 @@ This document provides an itemized matrix of all platform features, their exact 
 | **Purchase Engine** | Backend Purchase Event Indexer | **Implemented** | `server/src/jobs/purchase-event-indexer.js`, `server/src/routes/purchase.route.js` |
 | **Execution Sandbox** | Docker Sandbox Execution Environment | **Implemented** | `docker/sandbox/Dockerfile`, `docker/docker-compose.sandbox.yml`, `python-services/app/core/sandbox.py` |
 | **Execution Sandbox** | JupyterLab Interactive Session Manager | **Implemented** | `docker/sandbox/jupyter_server_config.py`, `python-services/app/core/jupyter.py` |
+| **Execution Sandbox** | Sandbox SDK & Workspace Staging | **Implemented** | `sandbox/src/index.js`, `sandbox/src/client.js`, `sandbox/src/workspace.js` |
+| **Backend Sandbox** | Application Sandbox CRUD & State Machine | **Implemented** | `server/src/models/sandbox.model.js`, `server/src/services/sandbox.service.js`, `server/src/controllers/sandbox.controller.js` |
+| **Backend Sandbox** | Sandbox File Upload & Security Validation | **Implemented** | `server/src/models/sandbox-file.model.js`, `server/src/services/fileUpload.service.js` |
+| **Backend Sandbox** | Training Log Retrieval & Structured Metrics | **Implemented** | `server/src/services/trainingLog.service.js`, `server/src/routes/sandbox.route.js` |
+| **Backend Sandbox** | Live Execution Monitoring & State Sync Job | **Implemented** | `server/src/services/monitoring.service.js`, `server/src/jobs/sandbox-monitor.job.js` |
 | **AI Training** | Structured PyTorch Training Pipeline | **Implemented** | `python-services/app/training/pytorch_trainer.py`, `python-services/app/training/pipeline.py` |
 | **AI Training** | Checkpoint Management & Top-k Rotation | **Implemented** | `python-services/app/training/checkpoints.py` |
 | **Model Export** | Multi-Format Serialization (.safetensors, .pt)| **Implemented** | `python-services/app/models/exporter.py` |

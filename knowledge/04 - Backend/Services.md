@@ -34,3 +34,19 @@ The Service layer in `server/src/services/` encapsulates core application busine
 
 ### 8. `download.service.js`
 - Verifies authorization via `access-control.service.js` before generating signed URLs or streaming protected dataset payloads from IPFS gateways.
+
+### 9. `sandbox.service.js`
+- Coordinates sandbox lifecycle management, verifies dataset entitlement via Phase 6 `accessControl.authorize()`, validates state transitions, stages execution files, dispatches training configurations to the AI substrate, and manages Jupyter sessions.
+
+### 10. `aiExecution.service.js`
+- Dedicated HTTP client integration layer communicating with `python-services` via `SandboxClient` from `@aixchange/sandbox`. Handles request timeouts, structured error mapping (`502` on connection drops, `422` on schema rejections), model validation requests, and Jupyter controls.
+
+### 11. `fileUpload.service.js`
+- Manages Multer upload pipelines for sandbox training scripts, dataset inputs, and configs. Enforces size limits (`SANDBOX_MAX_FILE_BYTES`), MIME filtering, path traversal protection, SHA-256 checksum calculation, metadata persistence in `SandboxFile`, and workspace staging via `stageWorkspaceFiles()`.
+
+### 12. `trainingLog.service.js`
+- Retrieves live execution progress and history from the AI service contract, synthesizes human-readable epoch metric logs, and returns structured log responses.
+
+### 13. `monitoring.service.js`
+- Synchronizes sandbox execution states (`RUNNING` -> `COMPLETED`, `FAILED`, `TIMEOUT`), updates epoch metrics and best validation scores, records model artifact paths and SHA-256 hashes, and handles batch synchronization for active executions.
+

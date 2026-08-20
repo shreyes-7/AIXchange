@@ -6,6 +6,7 @@ import connectDB from "./config/database.js";
 import tokenEventIndexer from "./jobs/token-event-indexer.js";
 import licenseEventIndexer from "./jobs/license-event-indexer.js";
 import purchaseEventIndexer from "./jobs/purchase-event-indexer.js";
+import sandboxMonitorJob from "./jobs/sandbox-monitor.job.js";
 
 const startServer = async () => {
     try {
@@ -20,7 +21,7 @@ const startServer = async () => {
         const indexerTimer = tokenEventIndexer.start();
         const licenseIndexerTimer = licenseEventIndexer.start();
         const purchaseIndexerTimer = purchaseEventIndexer.start();
-
+        const sandboxMonitorTimer = sandboxMonitorJob.start();
 
         const shutdown = (signal) => {
             logger.info(`${signal} received. Shutting down server...`);
@@ -29,6 +30,7 @@ const startServer = async () => {
                 clearInterval(indexerTimer);
                 if (licenseIndexerTimer) clearInterval(licenseIndexerTimer);
                 if (purchaseIndexerTimer) clearInterval(purchaseIndexerTimer);
+                if (sandboxMonitorTimer) clearInterval(sandboxMonitorTimer);
                 logger.info("Server closed successfully.");
                 process.exit(0);
             });

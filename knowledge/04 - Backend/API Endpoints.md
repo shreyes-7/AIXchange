@@ -71,3 +71,23 @@ This document catalogs all verified REST endpoints implemented in the Express ba
 | `POST` | `/api/v1/token/faucet` | Dispense test AIX tokens (Development only) | None | `token.route.js` |
 | `GET` | `/api/v1/health` | Server and database health check | None | `health.routes.js` |
 | `GET` | `/api/v1/dashboard/stats` | User creator/buyer summary metrics | JWT | `dashboard.route.js` |
+
+---
+
+## 7. Sandboxes & AI Execution (`/api/v1/sandboxes`)
+
+| Method | Endpoint | Description | Auth Required | File |
+| :--- | :--- | :--- | :---: | :--- |
+| `POST` | `/api/v1/sandboxes` | Create sandbox instance with Phase 6 entitlement check | JWT | `sandbox.route.js` |
+| `GET` | `/api/v1/sandboxes` | List sandboxes for authenticated user (paginated) | JWT | `sandbox.route.js` |
+| `GET` | `/api/v1/sandboxes/:sandboxId` | Get sandbox metadata and execution state | JWT (Owner) | `sandbox.route.js` |
+| `POST` | `/api/v1/sandboxes/:sandboxId/files` | Upload code, dataset, or config file to sandbox | JWT (Owner) | `sandbox.route.js` |
+| `GET` | `/api/v1/sandboxes/:sandboxId/files` | List uploaded files in sandbox | JWT (Owner) | `sandbox.route.js` |
+| `DELETE` | `/api/v1/sandboxes/:sandboxId/files/:fileId` | Delete uploaded file from sandbox | JWT (Owner) | `sandbox.route.js` |
+| `POST` | `/api/v1/sandboxes/:sandboxId/train` | Stage files and dispatch training to AI substrate | JWT (Owner) | `sandbox.route.js` |
+| `GET` | `/api/v1/sandboxes/:sandboxId/logs` | Retrieve structured logs, epoch metrics, and events | JWT (Owner) | `sandbox.route.js` |
+| `GET` | `/api/v1/sandboxes/:sandboxId/monitor` | Synchronize and retrieve live execution state | JWT (Owner) | `sandbox.route.js` |
+| `POST` | `/api/v1/sandboxes/:sandboxId/jupyter/start` | Start isolated JupyterLab session | JWT (Owner) | `sandbox.route.js` |
+| `POST` | `/api/v1/sandboxes/:sandboxId/jupyter/stop` | Stop active JupyterLab session | JWT (Owner) | `sandbox.route.js` |
+| `GET` | `/api/v1/sandboxes/:sandboxId/jupyter/status` | Get JupyterLab session status and URL | JWT (Owner) | `sandbox.route.js` |
+

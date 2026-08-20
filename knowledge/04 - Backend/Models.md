@@ -127,3 +127,75 @@ const purchaseSchema = new mongoose.Schema({
 
 - **`Transaction`**: Tracks `txHash`, `from`, `to`, `value`, `type` (`TOKEN_TRANSFER`, `DATASET_REGISTRATION`, `LICENSE_CREATION`, `PURCHASE`, `ROYALTY_PAYOUT`), and status (`PENDING`, `CONFIRMED`, `FAILED`).
 - **`IndexerState`**: Tracks `indexerName` (e.g. `purchase-event-indexer`) and `lastProcessedBlock` for reliable crash recovery.
+
+---
+
+## 7. `sandbox.model.js` (`Sandbox`)
+
+```javascript
+const sandboxSchema = new mongoose.Schema({
+  sandboxId: { type: String, required: true, unique: true, index: true },
+  executionId: { type: String, unique: true, sparse: true, index: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  datasetId: { type: Number, required: true, index: true },
+  licenseId: { type: Number, required: true, index: true },
+  datasetRef: { type: mongoose.Schema.Types.ObjectId, ref: "Dataset", default: null },
+  status: {
+    type: String,
+    enum: ["CREATING", "READY", "RUNNING", "COMPLETED", "FAILED", "CANCELLED", "TIMEOUT"],
+    default: "CREATING",
+    required: true,
+    index: true,
+  },
+  trainingConfig: { type: trainingConfigSchema, default: null },
+  files: [{ fileId, originalName, storedName, mimeType, sizeBytes, category, checksum, storagePath }],
+  metrics: { currentEpoch, totalEpochs, bestValLoss, bestValAccuracy, history: [...] },
+  artifact: { artifactPath, metadataPath, summaryPath, artifactHash, modelMetadata, validated },
+  jupyter: { active, port, url, startedAt, stoppedAt },
+  failureReason: { type: String, default: null },
+  startedAt: { type: Date, default: null },
+  completedAt: { type: Date, default: null },
+  lastSyncedAt: { type: Date, default: null },
+}, { timestamps: true });
+```
+
+---
+
+## 8. `sandbox-file.model.js` (`SandboxFile`)
+
+```javascript
+const sandboxFileSchema = new mongoose.Schema({
+  fileId: { type: String, required: true, unique: true, index: true },
+  sandboxId: { type: String, required: true, index: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  originalName: { type: String, required: true },
+  storedName: { type: String, required: true },
+  mimeType: { type: String, default: "application/octet-stream" },
+  sizeBytes: { type: Number, required: true },
+  storagePath: { type: String, required: true },
+  checksum: { type: String, required: true }, // SHA-256
+  category: { type: String, enum: ["code", "data", "config", "notebook", "other"], default: "other" },
+}, { timestamps: true });
+```
+
+---
+
+## 9. `execution-event.model.js` (`ExecutionEvent`)
+
+```javascript
+const executionEventSchema = new mongoose.Schema({
+  eventId: { type: String, required: true, unique: true, index: true },
+  sandboxId: { type: String, required: true, index: true },
+  executionId: { type: String, default: null, index: true },
+  eventType: {
+    type: String,
+    required: true,
+    enum: ["CREATED", "FILE_UPLOADED", "FILE_DELETED", "TRAINING_STARTED", "STATUS_SYNC", "METRICS_UPDATED", "COMPLETED", "FAILED", "CANCELLED", "TIMEOUT", "JUPYTER_STARTED", "JUPYTER_STOPPED"],
+    index: true,
+  },
+  message: { type: String, default: "" },
+  data: { type: mongoose.Schema.Types.Mixed, default: {} },
+  timestamp: { type: Date, default: Date.now, index: true },
+}, { timestamps: true });
+```
+

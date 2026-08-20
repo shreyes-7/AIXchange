@@ -36,9 +36,19 @@ Workspaces are provisioned under `/workspace/<execution_id>/` with strict separa
 
 ---
 
-## 3. Related Links
+## 3. Sandbox SDK & Workspace Staging (`@aixchange/sandbox`)
+
+The Node.js Sandbox SDK mirrors this directory structure and provides path containment validation:
+- `WorkspaceLayout`: Object mapping `input/`, `code/`, `data/`, `output/`, `checkpoints/`, `logs/`.
+- `validateContainedPath(baseDir, targetPath)`: Asserts strict path containment against directory traversal attacks.
+- `stageWorkspaceFiles(executionId, files, baseDir)`: Automatically stages uploaded user training scripts, datasets, and configurations into the appropriate workspace partition before execution start.
+
+---
+
+## 4. Related Links
 
 - [[AI Architecture]]
 - [[Jupyter Environment]]
 - [[Training Engine]]
 - [[AI Execution Contract]]
+

@@ -9,6 +9,7 @@ import dashboardRoutes from "./dashboard.route.js";
 import datasetRoutes from "./dataset.route.js";
 import licenseRoutes from "./license.route.js";
 import purchaseRoutes from "./purchase.route.js";
+import sandboxRoutes from "./sandbox.route.js";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/datasets", datasetRoutes);
 router.use("/licenses", licenseRoutes);
 router.use("/purchases", purchaseRoutes);
+router.use("/sandboxes", sandboxRoutes);
 
 export default router;

@@ -50,3 +50,33 @@ This document lists each MongoDB collection in AIXchange and its active database
   - `from_1`, `to_1`: Address activity indexes.
 - **`indexer_state`**:
   - `indexerName_1`: Unique index on background worker name.
+
+---
+
+## 6. `sandboxes` Collection
+- **Indexes**:
+  - `_id_`: Primary key index.
+  - `sandboxId_1`: Unique UUID index.
+  - `executionId_1`: Sparse unique index matching AI execution identifier.
+  - `userId_1_status_1_createdAt_-1`: Compound index for user sandbox list queries.
+  - `datasetId_1_status_1`: Compound index for dataset-specific executions.
+  - `status_1_lastSyncedAt_1`: Query index for active background monitoring.
+
+---
+
+## 7. `sandboxfiles` Collection
+- **Indexes**:
+  - `_id_`: Primary key index.
+  - `fileId_1`: Unique UUID index.
+  - `sandboxId_1_category_1`: Sandbox-scoped category index.
+  - `userId_1_createdAt_-1`: User audit index.
+
+---
+
+## 8. `executionevents` Collection
+- **Indexes**:
+  - `_id_`: Primary key index.
+  - `eventId_1`: Unique UUID index.
+  - `sandboxId_1_timestamp_1`: Ordered sandbox event stream index.
+  - `executionId_1_timestamp_1`: Execution trace index.
+

@@ -110,7 +110,71 @@ AI Execution Contract API (2 tests)
 
 ---
 
-## 3. Frontend & Backend Testing Status
+## 3. Backend Test Suite (`server/tests/`)
+
+- **Total Passing Tests**: `22 / 22`
+- **Execution Time**: ~2.5–4.2 seconds
+- **Command**: `npm test` (inside `server/`)
+
+```text
+Dataset & Review Validation (3 tests)
+  ├── Dataset creation requires encrypted upload metadata
+  ├── Review ratings are constrained to one through five
+  └── Dataset model defaults protected files and keeps encryption metadata
+
+Licensing System (6 tests)
+  ├── Phase 5 accepts all license templates and exact enum values
+  ├── Phase 5 enforces mutually exclusive fixed and royalty pricing
+  ├── Phase 5 rejects invalid metadata, rights, and validity
+  ├── Templates are read-only deterministic configurations
+  ├── Update input cannot modify immutable license fields
+  └── License model contains blockchain-compatible fields and indexes
+
+Purchase Engine (3 tests)
+  ├── Purchase requests only accept dataset and license identifiers
+  ├── Purchase model has pending/confirmed lifecycle and event deduplication indexes
+  └── PurchaseEngine ABI contains authoritative purchase, access, and event interfaces
+
+Docker Sandbox Backend Orchestration (10 tests)
+  ├── End-to-End Phase 7 Workflow: Access Check -> Create -> Stage Files -> Train -> Complete -> Logs
+  ├── Sandbox model enforces required fields, lifecycle enum, and nested schemas
+  ├── Sandbox model rejects invalid status enum values
+  ├── SandboxFile model validates category enum and required fields
+  ├── ExecutionEvent model validates eventType and records timestamp
+  ├── Joi validators accept valid payloads and reject malformed schemas
+  ├── File upload utilities correctly calculate checksum and infer categories
+  ├── AiExecutionService wraps HTTP errors into ApiError with appropriate status codes
+  ├── MonitoringService synchronizes execution state, updates metrics and artifacts
+  └── TrainingLogService formats structured logs from epoch metrics and events
+```
+
+---
+
+## 4. Sandbox SDK Test Suite (`sandbox/tests/`)
+
+- **Total Passing Tests**: `10 / 10`
+- **Execution Time**: ~0.2 seconds
+- **Command**: `npm test` (inside `sandbox/`)
+
+```text
+Sandbox Client (5 tests)
+  ├── SandboxClient.train sends POST request and returns ExecutionResponse
+  ├── SandboxClient.getStatus retrieves execution status
+  ├── SandboxClient handles AI service errors with AIExecutionError
+  ├── SandboxClient wraps network connection drops in ConnectionError
+  └── SandboxClient Jupyter start, stop, and status lifecycle
+
+Workspace Layout & Staging (5 tests)
+  ├── WorkspaceLayout generates complete directory hierarchy paths
+  ├── sanitizeExecutionId accepts valid IDs and rejects unsafe inputs
+  ├── validateContainedPath strictly blocks path traversal escapes
+  ├── getWorkspaceDestinationForCategory routes to appropriate workspace directories
+  └── stageWorkspaceFiles creates workspace and copies files to correct subdirectories
+```
+
+---
+
+## 5. Frontend Testing Status
 
 - **Frontend**: Manual end-to-end testing via the `/wallet-test` developer dashboard and interactive marketplace pages.
-- **Backend**: Test runner configured in `server/package.json` (`node --test tests/**/*.test.js`).
+

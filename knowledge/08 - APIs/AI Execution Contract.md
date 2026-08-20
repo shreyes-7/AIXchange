@@ -42,9 +42,23 @@ The AI Execution Contract defines the structured API specification governing int
 
 ---
 
-## 2. Related Links
+## 2. Sandbox SDK & Backend Orchestration Mapping
+
+| AI Execution Endpoint | `@aixchange/sandbox` Method | Express Backend Route (`server/`) |
+| :--- | :--- | :--- |
+| `POST /api/v1/execution/train` | `client.train(config)` | `POST /api/v1/sandboxes/:sandboxId/train` |
+| `GET /api/v1/execution/{id}/status` | `client.getStatus(id)` | `GET /api/v1/sandboxes/:sandboxId/monitor`, `GET /api/v1/sandboxes/:sandboxId/logs` |
+| `POST /api/v1/execution/validate-model` | `client.validateModel(art, meta)` | Integrated into training completion and monitoring |
+| `POST /api/v1/execution/jupyter/start` | `client.startJupyter()` | `POST /api/v1/sandboxes/:sandboxId/jupyter/start` |
+| `POST /api/v1/execution/jupyter/stop` | `client.stopJupyter()` | `POST /api/v1/sandboxes/:sandboxId/jupyter/stop` |
+| `GET /api/v1/execution/jupyter/status` | `client.getJupyterStatus()` | `GET /api/v1/sandboxes/:sandboxId/jupyter/status` |
+
+---
+
+## 3. Related Links
 
 - [[Docker Sandbox]]
 - [[Training Engine]]
 - [[Inference Engine]]
 - [[API Overview]]
+

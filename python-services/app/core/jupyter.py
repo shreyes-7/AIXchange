@@ -4,6 +4,7 @@ Manages isolated Jupyter Server / JupyterLab instances bounded to /workspace.
 """
 
 import os
+import sys
 import subprocess
 import logging
 from pathlib import Path
@@ -33,6 +34,8 @@ class JupyterManager:
 
         root_dir = str(workspace_root or settings.base_workspace_dir)
         cmd = [
+            sys.executable,
+            "-m",
             "jupyter",
             "lab",
             f"--ServerApp.ip={settings.host}",

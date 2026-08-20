@@ -45,3 +45,11 @@ This document records architectural decisions that are explicitly documented or 
 - **Decision**: Adopt Hugging Face Safetensors format as the primary model export standard and enforce `weights_only=True` for PyTorch state dicts.
 - **Evidence**: `python-services/app/models/exporter.py`, `python-services/app/inference/loader.py`.
 - **Rationale**: Eliminates arbitrary code execution vulnerabilities inherent to Python's standard `pickle` deserialization during model loading from untrusted marketplace creators.
+
+---
+
+## 7. Decoupled Backend Orchestration and Sandbox SDK Boundary (Phase 7)
+- **Decision**: Express backend (`server/`) serves strictly as the application control and access validation plane, while `@aixchange/sandbox` (`sandbox/`) provides workspace staging and SDK abstractions communicating with `python-services/` via the AI Execution Contract.
+- **Evidence**: `server/src/services/sandbox.service.js`, `sandbox/src/workspace.js`, `sandbox/src/client.js`, `python-services/app/api/execution.py`.
+- **Rationale**: Prevents duplicating heavy Docker, PyTorch, or Jupyter runtimes inside Node.js while guaranteeing strict isolation, path containment, and automated status synchronization.
+

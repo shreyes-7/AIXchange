@@ -30,6 +30,12 @@ const env = {
     BLOCKCHAIN_START_BLOCK: number(process.env.BLOCKCHAIN_START_BLOCK, 0),
     INDEXER_INTERVAL_MS: number(process.env.INDEXER_INTERVAL_MS, 15000),
     INDEXER_BATCH_SIZE: number(process.env.INDEXER_BATCH_SIZE, 1000),
+    AI_SERVICE_URL: process.env.AI_SERVICE_URL || "http://localhost:8000",
+    AI_SERVICE_TIMEOUT_MS: number(process.env.AI_SERVICE_TIMEOUT_MS, 30000),
+    SANDBOX_MONITOR_INTERVAL_MS: number(process.env.SANDBOX_MONITOR_INTERVAL_MS, 10000),
+    SANDBOX_MAX_FILE_BYTES: number(process.env.SANDBOX_MAX_FILE_BYTES, 50 * 1024 * 1024),
+    SANDBOX_UPLOAD_DIR: process.env.SANDBOX_UPLOAD_DIR || "uploads/sandboxes",
+    WORKSPACE_DIR: process.env.WORKSPACE_DIR || "../python-services/workspace",
 };
 
 if (!env.BLOCKCHAIN_RPC_URL || !env.BLOCKCHAIN_CHAIN_ID) {

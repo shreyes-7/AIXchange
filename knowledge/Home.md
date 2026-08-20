@@ -117,8 +117,9 @@ Welcome to the **AIXchange Knowledge Base**, an Obsidian-compatible documentatio
 | Subsystem | Implemented / Verified | Status |
 | :--- | :--- | :---: |
 | **Smart Contracts** | `AIXToken`, `Treasury`, `DatasetRegistry`, `LicenseRegistry`, `PurchaseEngine` (115 unit tests passing) | ✅ **100% Implemented (Phases 3–6)** |
-| **Backend API** | Auth, Wallet Nonces, Dataset CRUD, License Management, Purchase Recording, Event Indexers | ✅ **Implemented (Phases 1–6)** |
-| **Database** | MongoDB Models: User, Session, Dataset, License, Purchase, Transaction, IndexerState | ✅ **Implemented (7 Models)** |
+| **Backend API** | Auth, Wallet, Datasets, Licenses, Purchases, Docker Sandbox Orchestration, Monitoring Jobs (22 unit & E2E tests passing) | ✅ **100% Implemented (Phases 1–7)** |
+| **Database** | MongoDB Models: User, Session, Dataset, License, Purchase, Transaction, IndexerState, Sandbox, SandboxFile, ExecutionEvent | ✅ **Implemented (10 Models)** |
 | **Frontend Client** | React 19 SPA: Marketplace, Dataset Details, Register Wizard, Wallet Testbed, Ethers v6 services | ✅ **Implemented (Phases 2–6)** |
-| **Python AI Services** | Directory scaffold, `requirements.txt` (130 packages) | ⚠️ **Scaffolded / Planned** |
-| **Docker / Infra** | `docker-compose.yml` (0 bytes), Docker directories (`.gitkeep`) | ⚠️ **Placeholder / Incomplete** |
+| **Sandbox SDK** | `@aixchange/sandbox` SDK, WorkspaceLayout, stageWorkspaceFiles, SandboxClient (10 unit tests passing) | ✅ **100% Implemented (Phase 7)** |
+| **Python AI Services** | FastAPI AI Execution Substrate, PyTorchTrainer, ModelExporter (.safetensors), Validator, Decoupled Inference, JupyterLab (22 tests passing) | ✅ **100% Implemented (Phase 7)** |
+| **Docker / Infra** | `docker/sandbox/Dockerfile`, `docker/docker-compose.sandbox.yml`, `jupyter_server_config.py` | ✅ **Implemented (Phase 7)** |

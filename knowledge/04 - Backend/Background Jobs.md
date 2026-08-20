@@ -34,3 +34,15 @@ The AIXchange backend runs persistent background event indexers in `server/src/j
 - **Tracked Events**:
   - `Transfer(from, to, value)`: Tracks token velocity, burns, and large balance transfers.
   - `Approval(owner, spender, value)`: Tracks spending approvals.
+
+---
+
+### 4. `sandbox-monitor.job.js`
+- **Purpose**: Polling and synchronization background worker for active Docker Sandbox training executions.
+- **Interval**: Configurable via `SANDBOX_MONITOR_INTERVAL_MS` (default `10000ms`).
+- **Actions**:
+  1. Scans `sandboxes` collection for active executions (`status: RUNNING` or `CREATING`).
+  2. Queries AI Execution Substrate via `aiExecutionService.getStatus(executionId)`.
+  3. Updates epoch metrics history, validation score, and artifact metadata.
+  4. Automatically detects `COMPLETED`, `FAILED`, and `TIMEOUT` state transitions and updates `completedAt` and `lastSyncedAt`.
+

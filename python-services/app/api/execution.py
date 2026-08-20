@@ -43,40 +43,6 @@ def start_training(config: TrainingConfig):
         raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
 
 
-@router.get(
-    "/{execution_id}/status",
-    response_model=ExecutionResponse,
-    summary="Get Execution Status and Metrics",
-)
-def get_execution_status(execution_id: str):
-    """
-    Retrieves the status, progress metrics, and artifact references for an execution ID.
-    """
-    if execution_id in _active_executions:
-        return _active_executions[execution_id]
-
-    # Check on-disk workspace for completed runs
-    ws = sandbox_manager.get_workspace(execution_id)
-    if ws and ws.output.exists():
-        summary_file = ws.output / "training_summary.json"
-        if summary_file.exists():
-            import json
-            with open(summary_file, "r") as f:
-                data = json.load(f)
-            return ExecutionResponse(
-                execution_id=execution_id,
-                state=ExecutionState(data.get("state", "COMPLETED")),
-                message="Retrieved completed execution from disk",
-                artifacts={
-                    "artifact_path": str(ws.output / "model.safetensors"),
-                    "metadata_path": str(ws.output / "model_metadata.json"),
-                    "summary_path": str(summary_file),
-                },
-            )
-
-    raise HTTPException(status_code=404, detail=f"Execution ID {execution_id} not found")
-
-
 @router.post(
     "/infer",
     response_model=InferenceResponse,
@@ -145,3 +111,37 @@ def get_jupyter_status():
     Returns connection and lifecycle status of the Jupyter instance.
     """
     return jupyter_manager.get_connection_info()
+
+
+@router.get(
+    "/{execution_id}/status",
+    response_model=ExecutionResponse,
+    summary="Get Execution Status and Metrics",
+)
+def get_execution_status(execution_id: str):
+    """
+    Retrieves the status, progress metrics, and artifact references for an execution ID.
+    """
+    if execution_id in _active_executions:
+        return _active_executions[execution_id]
+
+    # Check on-disk workspace for completed runs
+    ws = sandbox_manager.get_workspace(execution_id)
+    if ws and ws.output.exists():
+        summary_file = ws.output / "training_summary.json"
+        if summary_file.exists():
+            import json
+            with open(summary_file, "r") as f:
+                data = json.load(f)
+            return ExecutionResponse(
+                execution_id=execution_id,
+                state=ExecutionState(data.get("state", "COMPLETED")),
+                message="Retrieved completed execution from disk",
+                artifacts={
+                    "artifact_path": str(ws.output / "model.safetensors"),
+                    "metadata_path": str(ws.output / "model_metadata.json"),
+                    "summary_path": str(summary_file),
+                },
+            )
+
+    raise HTTPException(status_code=404, detail=f"Execution ID {execution_id} not found")

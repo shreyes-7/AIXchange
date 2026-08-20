@@ -66,6 +66,10 @@ const options = {
                 name: "Wallet",
                 description: "Wallet linking and verification endpoints",
             },
+            {
+                name: "Sandbox",
+                description: "Docker Sandbox and AI Training Orchestration APIs",
+            },
         ],
     },
 

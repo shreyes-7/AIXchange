@@ -110,9 +110,19 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 ---
 
 ### Phase 7 — Docker Sandbox & AI Execution Substrate
+- **Backend Sandbox Orchestration (`server/`)**:
+  - **Entitlement Access Gate**: Enforces Phase 6 license validity checks (`accessControl.authorize`) before allowing sandbox instance creation.
+  - **Isolated Lifecycle State Machine**: Full `CREATING` -> `READY` -> `RUNNING` -> `COMPLETED`/`FAILED`/`TIMEOUT` lifecycle management with rollback on dispatch failure.
+  - **Secure File Upload & Staging**: Multer upload pipeline with SHA-256 checksum verification, MIME filtering, path traversal protection, and automated staging into workspace layout directories (`code/`, `data/`, `input/`).
+  - **AI Substrate Client Service**: Robust HTTP client wrapper with error translation, timeout controls, and structured error responses.
+  - **Structured Log Synthesis**: Extracts epoch metrics history, validation metrics, and lifecycle events into structured log outputs.
+  - **Live State Synchronization Job**: Background worker (`sandbox-monitor.job.js`) polling active executions and synchronizing final model artifacts and SHA-256 hashes.
+  - **JupyterLab Management**: Programmatic start, stop, and status retrieval with token authentication.
+- **Sandbox SDK (`sandbox/`)**:
+  - ES module package `@aixchange/sandbox` exporting `SandboxClient`, `WorkspaceLayout`, `validateContainedPath`, and `stageWorkspaceFiles`.
 - **AI Infrastructure & Container Sandbox (`docker/sandbox/`, `python-services/`)**:
-  - **Docker Sandbox Image**: Reproducible, multi-stage Linux container running under unprivileged user `aixuser` (UID 1000) with CPU limits, memory limits, and PID limits.
-  - **Interactive JupyterLab**: Hardened JupyterLab server locked to `/workspace` with token authentication and terminal execution controls.
+  - **Docker Sandbox Image**: Reproducible Linux container running under unprivileged user `aixuser` (UID 1000) with CPU limits, memory limits, and PID limits.
+  - **Interactive JupyterLab**: Hardened JupyterLab server locked to `/workspace` with token authentication.
   - **PyTorch Training Runtime**: Structured training loop with `DynamicMLP`, mini-batch loaders, optimizers (Adam, AdamW, SGD, RMSprop), StepLR decay, gradient clipping, live metrics logging, and timeout enforcement.
   - **Atomic Checkpoint Manager**: Atomic `.pt` checkpoint persistence and automatic top-$k$ lowest loss rotation.
   - **Model Exporter & Phase 9 Provenance**: Exports to Hugging Face `.safetensors` and PyTorch `.pt` formats with SHA-256 checksums and `model_metadata.json` capturing execution lineage.
@@ -145,15 +155,20 @@ AIXchange/
 │   │   ├── pages/       # DatasetMarketplace, DatasetDetails, RegisterDataset, WalletTest
 │   │   ├── services/    # Blockchain services (Ethers.js v6) and API clients
 │   │   └── types/       # JSDoc type definitions and constants
+├── sandbox/             # @aixchange/sandbox SDK and workspace staging package
+│   ├── src/             # SandboxClient, WorkspaceLayout, stageWorkspaceFiles, types
+│   └── tests/           # 10 automated unit tests (workspace and client)
 ├── server/              # Node.js 22 + Express 5 backend API services
-│   └── src/
-│       ├── config/      # Database, environment, logger, swagger
-│       ├── controllers/ # Auth, dataset, license, purchase, wallet controllers
-│       ├── jobs/        # Blockchain event indexers (license, purchase, token)
-│       ├── middlewares/ # Auth, error, role, validation middlewares
-│       ├── models/      # User, dataset, license, purchase, session models
-│       ├── routes/      # REST API route handlers
-│       └── services/    # Business logic and blockchain providers
+│   ├── src/
+│   │   ├── config/      # Database, environment, logger, swagger
+│   │   ├── controllers/ # Auth, dataset, license, purchase, sandbox, token, wallet
+│   │   ├── jobs/        # Blockchain event indexers and sandbox-monitor job
+│   │   ├── middlewares/ # Auth, error, role, validation middlewares
+│   │   ├── models/      # Sandbox, SandboxFile, ExecutionEvent, User, Dataset, License, Purchase
+│   │   ├── repositories/# Sandbox, SandboxFile, ExecutionEvent, User, License, Purchase repos
+│   │   ├── routes/      # REST API route handlers (/api/v1/sandboxes, /datasets, etc.)
+│   │   └── services/    # Sandbox, AIExecution, FileUpload, TrainingLog, Monitoring, AccessControl
+│   └── tests/           # 22 automated backend unit and e2e test suites
 ├── python-services/     # Python 3.12 AI Execution Substrate & Sandbox Services
 │   ├── app/
 │   │   ├── api/         # FastAPI execution endpoints (train, infer, validate-model, jupyter)
