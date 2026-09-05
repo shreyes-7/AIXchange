@@ -84,3 +84,21 @@ This document provides technical summaries of each active smart contract in `blo
   - `_modelOwnerIndex`: Mapping `uint256 => uint256` ($O(1)$ swap-and-pop index).
   - `_ownerModelNameToId`: Mapping `address => mapping(string => uint256)` (owner-scoped unique name reservation).
 
+---
+
+## 7. `ProvenanceRegistry.sol` (`contracts/registry/ProvenanceRegistry.sol`)
+
+- **Inheritance**: `IProvenanceRegistry`
+- **Role**: Decentralized, immutable lineage relationship and verification layer linking Dataset -> Execution -> Model -> Model Version.
+- **Key State Variables**:
+  - `datasetRegistry`: Reference to `IDatasetRegistry` (Phase 4).
+  - `modelRegistry`: Reference to `IModelRegistry` (Phase 8).
+  - `_nextProvenanceId`: Auto-incrementing counter for unique provenance record IDs.
+  - `_records`: Mapping `uint256 => Structs.ProvenanceRecord`.
+  - `_provenanceKeys`: Mapping `bytes32 => uint256` (composite key duplicate protection).
+  - `_modelProvenance`: Mapping `uint256 => uint256[]`.
+  - `_modelVersionProvenance`: Mapping `uint256 => mapping(uint256 => uint256[])`.
+  - `_datasetProvenance`: Mapping `uint256 => uint256[]`.
+  - `_executionProvenance`: Mapping `string => uint256[]`.
+
+

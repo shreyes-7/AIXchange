@@ -62,5 +62,8 @@ This document provides an itemized matrix of all platform features, their exact 
 | **Model Marketplace**| Marketplace Frontend UI | **Planned** | Frontend deferred |
 
 | **Model Marketplace**| Model Listing & Trading Frontend | **Planned / Not Found** | No files found in `client/` |
-| **AI Provenance** | Lineage Graph & Model Training Provenance | **Partially Implemented** | Metadata saved in `model_metadata.json` (Phase 7); On-chain DAG is Phase 9 planned |
+| **AI Provenance** | Lineage Relationship Smart Contract | **Implemented** | `blockchain/contracts/registry/ProvenanceRegistry.sol`, `blockchain/test/registry/ProvenanceRegistry.test.js` |
+| **AI Provenance** | Backend Provenance Graph & Timeline APIs | **In Progress** | Owned by Prabhu (deferred for blockchain sub-phase) |
+| **AI Provenance** | Frontend Provenance Visualization | **Planned** | Frontend deferred |
 | **Royalty System** | Secondary Automated Royalty Engine | **Placeholder / Stub** | `blockchain/contracts/royalty/RoyaltyEngine.sol` (empty placeholder) |
+

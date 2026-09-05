@@ -92,3 +92,25 @@ This document catalogs the functions implemented in AIXchange smart contracts.
 | `isModelActive` | `external view` | None | `uint256 modelId` | `bool` | Returns active status of model |
 | `verifyModelHash` | `external view` | None | `uint256 modelId, uint256 versionNumber, string expectedHash` | `bool` | Verifies hash integrity against version |
 
+---
+
+## 7. `ProvenanceRegistry.sol`
+
+| Function | Visibility | Modifiers | Parameters | Returns | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `registerProvenance` | `external` | None | `uint256 datasetId, uint256 modelId, uint256 modelVersion, string executionId, bytes32 metadataHash` | `uint256` | Anchors immutable provenance relationship |
+| `setProvenanceStatus` | `external` | None | `uint256 provenanceId, bool active` | None | Toggles active status (registrant / model owner) |
+| `getProvenance` | `external view` | None | `uint256 provenanceId` | `ProvenanceRecord` | Returns full provenance record struct |
+| `getTotalProvenanceRecords`| `external view` | None | None | `uint256` | Returns total registered provenance count |
+| `getProvenanceByModel` | `external view` | None | `uint256 modelId` | `uint256[]` | Returns provenance IDs for a model |
+| `getProvenanceByModelVersion` | `external view` | None | `uint256 modelId, uint256 modelVersion` | `uint256[]` | Returns provenance IDs for model version |
+| `getProvenanceByDataset` | `external view` | None | `uint256 datasetId` | `uint256[]` | Returns provenance IDs using dataset |
+| `getProvenanceByExecution` | `external view` | None | `string executionId` | `uint256[]` | Returns provenance IDs for execution |
+| `getProvenanceIdByKey` | `external view` | None | `uint256 datasetId, string executionId, uint256 modelId, uint256 modelVersion` | `uint256` | Returns provenance ID for composite key |
+| `verifyProvenance` | `external view` | None | `uint256 provenanceId, uint256 expectedDatasetId, string expectedExecutionId, uint256 expectedModelId, uint256 expectedModelVersion, bytes32 expectedMetadataHash` | `bool` | Verifies full provenance claim |
+| `verifyProvenanceHash` | `external view` | None | `uint256 provenanceId, bytes32 expectedMetadataHash` | `bool` | Verifies metadata hash commitment |
+| `isProvenanceActive` | `external view` | None | `uint256 provenanceId` | `bool` | Returns active status of provenance record |
+| `datasetRegistry` | `external view` | None | None | `IDatasetRegistry` | Returns linked DatasetRegistry address |
+| `modelRegistry` | `external view` | None | None | `IModelRegistry` | Returns linked ModelRegistry address |
+
+
