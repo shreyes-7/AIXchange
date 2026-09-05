@@ -124,4 +124,29 @@ library Structs {
         uint256 timestamp;
         bool active;
     }
+
+    // ==========================================
+    // Phase 8 Model Registry Structs
+    // ==========================================
+
+    /// @dev Structure describing an individual model version record.
+    struct ModelVersion {
+        uint256 versionNumber;
+        string modelHash;      // Cryptographic SHA-256 digest or artifact hash
+        string metadataURI;    // IPFS CID or metadata URI
+        uint256 createdAt;     // Creation timestamp of this version
+        bool active;           // Status of this version
+    }
+
+    /// @dev Structure describing an on-chain AI model registration.
+    struct Model {
+        uint256 modelId;
+        address owner;
+        string name;
+        string metadataURI;
+        uint256 currentVersion;
+        uint256 totalVersions;
+        uint256 createdAt;
+        bool active;
+    }
 }

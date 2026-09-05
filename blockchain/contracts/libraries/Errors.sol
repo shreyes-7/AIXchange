@@ -97,4 +97,29 @@ library Errors {
 
     /// @dev Thrown when an ERC20 payment transfer fails.
     error PaymentTransferFailed();
+
+    // ==========================================
+    // Phase 8 Model Registry Errors
+    // ==========================================
+
+    /// @dev Thrown when a queried model ID does not exist in the registry.
+    error ModelNotFound(uint256 modelId);
+
+    /// @dev Thrown when attempting to register a model that already exists for the owner.
+    error ModelAlreadyExists(string name);
+
+    /// @dev Thrown when an empty model name is provided.
+    error InvalidModelName();
+
+    /// @dev Thrown when an empty or invalid model hash is provided.
+    error InvalidModelHash();
+
+    /// @dev Thrown when an operation is attempted on an inactive model.
+    error ModelInactive(uint256 modelId);
+
+    /// @dev Thrown when a queried version number does not exist for the model.
+    error VersionNotFound(uint256 modelId, uint256 versionNumber);
+
+    /// @dev Thrown when attempting to add a version with a hash identical to the current version.
+    error DuplicateModelVersion(uint256 modelId, uint256 versionNumber);
 }

@@ -123,4 +123,38 @@ library Events {
 
     /// @dev Emitted when the platform fee basis points are modified by admin.
     event PlatformFeeUpdated(uint256 oldFeeBps, uint256 newFeeBps);
+
+    // ==========================================
+    // Phase 8 Model Registry Events
+    // ==========================================
+
+    /// @dev Emitted when a new AI model is registered on-chain.
+    event ModelRegistered(
+        uint256 indexed modelId,
+        address indexed owner,
+        string name,
+        string metadataURI,
+        string modelHash,
+        uint256 initialVersion,
+        uint256 createdAt
+    );
+
+    /// @dev Emitted when a new version is added to an existing model.
+    event ModelVersionAdded(
+        uint256 indexed modelId,
+        uint256 indexed versionNumber,
+        string modelHash,
+        string metadataURI,
+        uint256 createdAt
+    );
+
+    /// @dev Emitted when a model's active status is changed.
+    event ModelStatusChanged(uint256 indexed modelId, bool active);
+
+    /// @dev Emitted when model ownership is transferred.
+    event ModelOwnershipTransferred(
+        uint256 indexed modelId,
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 }
