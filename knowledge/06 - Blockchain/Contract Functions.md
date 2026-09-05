@@ -113,4 +113,29 @@ This document catalogs the functions implemented in AIXchange smart contracts.
 | `datasetRegistry` | `external view` | None | None | `IDatasetRegistry` | Returns linked DatasetRegistry address |
 | `modelRegistry` | `external view` | None | None | `IModelRegistry` | Returns linked ModelRegistry address |
 
+---
+
+## 8. `RoyaltyEngine.sol`
+
+| Function | Visibility | Modifiers | Parameters | Returns | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `distributeRoyalty` | `external` | `nonReentrant, whenNotPaused` | `RoyaltySourceType sourceType, uint256 sourceId, uint256 totalRevenue, RecipientShare[] recipients` | `uint256` | Atomically splits and distributes revenue to recipients and treasury |
+| `distributePurchaseRoyalty`| `external` | `nonReentrant, whenNotPaused` | `uint256 purchaseId, RecipientShare[] recipients` | `uint256` | Distributes licensor revenue from verified Phase 6 purchase |
+| `calculateSplit` | `public pure` | None | `uint256 totalRevenue, uint256 treasuryFeeBps, RecipientShare[] recipients` | `uint256, uint256[], uint256` | Simulates split calculations and integer remainder |
+| `getDistribution` | `external view` | None | `uint256 distributionId` | `DistributionRecord` | Returns full record for distribution |
+| `getDistributionAllocations`| `external view` | None | `uint256 distributionId` | `RecipientAllocation[]` | Returns individual recipient payouts for distribution |
+| `isSourceDistributed` | `external view` | None | `RoyaltySourceType sourceType, uint256 sourceId` | `bool` | Checks if source has already been distributed |
+| `getTotalDistributions` | `external view` | None | None | `uint256` | Returns total completed distributions count |
+| `getTotalDistributedAmount`| `external view` | None | None | `uint256` | Returns cumulative AIX tokens distributed |
+| `getTotalTreasuryDistributed`| `external view` | None | None | `uint256` | Returns cumulative AIX tokens routed to treasury |
+| `getRecipientTotalClaimed`| `external view` | None | `address recipient` | `uint256` | Returns cumulative tokens received by recipient |
+| `getDefaultTreasuryFeeBps`| `external view` | None | None | `uint256` | Returns default treasury fee basis points |
+| `getTreasury` | `external view` | None | None | `address` | Returns Treasury contract address |
+| `getAixToken` | `external view` | None | None | `address` | Returns AIXToken contract address |
+| `getPurchaseEngine` | `external view` | None | None | `address` | Returns PurchaseEngine contract address |
+| `setTreasury` | `external` | `onlyOwner` | `address newTreasury` | None | Updates platform Treasury vault address |
+| `setDefaultTreasuryFeeBps`| `external` | `onlyOwner` | `uint256 newFeeBps` | None | Updates default treasury fee (max 2000 BPS / 20%) |
+| `pause` | `external` | `onlyOwner` | None | None | Pauses distribution operations |
+| `unpause` | `external` | `onlyOwner` | None | None | Resumes distribution operations |
+
 

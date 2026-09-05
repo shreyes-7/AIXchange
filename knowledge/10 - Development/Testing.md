@@ -8,13 +8,23 @@ AIXchange implements comprehensive automated testing across its blockchain smart
 
 ## 1. Blockchain Test Suite (`blockchain/test/`)
 
-- **Total Passing Tests**: `192 / 192`
-- **Execution Time**: ~4–11 seconds
+- **Total Passing Tests**: `228 / 228`
+- **Execution Time**: ~5–8 seconds
 - **Command**: `npx hardhat test` (inside `blockchain/`)
 
 ### Test Coverage Breakdown
 
 ```text
+RoyaltyEngine Smart Contract (36 tests)
+  ├── Deployment & Configuration (Dependency linking, zero address reverts, fee ceiling bounds)
+  ├── Revenue Split & Calculation Preview (Deterministic split preview, multi-party allocations, remainder absorption, allocation bounds)
+  ├── Royalty Distribution Execution (Single & multi-recipient token transfers, balance assertions, event emissions)
+  ├── Distribution Security & Anti-Replay (Duplicate source prevention, direct source nonces, insufficient balance/allowance reverts)
+  ├── PurchaseEngine Integration (Phase 6 purchase-anchored revenue distribution, invalid/already distributed purchase reverts)
+  ├── Treasury Management & Admin Configuration (Owner-only treasury address and fee updates, zero address reverts, fee ceiling enforcement)
+  ├── Emergency Circuit Breaker (Pausable toggle, distribution blocking, unauthorized caller reverts)
+  └── Read Functions & Queries (Distribution record lookups, allocations queries, cumulative recipient totals, nonexistent reverts)
+
 ProvenanceRegistry Smart Contract (36 tests)
   ├── Deployment & Configuration (Dependency linking, zero address reverts)
   ├── Provenance Registration (Sequential IDs, event emissions, duplicate relationship prevention, model owner authorization)

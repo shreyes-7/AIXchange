@@ -101,4 +101,23 @@ This document provides technical summaries of each active smart contract in `blo
   - `_datasetProvenance`: Mapping `uint256 => uint256[]`.
   - `_executionProvenance`: Mapping `string => uint256[]`.
 
+---
+
+## 8. `RoyaltyEngine.sol` (`contracts/royalty/RoyaltyEngine.sol`)
+
+- **Inheritance**: `IRoyaltyEngine`, `Ownable`, `Pausable`, `ReentrancyGuard`
+- **Role**: Decentralized revenue split, multi-party distribution, and treasury fee engine.
+- **Key State Variables**:
+  - `aixToken`: Reference to `IERC20` utility token.
+  - `purchaseEngine`: Reference to `IPurchaseEngine` (Phase 6).
+  - `treasury`: Reference to `ITreasury` vault.
+  - `defaultTreasuryFeeBps`: Current platform treasury fee (default `250` BPS = 2.50%, max `2000` BPS = 20.00%).
+  - `_nextDistributionId`: Auto-incrementing counter for unique distribution IDs.
+  - `_totalDistributedAmount`: Cumulative AIX tokens distributed through engine.
+  - `_totalTreasuryDistributed`: Cumulative AIX tokens routed to platform Treasury.
+  - `_distributions`: Mapping `uint256 => Structs.DistributionRecord`.
+  - `_distributionAllocations`: Mapping `uint256 => Structs.RecipientAllocation[]`.
+  - `_distributedSources`: Mapping `bytes32 => bool` (double-distribution protection).
+  - `_recipientTotalClaimed`: Mapping `address => uint256` (cumulative claimed per recipient).
+
 

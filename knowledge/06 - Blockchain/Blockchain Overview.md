@@ -13,7 +13,7 @@ The AIXchange blockchain layer is developed in **Solidity `^0.8.28`** using the 
 - **Compiler Optimizer**: Enabled (`runs: 200`)
 - **Core Dependencies**: OpenZeppelin Contracts `^5.2.0` (`ERC20`, `Ownable`, `ReentrancyGuard`, `Pausable`, `SafeERC20`)
 - **Deployment Engine**: Hardhat Ignition & Standalone Node scripts
-- **Test Suite**: 192 passing unit tests across 7 suites (100% pass rate)
+- **Test Suite**: 228 passing unit tests across 8 suites (100% pass rate)
 
 ---
 
@@ -31,6 +31,7 @@ The AIXchange blockchain layer is developed in **Solidity `^0.8.28`** using the 
 ├────────────────────────────────┴───────────────────────────────────────┤
 │                          Settlement Engine                             │
 │  • PurchaseEngine.sol (Atomic Payments, Exclusivity, Access Tracking) │
+│  • RoyaltyEngine.sol (Multi-party Revenue Split, Treasury Routing)    │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -47,5 +48,6 @@ The AIXchange blockchain layer is developed in **Solidity `^0.8.28`** using the 
 | **`PurchaseEngine`** | `0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9` |
 | **`ModelRegistry`** | `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707` |
 | **`ProvenanceRegistry`** | `0x0165878A594ca255338adfa4d48449f69242Eb8F` |
+| **`RoyaltyEngine`** | `0xa513E6E4b8f2a923D98304ec87F64353C4D5C853` |
 
 

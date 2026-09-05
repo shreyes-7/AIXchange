@@ -17,13 +17,13 @@ This document tracks the verified implementation status across all development p
 | **Phase 7** | Docker Sandbox & AI Execution Substrate | N/A | ✅ Verified (22 tests) | ⚠️ Pending | ✅ Verified (22 tests) | **100% Completed** |
 | **Phase 8** | Model Marketplace & Registry | ✅ Verified (41 tests) | ⚠️ In Progress (Teammate) | ⚠️ Pending (Deferred) | ⚠️ Ready for Export | **Blockchain Complete** |
 | **Phase 9** | AI Provenance & Lineage Tracking | ✅ Verified (36 tests) | ⚠️ In Progress (Prabhu) | ⚠️ Pending (Deferred) | ✅ Lineage Anchored | **Blockchain Complete** |
-| **Phase 10** | Advanced Secondary Royalty Engine | ⚠️ Stub (`RoyaltyEngine.sol`) | ❌ Not Found | ❌ Not Found | N/A | **Planned** |
+| **Phase 10** | Advanced Secondary Royalty Engine | ✅ Implemented (`RoyaltyEngine.sol`) | ❌ Pending (Prabhu) | ❌ Deferred | 36 / 36 | **Blockchain Complete** |
 
 ---
 
 ## Detailed Component Status
 
-### 1. Smart Contracts (`blockchain/`) — **192 / 192 Tests Passing**
+### 1. Smart Contracts (`blockchain/`) — **228 / 228 Tests Passing**
 - `AIXToken.sol`: **Fully Implemented**. Standard ERC-20 with mint/burn capabilities, 1B initial supply, 18 decimals. Evidence: `contracts/tokens/AIXToken.sol`.
 - `Treasury.sol`: **Fully Implemented**. Platform vault for ETH and ERC20 tokens with owner withdrawal controls. Evidence: `contracts/governance/Treasury.sol`.
 - `DatasetRegistry.sol`: **Fully Implemented**. Auto-incrementing IDs, CID mapping, ownership transfer, metadata updates, status toggling. Evidence: `contracts/registry/DatasetRegistry.sol`.
@@ -31,8 +31,8 @@ This document tracks the verified implementation status across all development p
 - `PurchaseEngine.sol`: **Fully Implemented**. Atomic token transfers, Treasury fee splitting (2.50%), creator payouts, exclusivity locking, access tracking (`hasAccess`). Evidence: `contracts/marketplace/PurchaseEngine.sol`.
 - `ModelRegistry.sol`: **Fully Implemented**. Auto-incrementing model IDs, cryptographic SHA-256 artifact hash anchoring, immutable append-only versioning, owner access control, on-chain hash verification, status toggling, and swap-and-pop ownership transfer. Evidence: `contracts/registry/ModelRegistry.sol`, `interfaces/IModelRegistry.sol`.
 - `ProvenanceRegistry.sol`: **Fully Implemented**. Immutable lineage relationship layer linking Dataset -> Training/Execution -> Model Version, deterministic composite key duplicate prevention, on-chain verification engine (`verifyProvenance`, `verifyProvenanceHash`), and auditable status management. Evidence: `contracts/registry/ProvenanceRegistry.sol`, `interfaces/IProvenanceRegistry.sol`.
+- `RoyaltyEngine.sol`: **Fully Implemented**. Decentralized multi-party revenue splitting, deterministic rounding remainder absorption by platform Treasury, duplicate distribution prevention, Phase 6 purchase verification, and emergency pause controls. Evidence: `contracts/royalty/RoyaltyEngine.sol`, `interfaces/IRoyaltyEngine.sol`.
 - `Marketplace.sol`: **Placeholder / Stub** (88 bytes). Evidence: `contracts/marketplace/Marketplace.sol`.
-- `RoyaltyEngine.sol`: **Placeholder / Stub** (90 bytes). Evidence: `contracts/royalty/RoyaltyEngine.sol`.
 
 ### 2. Backend Server (`server/`) — **22 / 22 Tests Passing**
 - Express 5 setup, Mongoose connection, Morgan logging, Winston logger: **Fully Implemented**. Evidence: `server/src/app.js`, `server/src/server.js`.

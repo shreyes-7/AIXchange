@@ -183,4 +183,50 @@ event ProvenanceStatusChanged(
 );
 ```
 
+---
+
+## 7. Royalty Engine Events
+
+```solidity
+event DistributionCreated(
+    uint256 indexed distributionId,
+    bytes32 indexed sourceKey,
+    uint8 sourceType,
+    uint256 sourceId,
+    address indexed payer,
+    uint256 totalRevenue
+);
+
+event RecipientPaid(
+    uint256 indexed distributionId,
+    address indexed recipient,
+    uint256 amount,
+    uint256 shareBps
+);
+
+event TreasuryPaid(
+    uint256 indexed distributionId,
+    address indexed treasury,
+    uint256 amount,
+    uint256 feeBps
+);
+
+event DistributionCompleted(
+    uint256 indexed distributionId,
+    uint256 totalDistributed,
+    uint256 recipientCount,
+    uint256 timestamp
+);
+
+event TreasuryUpdated(
+    address indexed oldTreasury,
+    address indexed newTreasury
+);
+
+event TreasuryFeeUpdated(
+    uint256 oldFeeBps,
+    uint256 newFeeBps
+);
+```
+
 
