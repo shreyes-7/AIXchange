@@ -153,5 +153,34 @@ describe("Treasury Smart Contract", function () {
         treasury.withdrawToken(tokenAddress, addr1.address, ethers.parseEther("1000"))
       ).to.be.revertedWithCustomError(treasury, "InsufficientBalance");
     });
+
+    it("Should accept token deposits via depositToken and emit TokenDeposited", async function () {
+      const depositAmount = ethers.parseEther("3000");
+      const tokenAddress = await aixToken.getAddress();
+      const treasuryAddress = await treasury.getAddress();
+
+      // Transfer tokens to addr1 and approve treasury
+      await aixToken.transfer(addr1.address, depositAmount);
+      await aixToken.connect(addr1).approve(treasuryAddress, depositAmount);
+
+      await expect(treasury.connect(addr1).depositToken(tokenAddress, depositAmount))
+        .to.emit(treasury, "TokenDeposited")
+        .withArgs(tokenAddress, addr1.address, depositAmount);
+
+      expect(await treasury.getTokenBalance(tokenAddress)).to.equal(depositAmount);
+      expect(await aixToken.balanceOf(addr1.address)).to.equal(0);
+    });
+
+    it("Should revert depositToken for zero address or zero amount", async function () {
+      const tokenAddress = await aixToken.getAddress();
+
+      await expect(
+        treasury.depositToken(ethers.ZeroAddress, ethers.parseEther("10"))
+      ).to.be.revertedWithCustomError(treasury, "ZeroAddress");
+
+      await expect(
+        treasury.depositToken(tokenAddress, 0)
+      ).to.be.revertedWithCustomError(treasury, "ZeroAmount");
+    });
   });
 });

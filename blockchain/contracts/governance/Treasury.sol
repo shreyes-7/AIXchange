@@ -41,6 +41,26 @@ contract Treasury is Ownable, ITreasury {
     }
 
     /**
+     * @notice Deposits ERC20 tokens into the treasury from the caller.
+     * @param token Address of the ERC20 token to deposit.
+     * @param amount Amount of tokens to deposit.
+     */
+    function depositToken(
+        address token,
+        uint256 amount
+    ) external override {
+        if (token == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+        if (amount == 0) {
+            revert Errors.ZeroAmount();
+        }
+
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        emit Events.TokenDeposited(token, msg.sender, amount);
+    }
+
+    /**
      * @notice Withdraws ERC20 tokens held in the treasury to a recipient address.
      * @dev Restricted to contract owner (`onlyOwner`).
      * @param token Address of the ERC20 token to withdraw.
