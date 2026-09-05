@@ -8,13 +8,33 @@ AIXchange implements comprehensive automated testing across its blockchain smart
 
 ## 1. Blockchain Test Suite (`blockchain/test/`)
 
-- **Total Passing Tests**: `228 / 228`
+- **Total Passing Tests**: `245 / 245`
 - **Execution Time**: ~5–8 seconds
 - **Command**: `npx hardhat test` (inside `blockchain/`)
 
 ### Test Coverage Breakdown
 
 ```text
+Blockchain Monitoring & Fraud Detection (Phase 12) (15 tests)
+  ├── EventMonitor (5 tests)
+  │     ├── Normalizes emitted events with standard schema and BigInt stringification
+  │     ├── Collects and deduplicates events across multiple contracts concurrently
+  │     ├── Gracefully handles empty block ranges without false-positive records
+  │     ├── Filters events by contract address and event names accurately
+  │     └── Handles RPC query failures with resilience without crashing process
+  ├── TreasuryMonitor (3 tests)
+  │     ├── Fetches live on-chain balances (native ETH and ERC20 tokens)
+  │     ├── Correctly classifies inflows (ETHDeposited, TokenDeposited) and outflows
+  │     └── Produces verifiable activity summaries with historical tracking
+  └── FraudEngine (7 tests)
+        ├── Permits normal transaction patterns without emitting spurious fraud flags
+        ├── Flags abnormal large token transfers exceeding configurable threshold
+        ├── Flags rapid transaction bursts from single address within narrow window
+        ├── Flags suspicious treasury withdrawals exceeding outflow thresholds
+        ├── Flags unusual royalty payment spikes above baseline thresholds
+        ├── Flags repeated consecutive failed transaction attempts
+        └── Evaluates complex transaction streams and produces explainable evidence
+
 RoyaltyEngine Smart Contract (36 tests)
   ├── Deployment & Configuration (Dependency linking, zero address reverts, fee ceiling bounds)
   ├── Revenue Split & Calculation Preview (Deterministic split preview, multi-party allocations, remainder absorption, allocation bounds)
@@ -42,10 +62,10 @@ ModelRegistry Smart Contract (41 tests)
   ├── Status Management (Active/inactive toggling, caller restriction)
   └── Ownership Transfer (O(1) swap-and-pop index updates, duplicate name collision prevention, zero address revert, self-transfer)
 
-Treasury Smart Contract (12 tests)
+Treasury Smart Contract (14 tests)
   ├── Deployment & Initialization
   ├── ETH Deposits and Withdrawals (Access control, zero address checks, balance bounds)
-  └── ERC20 Token Deposits and Withdrawals (Access control, transfer boundaries)
+  └── ERC20 Token Deposits and Withdrawals (SafeERC20 depositToken, access control, zero address/amount reverts, transfer boundaries)
 
 LicenseRegistry Smart Contract (32 tests)
   ├── Deployment & Contract Linking

@@ -14,7 +14,7 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 ├─────────────────┬─────────────────┬──────────────────┬─────────────────┤
 │  1. Foundation  │ 2. Auth & Web3  │ 3. Token Economy │ 4. Marketplace  │
 │  5. Licensing   │ 6. Purchase Eng │ 7. AI Sandbox    │ 8. Model Reg    │
-│  9. Provenance  │ 10. Royalty Eng │ 11. BC Analytics │                 │
+│  9. Provenance  │ 10. Royalty Eng │ 11. BC Analytics │ 12. Monitoring  │
 └─────────────────┴─────────────────┴──────────────────┴─────────────────┘
 ```
 
@@ -212,6 +212,28 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 
 ---
 
+### Phase 12 — Blockchain Monitoring, Treasury & Fraud Detection (Shreyes — Blockchain Portion Complete)
+- **Scope Boundary**: **Blockchain Treasury enhancements, real-time Event & Treasury monitoring engine, deterministic Fraud Detection engine, and 15 automated test suites implemented and verified**. Backend user/dataset/model moderation and reports belong to Prabhu; strictly zero files modified in `server/`.
+- **Treasury Smart Contract Enhancements (`blockchain/contracts/governance/`, `interfaces/`)**:
+  - `depositToken(address token, uint256 amount)`: Enables direct ERC20 token deposits into the platform Treasury vault utilizing OpenZeppelin `SafeERC20.safeTransferFrom`.
+  - Emits `Events.TokenDeposited(token, msg.sender, amount)` and enforces `Errors.ZeroAddress` and `Errors.ZeroAmount` boundary validations.
+- **Blockchain Monitoring Engine (`blockchain/monitoring/`)**:
+  - `EventMonitor`: Connects to Ethereum JSON-RPC providers, monitors events across all 8 contracts (`AIXToken`, `Treasury`, `DatasetRegistry`, `LicenseRegistry`, `PurchaseEngine`, `ModelRegistry`, `ProvenanceRegistry`, `RoyaltyEngine`), filters by block range or specific contract/events, stringifies `BigInt` values safely, deduplicates multi-contract logs, and handles RPC timeouts with exponential backoff resilience.
+  - `TreasuryMonitor`: Queries live native ETH and ERC20 token balances on-chain, tracks inflows (`ETHDeposited`, `TokenDeposited`, platform fees) and outflows (`ETHWithdrawn`, `TokenWithdrawn`), and aggregates net financial activity summaries.
+  - `config.js`: Centralized, environment-overridable detection thresholds for high-value transfers, rapid transaction bursts, abnormal treasury outflows, and failed transaction probing.
+- **Deterministic Fraud Detection Engine (`blockchain/monitoring/fraudEngine.js`)**:
+  - **Explainable Rule Engine**: Evaluates incoming on-chain transactions and event streams against 5 transparent detection rules:
+    - `RAPID_TRANSACTIONS`: Detects rapid transaction bursts ($\ge 5$ within 60s) from a single address.
+    - `ABNORMAL_LARGE_TRANSFER`: Flags single token transfers exceeding configured threshold (default $50{,}000$ tokens).
+    - `SUSPICIOUS_TREASURY_ACTIVITY`: Flags unauthorized or abnormal Treasury withdrawals ($\ge 100{,}000$ tokens or $\ge 10$ ETH).
+    - `UNUSUAL_ROYALTY_PATTERN`: Flags anomalous royalty distributions exceeding single-transaction caps ($\ge 25{,}000$ tokens).
+    - `REPEATED_FAILED_TRANSACTIONS`: Flags repeated consecutive failed transaction attempts ($\ge 3$) indicating contract probing.
+  - **Flag & Evidence Structure**: Generates standardized, structured flags (`ruleId`, `severity`: `LOW` | `MEDIUM` | `HIGH` | `CRITICAL`, `entity`, `evidence`, `timestamp`, `recommendedAction`) for consumption by backend moderation pipelines.
+  - **Non-Invasive Architecture**: Strictly observation, analysis, and alerting; zero automated account freezing or state alteration on-chain.
+- **Verification**: 245/245 blockchain tests passing (15 dedicated monitoring/fraud tests + 14 Treasury tests), 0 modifications to `server/`.
+
+---
+
 ## 🛠️ Repository Structure
 
 ```text
@@ -228,8 +250,9 @@ AIXchange/
 │   │   ├── tokens/      # AIXToken.sol
 │   │   └── utils/       # AccessControl.sol
 │   ├── ignition/        # Hardhat Ignition deployment modules (Phases 3-10)
+│   ├── monitoring/      # Blockchain EventMonitor, TreasuryMonitor, FraudEngine, and thresholds
 │   ├── scripts/         # Standalone deployment and CLI scripts (deployRoyaltyEngine.js, etc.)
-│   └── test/            # 228 automated unit tests across all contract modules
+│   └── test/            # 245 automated unit tests across contracts, monitoring, and fraud detection
 ├── client/              # React 19 + Vite frontend application
 │   ├── src/
 │   │   ├── components/  # Navbar, IPFS preview modal, UI components
@@ -316,22 +339,26 @@ cd ..
 
 ## 🧪 Comprehensive Automated Test Suites
 
-### 1. Smart Contract Test Suite (228 Tests)
+### 1. Smart Contract & Monitoring Test Suite (245 Tests)
 ```bash
 cd blockchain
 npx hardhat test
 ```
 ```text
+  Blockchain Monitoring & Fraud Detection: 15 passing
+    - EventMonitor: 5 passing
+    - TreasuryMonitor: 3 passing
+    - FraudEngine: 7 passing
   RoyaltyEngine Smart Contract: 36 passing
   ProvenanceRegistry Smart Contract: 36 passing
   ModelRegistry Smart Contract: 41 passing
-  Treasury Smart Contract: 12 passing
+  Treasury Smart Contract: 14 passing
   LicenseRegistry Smart Contract: 32 passing
   PurchaseEngine Smart Contract: 30 passing
   DatasetRegistry Smart Contract: 26 passing
   AIXToken Smart Contract: 15 passing
 
-  228 passing (6s)
+  245 passing (6s)
 ```
 
 ### 2. Backend Server & Blockchain Analytics Test Suite (29 Tests)

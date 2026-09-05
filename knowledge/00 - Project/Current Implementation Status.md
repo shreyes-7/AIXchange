@@ -16,16 +16,18 @@ This document tracks the verified implementation status across all development p
 | **Phase 6** | Purchase Engine & Settlement | ✅ Verified (30 tests) | ✅ Verified | ⚠️ In Progress | N/A | **Completed (Core)** |
 | **Phase 7** | Docker Sandbox & AI Execution Substrate | N/A | ✅ Verified (22 tests) | ⚠️ Pending | ✅ Verified (22 tests) | **100% Completed** |
 | **Phase 8** | Model Marketplace & Registry | ✅ Verified (41 tests) | ⚠️ In Progress (Teammate) | ⚠️ Pending (Deferred) | ⚠️ Ready for Export | **Blockchain Complete** |
-| **Phase 10** | Advanced Secondary Royalty Engine | ✅ Implemented (`RoyaltyEngine.sol`) | ❌ Pending (Prabhu) | ❌ Deferred | 36 / 36 | **Blockchain Complete** |
+| **Phase 9** | AI Provenance & Lineage Tracking | ✅ Verified (36 tests) | ⚠️ In Progress (Prabhu) | ⚠️ Pending (Deferred) | ✅ Lineage Anchored | **Blockchain Complete** |
+| **Phase 10** | Advanced Secondary Royalty Engine | ✅ Implemented (`RoyaltyEngine.sol`, 36 tests) | ❌ Pending (Prabhu) | ❌ Deferred | 36 / 36 | **Blockchain Complete** |
 | **Phase 11** | Platform & Blockchain Analytics | ✅ Verified (Shreyes — Blockchain Analytics) | ⚠️ In Progress (Prabhu — Backend Analytics) | ⚠️ Deferred (Phase 14) | ✅ On-chain Data Ingested | **Blockchain Analytics Complete** |
+| **Phase 12** | Admin Backend & Blockchain Monitoring | ✅ Verified (Shreyes — Treasury, Monitoring, Fraud) | ⚠️ In Progress (Prabhu — Moderation/Reports) | ⚠️ Deferred | N/A | **Blockchain Portion Complete** |
 
 ---
 
 ## Detailed Component Status
 
-### 1. Smart Contracts (`blockchain/`) — **228 / 228 Tests Passing**
+### 1. Smart Contracts & Blockchain Layer (`blockchain/`) — **245 / 245 Tests Passing**
 - `AIXToken.sol`: **Fully Implemented**. Standard ERC-20 with mint/burn capabilities, 1B initial supply, 18 decimals. Evidence: `contracts/tokens/AIXToken.sol`.
-- `Treasury.sol`: **Fully Implemented**. Platform vault for ETH and ERC20 tokens with owner withdrawal controls. Evidence: `contracts/governance/Treasury.sol`.
+- `Treasury.sol`: **Fully Implemented & Enhanced**. Platform vault for ETH and ERC20 tokens with owner withdrawal controls and Phase 12 `depositToken(token, amount)`. Evidence: `contracts/governance/Treasury.sol`.
 - `DatasetRegistry.sol`: **Fully Implemented**. Auto-incrementing IDs, CID mapping, ownership transfer, metadata updates, status toggling. Evidence: `contracts/registry/DatasetRegistry.sol`.
 - `LicenseRegistry.sol`: **Fully Implemented**. Multi-tier licensing (`ACADEMIC`, `COMMERCIAL`, `EXCLUSIVE`, `CUSTOM`), Fixed & Royalty pricing, permissions, validity windows. Evidence: `contracts/licensing/LicenseRegistry.sol`.
 - `PurchaseEngine.sol`: **Fully Implemented**. Atomic token transfers, Treasury fee splitting (2.50%), creator payouts, exclusivity locking, access tracking (`hasAccess`). Evidence: `contracts/marketplace/PurchaseEngine.sol`.
