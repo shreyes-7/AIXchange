@@ -149,4 +149,22 @@ library Structs {
         uint256 createdAt;
         bool active;
     }
+
+    // ==========================================
+    // Phase 9 Provenance Engine Structs
+    // ==========================================
+
+    /// @dev Structure describing an on-chain lineage/provenance link between Dataset, Execution, and Model.
+    struct ProvenanceRecord {
+        uint256 provenanceId;     // Unique sequential identifier
+        uint256 datasetId;        // Reference to DatasetRegistry datasetId
+        uint256 modelId;          // Reference to ModelRegistry modelId
+        uint256 modelVersion;     // Reference to ModelRegistry versionNumber
+        string executionId;       // Off-chain execution/sandbox identifier
+        bytes32 metadataHash;     // Cryptographic commitment/hash of model_metadata.json
+        address registrant;       // Account that anchored the provenance record
+        uint256 createdAt;        // Timestamp when record was committed
+        bool active;              // Status flag (true = active, false = deprecated/revoked)
+    }
 }
+

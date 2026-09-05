@@ -122,4 +122,24 @@ library Errors {
 
     /// @dev Thrown when attempting to add a version with a hash identical to the current version.
     error DuplicateModelVersion(uint256 modelId, uint256 versionNumber);
+
+    // ==========================================
+    // Phase 9 Provenance Engine Errors
+    // ==========================================
+
+    /// @dev Thrown when a queried provenance record ID does not exist.
+    error ProvenanceNotFound(uint256 provenanceId);
+
+    /// @dev Thrown when attempting to register a provenance record that already exists.
+    error ProvenanceAlreadyExists(uint256 provenanceId);
+
+    /// @dev Thrown when an empty execution ID string is provided.
+    error InvalidExecutionId();
+
+    /// @dev Thrown when an empty or zero metadata hash is provided.
+    error InvalidMetadataHash();
+
+    /// @dev Thrown when attempting an operation on an inactive or revoked provenance record.
+    error ProvenanceInactive(uint256 provenanceId);
 }
+

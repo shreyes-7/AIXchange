@@ -157,4 +157,28 @@ library Events {
         address indexed previousOwner,
         address indexed newOwner
     );
+
+    // ==========================================
+    // Phase 9 Provenance Engine Events
+    // ==========================================
+
+    /// @dev Emitted when a new provenance record is registered linking Dataset, Execution, and Model Version.
+    event ProvenanceRegistered(
+        uint256 indexed provenanceId,
+        uint256 indexed datasetId,
+        uint256 indexed modelId,
+        uint256 modelVersion,
+        string executionId,
+        bytes32 metadataHash,
+        address registrant,
+        uint256 createdAt
+    );
+
+    /// @dev Emitted when the status of a provenance record is updated (e.g. active / revoked).
+    event ProvenanceStatusChanged(
+        uint256 indexed provenanceId,
+        bool active,
+        uint256 timestamp
+    );
 }
+
