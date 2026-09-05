@@ -14,7 +14,7 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 ├─────────────────┬─────────────────┬──────────────────┬─────────────────┤
 │  1. Foundation  │ 2. Auth & Web3  │ 3. Token Economy │ 4. Marketplace  │
 │  5. Licensing   │ 6. Purchase Eng │ 7. AI Sandbox    │ 8. Model Reg    │
-│  9. Provenance  │ 10. Royalty Eng │                  │                 │
+│  9. Provenance  │ 10. Royalty Eng │ 11. BC Analytics │                 │
 └─────────────────┴─────────────────┴──────────────────┴─────────────────┘
 ```
 
@@ -187,6 +187,31 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 
 ---
 
+### Phase 11 — Blockchain Analytics (Shreyes — Blockchain Portion Complete)
+- **Scope Boundary**: **Blockchain event indexing, AIX token usage analytics, gas metrics, and analytics REST APIs implemented and verified**. Backend user/download/API-call analytics belong to Prabhu; Frontend dashboard is deferred to Phase 14.
+- **Event Indexer & Checkpointing (`server/src/jobs/`, `server/src/models/`)**:
+  - `BlockchainAnalyticsIndexer`: Background daemon querying logs across all 8 contracts (`AIXToken`, `Treasury`, `DatasetRegistry`, `LicenseRegistry`, `PurchaseEngine`, `ModelRegistry`, `ProvenanceRegistry`, `RoyaltyEngine`).
+  - **Replay Idempotency**: Strict unique compound index `{ transactionHash: 1, logIndex: 1 }` on `BlockchainEvent` and unique `{ transactionHash: 1 }` on `BlockchainGasTx`. Replaying blocks produces zero duplicate records.
+  - **State Checkpointing**: Persistent `IndexerState` tracking `lastIndexedBlock`, `lastSuccessfulSync`, and `status`. Checkpoints only advance upon successful processing.
+  - **Confirmation Depth & Reorg Safety**: Integrates configurable `BLOCKCHAIN_CONFIRMATIONS` depth, retaining block hashes, numbers, log indices, and authoritative block timestamps.
+- **AIX Token Analytics**:
+  - Full 18-decimal precision math using native `BigInt` (zero JavaScript floating-point arithmetic on token base units).
+  - Metrics: Transfer counts, total token volume, unique senders, unique receivers, and total unique participants.
+  - Categorized spending: Identifies dataset purchase expenditure, royalty distribution volume, and platform treasury fee inflows.
+  - Authoritative time-based activity aggregation (`day`, `week`, `month`) using block timestamps.
+- **Gas Usage Analytics**:
+  - Captures `gasUsed`, `effectiveGasPrice`, and computes $\text{gasCost} = \text{gasUsed} \times \text{effectiveGasPrice}$ using integer-safe `BigInt` multiplication.
+  - Aggregations: Total gas used, min/max/average gas used, total gas cost in wei & ETH, average gas cost, and transaction counts.
+  - Contract breakdown & time activity: Grouping by contract address/name and time interval (`day`, `week`, `month`).
+- **Blockchain Analytics REST APIs (`server/src/routes/`)**:
+  - `GET /api/v1/analytics/blockchain/events` (and `/api/analytics/blockchain/events`) — Paginated & filtered event explorer (`page`, `limit`, `contract`, `eventName`, `address`, `fromBlock`, `toBlock`, `startDate`, `endDate`).
+  - `GET /api/v1/analytics/blockchain/token` — AIX volume, participant statistics, categorized spending, and time buckets.
+  - `GET /api/v1/analytics/blockchain/gas` — Gas usage, cost metrics, contract breakdown, and time aggregation.
+  - `GET /api/v1/analytics/blockchain/overview` — High-level network transaction count, event count, token volume, royalty volume, and gas cost.
+- **Verification**: 29/29 server tests passing including 7 dedicated Phase 11 unit & HTTP API integration tests.
+
+---
+
 ## 🛠️ Repository Structure
 
 ```text
@@ -216,15 +241,16 @@ AIXchange/
 │   └── tests/           # 10 automated unit tests (workspace and client)
 ├── server/              # Node.js 22 + Express 5 backend API services
 │   ├── src/
-│   │   ├── config/      # Database, environment, logger, swagger
-│   │   ├── controllers/ # Auth, dataset, license, purchase, sandbox, token, wallet
-│   │   ├── jobs/        # Blockchain event indexers and sandbox-monitor job
+│   │   ├── config/      # Database, environment, contracts metadata, logger, swagger
+│   │   ├── controllers/ # Auth, blockchain analytics, dataset, license, purchase, sandbox, token, wallet
+│   │   ├── jobs/        # Blockchain event indexers (analytics, license, purchase, token) and sandbox-monitor
 │   │   ├── middlewares/ # Auth, error, role, validation middlewares
-│   │   ├── models/      # Sandbox, SandboxFile, ExecutionEvent, User, Dataset, License, Purchase
-│   │   ├── repositories/# Sandbox, SandboxFile, ExecutionEvent, User, License, Purchase repos
-│   │   ├── routes/      # REST API route handlers (/api/v1/sandboxes, /datasets, etc.)
-│   │   └── services/    # Sandbox, AIExecution, FileUpload, TrainingLog, Monitoring, AccessControl
-│   └── tests/           # 22 automated backend unit and e2e test suites
+│   │   ├── models/      # BlockchainEvent, BlockchainGasTx, IndexerState, Sandbox, SandboxFile, User, Dataset, License, Purchase
+│   │   ├── repositories/# Blockchain analytics, Sandbox, SandboxFile, User, License, Purchase repos
+│   │   ├── routes/      # REST API route handlers (/api/v1/analytics/blockchain, /sandboxes, /datasets, etc.)
+│   │   ├── services/    # Blockchain analytics, Sandbox, AIExecution, FileUpload, TrainingLog, Monitoring
+│   │   └── validators/  # Joi schema validators (blockchain-analytics, dataset, license, purchase, sandbox)
+│   └── tests/           # 29 automated backend unit, e2e, and blockchain analytics test suites
 ├── python-services/     # Python 3.12 AI Execution Substrate & Sandbox Services
 │   ├── app/
 │   │   ├── api/         # FastAPI execution endpoints (train, infer, validate-model, jupyter)
@@ -290,12 +316,13 @@ cd ..
 
 ## 🧪 Comprehensive Automated Test Suites
 
-### 1. Smart Contract Test Suite (192 Tests)
+### 1. Smart Contract Test Suite (228 Tests)
 ```bash
 cd blockchain
 npx hardhat test
 ```
 ```text
+  RoyaltyEngine Smart Contract: 36 passing
   ProvenanceRegistry Smart Contract: 36 passing
   ModelRegistry Smart Contract: 41 passing
   Treasury Smart Contract: 12 passing
@@ -304,10 +331,31 @@ npx hardhat test
   DatasetRegistry Smart Contract: 26 passing
   AIXToken Smart Contract: 15 passing
 
-  192 passing (5s)
+  228 passing (6s)
 ```
 
-### 2. Python AI Execution & Sandbox Test Suite (22 Tests)
+### 2. Backend Server & Blockchain Analytics Test Suite (29 Tests)
+```bash
+cd server
+node --test (Get-ChildItem tests/*.test.js).FullName
+```
+```text
+  Blockchain Analytics HTTP API routes, controllers, and error handling: passing
+  Contract configurations contain authoritative event ABIs for all 8 contracts: passing
+  Event argument sanitizer converts BigInt values to precision-safe strings: passing
+  Event normalizer correctly extracts domain fields across different contract events: passing
+  Mongoose models enforce required uniqueness and checkpoint tracking indexes: passing
+  Gas cost arithmetic preserves precision using integer BigInt calculations: passing
+  Blockchain Analytics Joi validators accept valid requests and reject malformed input: passing
+  Dataset & Review Validation (3 tests): passing
+  Licensing System (6 tests): passing
+  Purchase Engine (3 tests): passing
+  Docker Sandbox Backend Orchestration (10 tests): passing
+
+  29 passing (1.7s)
+```
+
+### 3. Python AI Execution & Sandbox Test Suite (22 Tests)
 ```bash
 cd python-services
 .\venv\Scripts\pytest tests/ -v

@@ -28,10 +28,16 @@ The AIXchange blockchain layer is developed in **Solidity `^0.8.28`** using the 
 │  • Treasury.sol (Protocol)     │  • LicenseRegistry.sol (Licensing)    │
 │                                │  • ModelRegistry.sol (Models & Hashes)│
 │                                │  • ProvenanceRegistry.sol (Lineage)   │
-├────────────────────────────────┴───────────────────────────────────────┤
+├────────────────────────────────────────────────────────────────────────┤
 │                          Settlement Engine                             │
 │  • PurchaseEngine.sol (Atomic Payments, Exclusivity, Access Tracking) │
 │  • RoyaltyEngine.sol (Multi-party Revenue Split, Treasury Routing)    │
+├────────────────────────────────────────────────────────────────────────┤
+│                    Blockchain Analytics Engine (Phase 11)              │
+│  • Event Indexer (Idempotent replay, Checkpointing, 24 contract events)│
+│  • Token Analytics (18-decimal precision BigInt transfer & volume math)│
+│  • Gas Analytics (Integer-safe gas cost calculation, contract grouping)│
+│  • Analytics REST APIs (/events, /token, /gas, /overview)              │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 

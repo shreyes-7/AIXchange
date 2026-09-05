@@ -139,11 +139,20 @@ AI Execution Contract API (2 tests)
 
 ## 3. Backend Test Suite (`server/tests/`)
 
-- **Total Passing Tests**: `22 / 22`
-- **Execution Time**: ~2.5–4.2 seconds
-- **Command**: `npm test` (inside `server/`)
+- **Total Passing Tests**: `29 / 29`
+- **Execution Time**: ~1.5–3.0 seconds
+- **Command**: `node --test (Get-ChildItem tests/*.test.js).FullName` (inside `server/`)
 
 ```text
+Blockchain Analytics (Phase 11) (7 tests)
+  ├── Contract configurations contain authoritative event ABIs for all 8 contracts
+  ├── Event argument sanitizer converts BigInt values to precision-safe strings
+  ├── Event normalizer correctly extracts domain fields across different contract events
+  ├── Mongoose models enforce required uniqueness and checkpoint tracking indexes
+  ├── Gas cost arithmetic preserves precision using integer BigInt calculations
+  ├── Blockchain Analytics Joi validators accept valid requests and reject malformed input
+  └── Blockchain Analytics HTTP API routes, controllers, and error handling
+
 Dataset & Review Validation (3 tests)
   ├── Dataset creation requires encrypted upload metadata
   ├── Review ratings are constrained to one through five
