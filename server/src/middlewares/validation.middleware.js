@@ -23,7 +23,16 @@ const validate = (schema, source = "body") => {
             );
         }
 
-        req[source] = value;
+        try {
+            req[source] = value;
+        } catch {
+            Object.defineProperty(req, source, {
+                value,
+                writable: true,
+                enumerable: true,
+                configurable: true,
+            });
+        }
 
         next();
     };

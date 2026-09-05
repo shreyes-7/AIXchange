@@ -176,6 +176,24 @@ export class SandboxClient {
     }
 
     /**
+     * Execute model inference via the AI Execution Substrate.
+     * @param {Object} request - InferenceRequest matching FastAPI schema
+     * @returns {Promise<Object>} InferenceResponse
+     */
+    async infer(request) {
+        if (!request || !request.model_artifact_path) {
+            throw new SandboxError("model_artifact_path is required for inference", 400);
+        }
+        if (request.inputs === undefined || request.inputs === null) {
+            throw new SandboxError("inputs payload is required for inference", 400);
+        }
+        return this._request("/api/v1/execution/infer", {
+            method: "POST",
+            body: request,
+        });
+    }
+
+    /**
      * Start an isolated Jupyter server inside the sandbox.
      * @returns {Promise<{ status: string, port: string, token: string, url: string }>}
      */

@@ -77,6 +77,18 @@ class AiExecutionService {
     }
 
     /**
+     * Run model inference on provided feature inputs.
+     */
+    async runInference(inferenceRequest) {
+        try {
+            logger.info(`Dispatching model inference to AI execution layer: ${inferenceRequest.model_artifact_path}`);
+            return await this.client.infer(inferenceRequest);
+        } catch (error) {
+            throw this._handleError(error, "Run inference");
+        }
+    }
+
+    /**
      * Start JupyterLab session.
      */
     async startJupyter() {
