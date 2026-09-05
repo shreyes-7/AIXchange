@@ -141,5 +141,30 @@ library Errors {
 
     /// @dev Thrown when attempting an operation on an inactive or revoked provenance record.
     error ProvenanceInactive(uint256 provenanceId);
+
+    // ==========================================
+    // Phase 10 Royalty Engine Errors
+    // ==========================================
+
+    /// @dev Thrown when an invalid or zero address recipient is specified.
+    error InvalidRecipient(address recipient);
+
+    /// @dev Thrown when duplicate recipients are passed in the same distribution list.
+    error DuplicateRecipient(address recipient);
+
+    /// @dev Thrown when the sum of recipient shares and treasury fee exceeds 10000 basis points (100%).
+    error InvalidShareAllocation(uint256 totalBps);
+
+    /// @dev Thrown when attempting to distribute revenue for a source that has already been distributed.
+    error DistributionAlreadyCompleted(bytes32 sourceKey);
+
+    /// @dev Thrown when a queried distribution ID does not exist.
+    error DistributionNotFound(uint256 distributionId);
+
+    /// @dev Thrown when recipient list exceeds the maximum allowed count to prevent unbounded gas loops.
+    error ExceedsMaxRecipients(uint256 count, uint256 maxAllowed);
+
+    /// @dev Thrown when setting a default treasury fee exceeding the maximum allowable threshold.
+    error TreasuryFeeExceedsMax(uint256 feeBps, uint256 maxFeeBps);
 }
 

@@ -180,5 +180,55 @@ library Events {
         bool active,
         uint256 timestamp
     );
+
+    // ==========================================
+    // Phase 10 Royalty Engine Events
+    // ==========================================
+
+    /// @dev Emitted when a new royalty distribution operation is created.
+    event DistributionCreated(
+        uint256 indexed distributionId,
+        bytes32 indexed sourceKey,
+        uint8 sourceType,
+        uint256 sourceId,
+        address indexed payer,
+        uint256 totalRevenue
+    );
+
+    /// @dev Emitted when an individual recipient share is paid out during distribution.
+    event RecipientPaid(
+        uint256 indexed distributionId,
+        address indexed recipient,
+        uint256 amount,
+        uint256 shareBps
+    );
+
+    /// @dev Emitted when the platform Treasury share is paid out during distribution.
+    event TreasuryPaid(
+        uint256 indexed distributionId,
+        address indexed treasury,
+        uint256 amount,
+        uint256 feeBps
+    );
+
+    /// @dev Emitted when all recipient and treasury allocations for a distribution are fully executed.
+    event DistributionCompleted(
+        uint256 indexed distributionId,
+        uint256 totalDistributed,
+        uint256 recipientCount,
+        uint256 timestamp
+    );
+
+    /// @dev Emitted when the platform Treasury address is updated by admin.
+    event TreasuryUpdated(
+        address indexed oldTreasury,
+        address indexed newTreasury
+    );
+
+    /// @dev Emitted when the default platform treasury fee basis points are updated by admin.
+    event TreasuryFeeUpdated(
+        uint256 oldFeeBps,
+        uint256 newFeeBps
+    );
 }
 

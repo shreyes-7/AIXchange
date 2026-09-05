@@ -166,5 +166,53 @@ library Structs {
         uint256 createdAt;        // Timestamp when record was committed
         bool active;              // Status flag (true = active, false = deprecated/revoked)
     }
+
+    // ==========================================
+    // Phase 10 Royalty Engine Structs
+    // ==========================================
+
+    /// @dev Supported revenue sources for royalty distributions.
+    enum RoyaltySourceType {
+        PURCHASE,       // Phase 6 dataset or model purchase
+        DERIVATIVE,     // Downstream derivative model/dataset revenue
+        INFERENCE,      // Model inference fee distribution
+        DIRECT          // Direct contributor tip, grant, or settlement
+    }
+
+    /// @dev Lifecycle states for a royalty distribution.
+    enum DistributionStatus {
+        NONE,           // Nonexistent
+        PENDING,        // Allocated but awaiting execution
+        DISTRIBUTED,    // Tokens transferred successfully
+        CANCELLED       // Cancelled prior to token execution
+    }
+
+    /// @dev Input parameter struct specifying an individual recipient share.
+    struct RecipientShare {
+        address recipient;
+        uint256 shareBps;       // Share in basis points (1 - 10000)
+    }
+
+    /// @dev On-chain record describing a completed or pending royalty distribution.
+    struct DistributionRecord {
+        uint256 distributionId;
+        bytes32 sourceKey;          // keccak256(abi.encodePacked(sourceType, sourceId))
+        RoyaltySourceType sourceType;
+        uint256 sourceId;           // Context-dependent identifier (e.g. purchaseId)
+        address payer;              // Payer account that funded the distribution
+        uint256 totalRevenue;       // Total revenue distributed in AIX tokens
+        uint256 treasuryAmount;     // Allocation routed to platform Treasury
+        uint256 recipientCount;     // Number of recipients in this distribution
+        DistributionStatus status;  // Distribution lifecycle state
+        uint256 timestamp;          // Block timestamp when executed
+    }
+
+    /// @dev Record describing the specific payout made to an individual recipient.
+    struct RecipientAllocation {
+        address recipient;
+        uint256 shareBps;
+        uint256 amount;
+        bool paid;
+    }
 }
 
