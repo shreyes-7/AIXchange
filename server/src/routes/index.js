@@ -10,6 +10,7 @@ import datasetRoutes from "./dataset.route.js";
 import licenseRoutes from "./license.route.js";
 import purchaseRoutes from "./purchase.route.js";
 import sandboxRoutes from "./sandbox.route.js";
+import blockchainAnalyticsRoutes from "./blockchain-analytics.routes.js";
 
 const router = Router();
 
@@ -23,5 +24,6 @@ router.use("/datasets", datasetRoutes);
 router.use("/licenses", licenseRoutes);
 router.use("/purchases", purchaseRoutes);
 router.use("/sandboxes", sandboxRoutes);
+router.use("/analytics/blockchain", blockchainAnalyticsRoutes);
 
 export default router;

@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import env from "./config/env.js";
 
 import routes from "./routes/index.js";
+import blockchainAnalyticsRoutes from "./routes/blockchain-analytics.routes.js";
 
 import requestLogger from "./middlewares/requestLogger.middleware.js";
 import notFound from "./middlewares/notFound.middleware.js";
@@ -46,6 +47,7 @@ swaggerDocs(app);
 /* ------------------------- Routes ------------------------- */
 
 app.use(env.API_PREFIX, routes);
+app.use("/api/analytics/blockchain", blockchainAnalyticsRoutes);
 
 /* ------------------------- 404 ------------------------- */
 
