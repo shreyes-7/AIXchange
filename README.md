@@ -14,6 +14,7 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 ├─────────────────┬─────────────────┬──────────────────┬─────────────────┤
 │  1. Foundation  │ 2. Auth & Web3  │ 3. Token Economy │ 4. Marketplace  │
 │  5. Licensing   │ 6. Purchase Eng │ 7. AI Sandbox    │ 8. Model Reg    │
+│  9. Provenance  │ 10. Royalty Eng │                  │                 │
 └─────────────────┴─────────────────┴──────────────────┴─────────────────┘
 ```
 
@@ -165,7 +166,24 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
   - Standalone deployment and verification script (`scripts/deployProvenanceRegistry.js`).
 - **Verification**: 36 dedicated automated tests (`blockchain/test/registry/ProvenanceRegistry.test.js`), 192/192 full blockchain suite passing, deployed and smoke-tested on-chain.
 
+---
 
+### Phase 10 — Blockchain Royalty Engine (Blockchain Portion Complete)
+- **Scope Boundary**: **On-chain revenue splitting, treasury allocation, and token distribution engine implemented and verified**. Backend royalty APIs, history, and reporting belong to Prabhu.
+- **Blockchain Contracts (`blockchain/contracts/royalty/`)**:
+  - `RoyaltyEngine.sol`: Decentralized multi-party revenue settlement engine:
+    - **Multi-Party Revenue Split**: Distributes AIX token revenue across arbitrary recipient lists (up to 50 recipients per batch) using basis points (`BPS_DENOMINATOR = 10000`).
+    - **Platform Treasury Integration**: Deducts platform fee (default 2.50% / 250 BPS, max 20.00% / 2000 BPS) routed directly into the platform `Treasury` vault.
+    - **Strict Accounting Invariant**: Deterministic remainder handling absorbs all integer division rounding dust into the Treasury:
+      $$\sum \text{recipientAmounts} + \text{treasuryAmount} \equiv \text{totalRevenue}$$
+    - **Anti-Replay & Double-Distribution Protection**: Enforces uniqueness per `keccak256(sourceType, sourceId)` to prevent duplicate distributions of the same purchase or revenue source.
+    - **PurchaseEngine Integration**: Dedicated helper `distributePurchaseRoyalty(purchaseId, recipients)` to split licensor earnings from verified Phase 6 dataset purchases.
+    - **Circuit Breaker**: OpenZeppelin `Pausable` emergency stop controls and `ReentrancyGuard` protection on all external token transfers.
+  - `IRoyaltyEngine.sol`: Public interface exposing all read, write, preview (`calculateSplit`), and accounting functions.
+- **Deployment & Tooling**:
+  - Hardhat Ignition modules (`ignition/modules/RoyaltyEngine.js`, `ignition/modules/Phase10.js`).
+  - Standalone deployment and verification script (`scripts/deployRoyaltyEngine.js`).
+- **Verification**: 36 dedicated unit tests (`blockchain/test/royalty/RoyaltyEngine.test.js`), 228/228 full blockchain suite passing, deployed and smoke-tested on-chain.
 
 ---
 
@@ -176,16 +194,17 @@ AIXchange/
 ├── blockchain/          # Solidity smart contracts, Hardhat tests, and deployment scripts
 │   ├── contracts/
 │   │   ├── governance/  # Treasury.sol
-│   │   ├── interfaces/  # IAIXToken, IDatasetRegistry, ILicenseRegistry, IModelRegistry, IProvenanceRegistry, IPurchaseEngine, ITreasury
+│   │   ├── interfaces/  # IAIXToken, IDatasetRegistry, ILicenseRegistry, IModelRegistry, IProvenanceRegistry, IPurchaseEngine, IRoyaltyEngine, ITreasury
 │   │   ├── libraries/   # Structs.sol, Errors.sol, Events.sol
 │   │   ├── licensing/   # LicenseRegistry.sol
 │   │   ├── marketplace/ # PurchaseEngine.sol
 │   │   ├── registry/    # DatasetRegistry.sol, ModelRegistry.sol, ProvenanceRegistry.sol
+│   │   ├── royalty/     # RoyaltyEngine.sol
 │   │   ├── tokens/      # AIXToken.sol
 │   │   └── utils/       # AccessControl.sol
-│   ├── ignition/        # Hardhat Ignition deployment modules (Phases 3-9)
-│   ├── scripts/         # Standalone deployment and CLI scripts (deployProvenanceRegistry.js, etc.)
-│   └── test/            # 192 automated unit tests across all contract modules
+│   ├── ignition/        # Hardhat Ignition deployment modules (Phases 3-10)
+│   ├── scripts/         # Standalone deployment and CLI scripts (deployRoyaltyEngine.js, etc.)
+│   └── test/            # 228 automated unit tests across all contract modules
 ├── client/              # React 19 + Vite frontend application
 │   ├── src/
 │   │   ├── components/  # Navbar, IPFS preview modal, UI components
@@ -331,14 +350,14 @@ npx hardhat node
 ```
 *Starts local Ethereum node at `http://127.0.0.1:8545` with 20 pre-funded test accounts.*
 
-### Terminal 2: Deploy Smart Contracts (Phases 3–9)
+### Terminal 2: Deploy Smart Contracts (Phases 3–10)
 ```bash
 cd blockchain
-# Option A: Deploy full platform stack through Phase 9 via Ignition
-npx hardhat ignition deploy ignition/modules/Phase9.js --network localhost
+# Option A: Deploy full platform stack through Phase 10 via Ignition
+npx hardhat ignition deploy ignition/modules/Phase10.js --network localhost
 
-# Option B: Deploy standalone ProvenanceRegistry with on-chain verification
-npx hardhat run scripts/deployProvenanceRegistry.js --network localhost
+# Option B: Deploy standalone RoyaltyEngine with on-chain smoke verification
+npx hardhat run scripts/deployRoyaltyEngine.js --network localhost
 ```
 
 ### Terminal 3: Start the Backend Server
