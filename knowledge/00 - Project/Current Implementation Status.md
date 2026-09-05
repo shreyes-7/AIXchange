@@ -15,7 +15,7 @@ This document tracks the verified implementation status across all development p
 | **Phase 5** | Licensing System | ✅ Verified (32 tests) | ✅ Verified | ⚠️ In Progress | N/A | **Completed (Core)** |
 | **Phase 6** | Purchase Engine & Settlement | ✅ Verified (30 tests) | ✅ Verified | ⚠️ In Progress | N/A | **Completed (Core)** |
 | **Phase 7** | Docker Sandbox & AI Execution Substrate | N/A | ✅ Verified (22 tests) | ⚠️ Pending | ✅ Verified (22 tests) | **100% Completed** |
-| **Phase 8** | Model Marketplace & Registry | ⚠️ Stub (`ModelRegistry.sol`) | ❌ Not Found | ❌ Not Found | ⚠️ Ready for Export | **Planned** |
+| **Phase 8** | Model Marketplace & Registry | ✅ Verified (41 tests) | ⚠️ In Progress (Teammate) | ⚠️ Pending (Deferred) | ⚠️ Ready for Export | **Blockchain Complete** |
 | **Phase 9** | AI Provenance & Lineage Tracking | ❌ Not Found | ❌ Not Found | ❌ Not Found | ✅ Metadata Saved | **Planned** |
 | **Phase 10** | Advanced Secondary Royalty Engine | ⚠️ Stub (`RoyaltyEngine.sol`) | ❌ Not Found | ❌ Not Found | N/A | **Planned** |
 
@@ -23,13 +23,13 @@ This document tracks the verified implementation status across all development p
 
 ## Detailed Component Status
 
-### 1. Smart Contracts (`blockchain/`) — **115 / 115 Tests Passing**
+### 1. Smart Contracts (`blockchain/`) — **156 / 156 Tests Passing**
 - `AIXToken.sol`: **Fully Implemented**. Standard ERC-20 with mint/burn capabilities, 1B initial supply, 18 decimals. Evidence: `contracts/tokens/AIXToken.sol`.
 - `Treasury.sol`: **Fully Implemented**. Platform vault for ETH and ERC20 tokens with owner withdrawal controls. Evidence: `contracts/governance/Treasury.sol`.
 - `DatasetRegistry.sol`: **Fully Implemented**. Auto-incrementing IDs, CID mapping, ownership transfer, metadata updates, status toggling. Evidence: `contracts/registry/DatasetRegistry.sol`.
 - `LicenseRegistry.sol`: **Fully Implemented**. Multi-tier licensing (`ACADEMIC`, `COMMERCIAL`, `EXCLUSIVE`, `CUSTOM`), Fixed & Royalty pricing, permissions, validity windows. Evidence: `contracts/licensing/LicenseRegistry.sol`.
 - `PurchaseEngine.sol`: **Fully Implemented**. Atomic token transfers, Treasury fee splitting (2.50%), creator payouts, exclusivity locking, access tracking (`hasAccess`). Evidence: `contracts/marketplace/PurchaseEngine.sol`.
-- `ModelRegistry.sol`: **Placeholder / Stub** (88 bytes). Evidence: `contracts/registry/ModelRegistry.sol`.
+- `ModelRegistry.sol`: **Fully Implemented**. Auto-incrementing model IDs, cryptographic SHA-256 artifact hash anchoring, immutable append-only versioning, owner access control, on-chain hash verification, status toggling, and swap-and-pop ownership transfer. Evidence: `contracts/registry/ModelRegistry.sol`, `interfaces/IModelRegistry.sol`.
 - `Marketplace.sol`: **Placeholder / Stub** (88 bytes). Evidence: `contracts/marketplace/Marketplace.sol`.
 - `RoyaltyEngine.sol`: **Placeholder / Stub** (90 bytes). Evidence: `contracts/royalty/RoyaltyEngine.sol`.
 

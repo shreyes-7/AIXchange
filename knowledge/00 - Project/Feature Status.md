@@ -57,7 +57,10 @@ This document provides an itemized matrix of all platform features, their exact 
 | **Model Validation** | SHA-256 Checksum & Smoke Test Forward Pass | **Implemented** | `python-services/app/models/validator.py` |
 | **AI Inference** | Decoupled Safe Deserialization & Prediction Engine | **Implemented** | `python-services/app/inference/loader.py`, `python-services/app/inference/engine.py` |
 | **AI Execution API** | AI Execution Contract REST API | **Implemented** | `python-services/app/api/execution.py`, `python-services/main.py` |
-| **Model Marketplace**| Model Registry Smart Contract | **Placeholder / Stub** | `blockchain/contracts/registry/ModelRegistry.sol` (empty placeholder) |
+| **Model Marketplace**| Model Registry Smart Contract | **Implemented** | `blockchain/contracts/registry/ModelRegistry.sol`, `blockchain/test/registry/ModelRegistry.test.js` |
+| **Model Marketplace**| Backend Model Catalog & APIs | **In Progress** | Owned by teammate (deferred for blockchain sub-phase) |
+| **Model Marketplace**| Marketplace Frontend UI | **Planned** | Frontend deferred |
+
 | **Model Marketplace**| Model Listing & Trading Frontend | **Planned / Not Found** | No files found in `client/` |
 | **AI Provenance** | Lineage Graph & Model Training Provenance | **Partially Implemented** | Metadata saved in `model_metadata.json` (Phase 7); On-chain DAG is Phase 9 planned |
 | **Royalty System** | Secondary Automated Royalty Engine | **Placeholder / Stub** | `blockchain/contracts/royalty/RoyaltyEngine.sol` (empty placeholder) |

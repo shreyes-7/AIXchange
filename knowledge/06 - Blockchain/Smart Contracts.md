@@ -69,3 +69,18 @@ This document provides technical summaries of each active smart contract in `blo
   - `datasetRegistry`: Reference to `IDatasetRegistry`.
   - `licenseRegistry`: Reference to `ILicenseRegistry`.
   - `treasury`: Reference to `ITreasury`.
+
+---
+
+## 6. `ModelRegistry.sol` (`contracts/registry/ModelRegistry.sol`)
+
+- **Inheritance**: `IModelRegistry`
+- **Role**: Authoritative decentralized registry for AI model identity, cryptographic artifact hashes, version history, and ownership.
+- **Key State Variables**:
+  - `_nextModelId`: Auto-incrementing counter for unique model IDs.
+  - `_models`: Mapping `uint256 => Structs.Model`.
+  - `_modelVersions`: Mapping `uint256 => mapping(uint256 => Structs.ModelVersion)` (modelId => versionNumber => version record).
+  - `_ownerModels`: Mapping `address => uint256[]`.
+  - `_modelOwnerIndex`: Mapping `uint256 => uint256` ($O(1)$ swap-and-pop index).
+  - `_ownerModelNameToId`: Mapping `address => mapping(string => uint256)` (owner-scoped unique name reservation).
+

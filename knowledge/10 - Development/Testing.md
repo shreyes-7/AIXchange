@@ -8,13 +8,22 @@ AIXchange implements comprehensive automated testing across its blockchain smart
 
 ## 1. Blockchain Test Suite (`blockchain/test/`)
 
-- **Total Passing Tests**: `115 / 115`
+- **Total Passing Tests**: `156 / 156`
 - **Execution Time**: ~4–11 seconds
 - **Command**: `npx hardhat test` (inside `blockchain/`)
 
 ### Test Coverage Breakdown
 
 ```text
+ModelRegistry Smart Contract (41 tests)
+  ├── Deployment & Initialization (Total models initialization)
+  ├── Model Registration (Incremental IDs, empty validations, duplicate name revert, cross-owner name allowance, event emissions)
+  ├── Model Retrieval (Full struct inspection, owner lookup, owner model array, zero address reverts, nonexistent reverts)
+  ├── Model Versioning (Sequential versions, historical immutability, duplicate hash rejection, inactive model revert, empty validations, unauthorized caller revert)
+  ├── Model Hash Verification (Matching/mismatching SHA-256 hash checks on-chain)
+  ├── Status Management (Active/inactive toggling, caller restriction)
+  └── Ownership Transfer (O(1) swap-and-pop index updates, duplicate name collision prevention, zero address revert, self-transfer)
+
 Treasury Smart Contract (12 tests)
   ├── Deployment & Initialization
   ├── ETH Deposits and Withdrawals (Access control, zero address checks, balance bounds)

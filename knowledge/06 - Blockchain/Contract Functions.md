@@ -70,3 +70,25 @@ This document catalogs the functions implemented in AIXchange smart contracts.
 | `getPurchasesByDataset` | `external view` | None | `uint256 datasetId` | `uint256[]` | Returns dataset purchases |
 | `setPlatformFee` | `external` | `onlyOwner` | `uint256 newFeeBps` | None | Updates platform fee rate |
 | `pause` / `unpause` | `external` | `onlyOwner` | None | None | Circuit breaker controls |
+
+---
+
+## 6. `ModelRegistry.sol`
+
+| Function | Visibility | Modifiers | Parameters | Returns | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `registerModel` | `external` | None | `string name, string metadataURI, string modelHash` | `uint256` | Registers new model and initial v1 record |
+| `addModelVersion` | `external` | None | `uint256 modelId, string metadataURI, string modelHash` | `uint256` | Adds new version to existing model (owner only) |
+| `setModelStatus` | `external` | None | `uint256 modelId, bool active` | None | Toggles model active status (owner only) |
+| `transferModelOwnership` | `external` | None | `uint256 modelId, address newOwner` | None | Transfers model ownership (owner only) |
+| `getModel` | `external view` | None | `uint256 modelId` | `Model` | Returns full model record |
+| `getModelOwner` | `external view` | None | `uint256 modelId` | `address` | Returns current model owner |
+| `getModelsByOwner` | `external view` | None | `address owner` | `uint256[]` | Returns all model IDs owned by address |
+| `getTotalModels` | `external view` | None | None | `uint256` | Returns total registered model count |
+| `getVersion` | `external view` | None | `uint256 modelId, uint256 versionNumber` | `ModelVersion` | Returns specific historical version |
+| `getLatestVersion` | `external view` | None | `uint256 modelId` | `ModelVersion` | Returns current/latest version record |
+| `getVersionCount` | `external view` | None | `uint256 modelId` | `uint256` | Returns total version count for model |
+| `getModelVersions` | `external view` | None | `uint256 modelId` | `ModelVersion[]` | Returns all version records for model |
+| `isModelActive` | `external view` | None | `uint256 modelId` | `bool` | Returns active status of model |
+| `verifyModelHash` | `external view` | None | `uint256 modelId, uint256 versionNumber, string expectedHash` | `bool` | Verifies hash integrity against version |
+

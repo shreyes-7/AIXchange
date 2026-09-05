@@ -124,3 +124,39 @@ event PlatformFeeUpdated(
     uint256 timestamp
 );
 ```
+
+---
+
+## 5. Model Registry Events
+
+```solidity
+event ModelRegistered(
+    uint256 indexed modelId,
+    address indexed owner,
+    string name,
+    string metadataURI,
+    string modelHash,
+    uint256 initialVersion,
+    uint256 createdAt
+);
+
+event ModelVersionAdded(
+    uint256 indexed modelId,
+    uint256 indexed versionNumber,
+    string modelHash,
+    string metadataURI,
+    uint256 createdAt
+);
+
+event ModelStatusChanged(
+    uint256 indexed modelId,
+    bool active
+);
+
+event ModelOwnershipTransferred(
+    uint256 indexed modelId,
+    address indexed previousOwner,
+    address indexed newOwner
+);
+```
+
