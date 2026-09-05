@@ -144,10 +144,27 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
     - **Duplicate Protection**: Per-owner model name uniqueness and duplicate consecutive hash rejection.
     - **Ownership Transfer**: $O(1)$ swap-and-pop index management with name reservation handoff.
   - `IModelRegistry.sol`: Public interface with comprehensive NatSpec, error definitions, and view methods for backend integration.
-- **Deployment & Tooling**:
-  - Hardhat Ignition modules (`ignition/modules/ModelRegistry.js`, `ignition/modules/Phase8.js`).
-  - Standalone deployment script (`scripts/deployModelRegistry.js`) with on-chain smoke test and hash verification.
 - **Verification**: 41 dedicated automated tests (`blockchain/test/registry/ModelRegistry.test.js`), 156/156 full blockchain suite passing, deployed and verified on local Hardhat network.
+
+---
+
+### Phase 9 — Blockchain Provenance Engine (Blockchain Portion Complete)
+- **Scope Boundary**: **Blockchain lineage relationship layer implemented and verified**. Backend graph/timeline APIs belong to Prabhu; Frontend visualization is deferred.
+- **Blockchain Contracts (`blockchain/contracts/registry/`)**:
+  - `ProvenanceRegistry.sol`: Immutable on-chain lineage and verification engine:
+    - **Lineage Linkage**: Binds source dataset (`datasetId` from Phase 4 `DatasetRegistry`), training execution (`executionId` from Phase 7), resulting model (`modelId`), and version (`modelVersion` from Phase 8).
+    - **Zero Data Duplication**: Reuses existing `DatasetRegistry` and `ModelRegistry` as canonical sources of entity identity; stores zero weights or execution logs on-chain.
+    - **Integrity Anchor**: Anchors cryptographic commitments (`metadataHash` = SHA-256 / keccak256 of `model_metadata.json`).
+    - **Composite Key Duplicate Protection**: Enforces uniqueness via $\text{keccak256}(datasetId, executionId, modelId, modelVersion)$ to prevent duplicate lineage claims.
+    - **Multi-Dataset Support**: Models multi-dataset training runs as distinct atomic provenance edges forming a directed acyclic property graph (DAG).
+    - **On-Chain Verification Engine**: `verifyProvenance(...)` enables deterministic, read-only verification of dataset, execution, model, version, and metadata commitments without off-chain trust.
+    - **Authorization & Auditable Revocation**: Registration is restricted to the model creator/owner. Records are immutable append-only with auditable status toggling (`setProvenanceStatus`).
+  - `IProvenanceRegistry.sol`: Public interface exposing all getters, verifications, and event signatures for backend integration.
+- **Deployment & Tooling**:
+  - Hardhat Ignition modules (`ignition/modules/ProvenanceRegistry.js`, `ignition/modules/Phase9.js`).
+  - Standalone deployment and verification script (`scripts/deployProvenanceRegistry.js`).
+- **Verification**: 36 dedicated automated tests (`blockchain/test/registry/ProvenanceRegistry.test.js`), 192/192 full blockchain suite passing, deployed and smoke-tested on-chain.
+
 
 
 ---
@@ -159,16 +176,16 @@ AIXchange/
 ├── blockchain/          # Solidity smart contracts, Hardhat tests, and deployment scripts
 │   ├── contracts/
 │   │   ├── governance/  # Treasury.sol
-│   │   ├── interfaces/  # IAIXToken, IDatasetRegistry, ILicenseRegistry, IModelRegistry, IPurchaseEngine, ITreasury
+│   │   ├── interfaces/  # IAIXToken, IDatasetRegistry, ILicenseRegistry, IModelRegistry, IProvenanceRegistry, IPurchaseEngine, ITreasury
 │   │   ├── libraries/   # Structs.sol, Errors.sol, Events.sol
 │   │   ├── licensing/   # LicenseRegistry.sol
 │   │   ├── marketplace/ # PurchaseEngine.sol
-│   │   ├── registry/    # DatasetRegistry.sol, ModelRegistry.sol
+│   │   ├── registry/    # DatasetRegistry.sol, ModelRegistry.sol, ProvenanceRegistry.sol
 │   │   ├── tokens/      # AIXToken.sol
 │   │   └── utils/       # AccessControl.sol
-│   ├── ignition/        # Hardhat Ignition deployment modules (Phases 3-8)
-│   ├── scripts/         # Standalone deployment and CLI scripts (deployModelRegistry.js, etc.)
-│   └── test/            # 156 automated unit tests across all contract modules
+│   ├── ignition/        # Hardhat Ignition deployment modules (Phases 3-9)
+│   ├── scripts/         # Standalone deployment and CLI scripts (deployProvenanceRegistry.js, etc.)
+│   └── test/            # 192 automated unit tests across all contract modules
 ├── client/              # React 19 + Vite frontend application
 │   ├── src/
 │   │   ├── components/  # Navbar, IPFS preview modal, UI components
@@ -254,12 +271,13 @@ cd ..
 
 ## 🧪 Comprehensive Automated Test Suites
 
-### 1. Smart Contract Test Suite (156 Tests)
+### 1. Smart Contract Test Suite (192 Tests)
 ```bash
 cd blockchain
 npx hardhat test
 ```
 ```text
+  ProvenanceRegistry Smart Contract: 36 passing
   ModelRegistry Smart Contract: 41 passing
   Treasury Smart Contract: 12 passing
   LicenseRegistry Smart Contract: 32 passing
@@ -267,7 +285,7 @@ npx hardhat test
   DatasetRegistry Smart Contract: 26 passing
   AIXToken Smart Contract: 15 passing
 
-  156 passing (4s)
+  192 passing (5s)
 ```
 
 ### 2. Python AI Execution & Sandbox Test Suite (22 Tests)
@@ -313,14 +331,14 @@ npx hardhat node
 ```
 *Starts local Ethereum node at `http://127.0.0.1:8545` with 20 pre-funded test accounts.*
 
-### Terminal 2: Deploy Smart Contracts (Phases 3–8)
+### Terminal 2: Deploy Smart Contracts (Phases 3–9)
 ```bash
 cd blockchain
-# Option A: Deploy full platform stack through Phase 8 via Ignition
-npx hardhat ignition deploy ignition/modules/Phase8.js --network localhost
+# Option A: Deploy full platform stack through Phase 9 via Ignition
+npx hardhat ignition deploy ignition/modules/Phase9.js --network localhost
 
-# Option B: Deploy standalone ModelRegistry with on-chain verification
-npx hardhat run scripts/deployModelRegistry.js --network localhost
+# Option B: Deploy standalone ProvenanceRegistry with on-chain verification
+npx hardhat run scripts/deployProvenanceRegistry.js --network localhost
 ```
 
 ### Terminal 3: Start the Backend Server
