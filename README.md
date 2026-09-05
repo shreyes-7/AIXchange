@@ -15,6 +15,7 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 │  1. Foundation  │ 2. Auth & Web3  │ 3. Token Economy │ 4. Marketplace  │
 │  5. Licensing   │ 6. Purchase Eng │ 7. AI Sandbox    │ 8. Model Reg    │
 │  9. Provenance  │ 10. Royalty Eng │ 11. BC Analytics │ 12. Monitoring  │
+│  13. API Test   │                 │                  │                 │
 └─────────────────┴─────────────────┴──────────────────┴─────────────────┘
 ```
 
@@ -234,6 +235,30 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 
 ---
 
+### Phase 13 — Blockchain API Testing & Gas Benchmarks (Shreyes — Blockchain Portion Complete)
+- **Scope Boundary**: **Blockchain API integration test suites, gas consumption benchmarks, and OpenAPI/Swagger schema validation implemented and verified**. Backend API testing and Postman collections belong to Prabhu; strictly zero files modified in `server/`.
+- **End-to-End Multi-Contract Integration (`blockchain/test/integration/BlockchainApiIntegration.test.js`)**:
+  - Exercises the complete simulated user lifecycle: EIP-191 personal sign wallet authentication, AIX token transfers & allowances, SafeERC20 Treasury deposits/withdrawals, Dataset registration with IPFS CIDs, Fixed/Royalty license issuance, atomic PurchaseEngine purchases with 2.50% fee split, Model registration with SHA-256 digests, append-only Model versioning, Provenance DAG lineage anchoring, and secondary multi-party RoyaltyEngine distributions with remainder absorption.
+  - Validates exact state transitions, balance diffs, event emissions, and receipt statuses (`status: 1`).
+  - Asserts strict compliance with Swagger/OpenAPI schema patterns: transaction hashes (`^0x[a-fA-F0-9]{64}$`), Ethereum addresses (`^0x[a-fA-F0-9]{40}$`), basis points limits ($0 \le \text{bps} \le 10000$), and BigInt precision-safe string representations.
+- **Gas Benchmarking Suite (`blockchain/test/integration/GasBenchmarking.test.js`, `scripts/runGasBenchmark.js`)**:
+  - Benchmarks and bounds gas consumption across all 12 core operations on a local Hardhat node:
+    - `AIXToken.transfer`: **51,610 gas** (limit: < 70,000)
+    - `AIXToken.approve`: **46,394 gas** (limit: < 60,000)
+    - `Treasury.depositToken`: **57,594 gas** (limit: < 100,000)
+    - `Treasury.withdrawToken`: **43,254 gas** (limit: < 70,000)
+    - `DatasetRegistry.registerDataset`: **280,498 gas** (limit: < 350,000)
+    - `DatasetRegistry.updateDataset`: **47,612 gas** (limit: < 90,000)
+    - `LicenseRegistry.createLicense`: **386,427 gas** (limit: < 450,000)
+    - `ModelRegistry.registerModel`: **443,495 gas** (limit: < 500,000)
+    - `ModelRegistry.addModelVersion`: **208,402 gas** (limit: < 250,000)
+    - `PurchaseEngine.purchaseDataset`: **482,112 gas** (limit: < 600,000)
+    - `RoyaltyEngine.distributeRoyalty`: **641,770 gas** (limit: < 750,000)
+    - `ProvenanceRegistry.registerProvenance`: **483,396 gas** (limit: < 600,000)
+- **Documentation & Verification**: Comprehensive master report and backend issue log for Prabhu created at `knowledge/06 - Blockchain/Phase 13 Blockchain API Testing and Gas Benchmarks.md`. Full blockchain test suite expanded to **279/279 passing tests** (100% pass rate).
+
+---
+
 ## 🛠️ Repository Structure
 
 ```text
@@ -251,8 +276,8 @@ AIXchange/
 │   │   └── utils/       # AccessControl.sol
 │   ├── ignition/        # Hardhat Ignition deployment modules (Phases 3-10)
 │   ├── monitoring/      # Blockchain EventMonitor, TreasuryMonitor, FraudEngine, and thresholds
-│   ├── scripts/         # Standalone deployment and CLI scripts (deployRoyaltyEngine.js, etc.)
-│   └── test/            # 245 automated unit tests across contracts, monitoring, and fraud detection
+│   ├── scripts/         # Standalone deployment and benchmarking CLI scripts (runGasBenchmark.js, deployRoyaltyEngine.js, etc.)
+│   └── test/            # 279 automated unit, integration, and gas benchmark tests across all contract modules
 ├── client/              # React 19 + Vite frontend application
 │   ├── src/
 │   │   ├── components/  # Navbar, IPFS preview modal, UI components
@@ -339,12 +364,14 @@ cd ..
 
 ## 🧪 Comprehensive Automated Test Suites
 
-### 1. Smart Contract & Monitoring Test Suite (245 Tests)
+### 1. Smart Contract & Integration Test Suite (279 Tests)
 ```bash
 cd blockchain
 npx hardhat test
 ```
 ```text
+  Blockchain API Integration: 9 passing
+  Gas Benchmarking Suite: 12 passing
   Blockchain Monitoring & Fraud Detection: 15 passing
     - EventMonitor: 5 passing
     - TreasuryMonitor: 3 passing
@@ -357,8 +384,9 @@ npx hardhat test
   PurchaseEngine Smart Contract: 30 passing
   DatasetRegistry Smart Contract: 26 passing
   AIXToken Smart Contract: 15 passing
+  Wallet & Signature Utilities: 13 passing
 
-  245 passing (6s)
+  279 passing (8s)
 ```
 
 ### 2. Backend Server & Blockchain Analytics Test Suite (29 Tests)

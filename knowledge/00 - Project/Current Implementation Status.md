@@ -20,12 +20,13 @@ This document tracks the verified implementation status across all development p
 | **Phase 10** | Advanced Secondary Royalty Engine | ✅ Implemented (`RoyaltyEngine.sol`, 36 tests) | ❌ Pending (Prabhu) | ❌ Deferred | 36 / 36 | **Blockchain Complete** |
 | **Phase 11** | Platform & Blockchain Analytics | ✅ Verified (Shreyes — Blockchain Analytics) | ⚠️ In Progress (Prabhu — Backend Analytics) | ⚠️ Deferred (Phase 14) | ✅ On-chain Data Ingested | **Blockchain Analytics Complete** |
 | **Phase 12** | Admin Backend & Blockchain Monitoring | ✅ Verified (Shreyes — Treasury, Monitoring, Fraud) | ⚠️ In Progress (Prabhu — Moderation/Reports) | ⚠️ Deferred | N/A | **Blockchain Portion Complete** |
+| **Phase 13** | API Testing & Gas Benchmarking | ✅ Verified (Shreyes — Integration & Gas, 34 tests) | ⚠️ In Progress (Prabhu — API Testing) | ⚠️ Deferred (Phase 14) | ✅ Gas Benchmarked | **Blockchain Portion Complete** |
 
 ---
 
 ## Detailed Component Status
 
-### 1. Smart Contracts & Blockchain Layer (`blockchain/`) — **245 / 245 Tests Passing**
+### 1. Smart Contracts & Blockchain Layer (`blockchain/`) — **279 / 279 Tests Passing**
 - `AIXToken.sol`: **Fully Implemented**. Standard ERC-20 with mint/burn capabilities, 1B initial supply, 18 decimals. Evidence: `contracts/tokens/AIXToken.sol`.
 - `Treasury.sol`: **Fully Implemented & Enhanced**. Platform vault for ETH and ERC20 tokens with owner withdrawal controls and Phase 12 `depositToken(token, amount)`. Evidence: `contracts/governance/Treasury.sol`.
 - `DatasetRegistry.sol`: **Fully Implemented**. Auto-incrementing IDs, CID mapping, ownership transfer, metadata updates, status toggling. Evidence: `contracts/registry/DatasetRegistry.sol`.

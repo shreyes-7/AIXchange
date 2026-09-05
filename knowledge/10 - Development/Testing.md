@@ -8,13 +8,41 @@ AIXchange implements comprehensive automated testing across its blockchain smart
 
 ## 1. Blockchain Test Suite (`blockchain/test/`)
 
-- **Total Passing Tests**: `245 / 245`
+- **Total Passing Tests**: `279 / 279`
 - **Execution Time**: ~5–8 seconds
 - **Command**: `npx hardhat test` (inside `blockchain/`)
 
 ### Test Coverage Breakdown
 
 ```text
+Blockchain API Integration & Gas Benchmarking (Phase 13) (21 tests + wallet suites)
+  ├── BlockchainApiIntegration (9 tests)
+  │     ├── Cryptographic EIP-191 personal sign verification matching wallet address
+  │     ├── Rejection of altered message signatures
+  │     ├── Token transfer with exact balance diff assertion and Transfer event emission
+  │     ├── Revert on insufficient balance and insufficient allowance
+  │     ├── SafeERC20 Treasury deposits, balance diff, and TokenDeposited event emission
+  │     ├── Owner-only Treasury token withdrawals and unauthorized caller revert
+  │     ├── Dataset and model registrations, SHA-256 hash anchoring, and versioning
+  │     ├── Atomic PurchaseEngine purchase with 2.5% platform fee split to Treasury
+  │     ├── RoyaltyEngine multi-party distribution with remainder absorption
+  │     ├── Provenance DAG registration and deterministic on-chain verification
+  │     ├── Cross-contract log collection, normalization, and deduplication
+  │     └── Swagger / OpenAPI schema conformance (txHash, addresses, BigInt strings)
+  └── GasBenchmarking (12 tests)
+        ├── AIXToken transfer (< 70k gas: 51,610)
+        ├── AIXToken approve (< 60k gas: 46,394)
+        ├── Treasury depositToken (< 100k gas: 57,594)
+        ├── Treasury withdrawToken (< 70k gas: 43,254)
+        ├── DatasetRegistry registerDataset (< 350k gas: 280,498)
+        ├── DatasetRegistry updateDataset (< 90k gas: 47,612)
+        ├── LicenseRegistry createLicense (< 450k gas: 386,427)
+        ├── ModelRegistry registerModel (< 500k gas: 443,495)
+        ├── ModelRegistry addModelVersion (< 250k gas: 208,402)
+        ├── PurchaseEngine purchaseDataset (< 600k gas: 482,112)
+        ├── RoyaltyEngine distributeRoyalty (< 750k gas: 641,770)
+        └── ProvenanceRegistry registerProvenance (< 600k gas: 483,396)
+
 Blockchain Monitoring & Fraud Detection (Phase 12) (15 tests)
   ├── EventMonitor (5 tests)
   │     ├── Normalizes emitted events with standard schema and BigInt stringification
