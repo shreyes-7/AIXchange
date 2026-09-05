@@ -13,7 +13,7 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 │                          AIXchange Platform                            │
 ├─────────────────┬─────────────────┬──────────────────┬─────────────────┤
 │  1. Foundation  │ 2. Auth & Web3  │ 3. Token Economy │ 4. Marketplace  │
-│  5. Licensing   │ 6. Purchase Eng │ 7. AI Sandbox    │ 8. Models (WIP) │
+│  5. Licensing   │ 6. Purchase Eng │ 7. AI Sandbox    │ 8. Model Reg    │
 └─────────────────┴─────────────────┴──────────────────┴─────────────────┘
 ```
 
@@ -132,6 +132,26 @@ AIXchange is engineered as a modular multi-service platform. Below is the comple
 
 ---
 
+### Phase 8 — Blockchain Model Registry (Blockchain Portion Complete)
+- **Scope Boundary**: **Blockchain layer implemented and verified**. Backend CRUD/APIs are owned by a teammate; Frontend marketplace UI is deferred.
+- **Blockchain Contracts (`blockchain/contracts/registry/`)**:
+  - `ModelRegistry.sol`: Decentralized registry anchoring trained machine learning models:
+    - **Model Identity**: Sequential on-chain identifier generation (`modelId = 1, 2, ...`).
+    - **Model Ownership**: On-chain cryptographic ownership and access control for version additions and status toggles.
+    - **Cryptographic Model Hash**: Anchors SHA-256 artifact digests (generated during Phase 7 training/export) on-chain. Model weights (`.pt`, `.safetensors`) remain strictly off-chain.
+    - **Model Versioning**: Immutable append-only version history (`ModelVersion` v1, v2, v3...) tracking metadata URIs and artifact hashes.
+    - **On-Chain Hash Verification**: `verifyModelHash(modelId, versionNumber, expectedHash)` executes on-chain equality checks against stored digests.
+    - **Duplicate Protection**: Per-owner model name uniqueness and duplicate consecutive hash rejection.
+    - **Ownership Transfer**: $O(1)$ swap-and-pop index management with name reservation handoff.
+  - `IModelRegistry.sol`: Public interface with comprehensive NatSpec, error definitions, and view methods for backend integration.
+- **Deployment & Tooling**:
+  - Hardhat Ignition modules (`ignition/modules/ModelRegistry.js`, `ignition/modules/Phase8.js`).
+  - Standalone deployment script (`scripts/deployModelRegistry.js`) with on-chain smoke test and hash verification.
+- **Verification**: 41 dedicated automated tests (`blockchain/test/registry/ModelRegistry.test.js`), 156/156 full blockchain suite passing, deployed and verified on local Hardhat network.
+
+
+---
+
 ## 🛠️ Repository Structure
 
 ```text
@@ -139,16 +159,16 @@ AIXchange/
 ├── blockchain/          # Solidity smart contracts, Hardhat tests, and deployment scripts
 │   ├── contracts/
 │   │   ├── governance/  # Treasury.sol
-│   │   ├── interfaces/  # IAIXToken, IDatasetRegistry, ILicenseRegistry, IPurchaseEngine, ITreasury
+│   │   ├── interfaces/  # IAIXToken, IDatasetRegistry, ILicenseRegistry, IModelRegistry, IPurchaseEngine, ITreasury
 │   │   ├── libraries/   # Structs.sol, Errors.sol, Events.sol
 │   │   ├── licensing/   # LicenseRegistry.sol
 │   │   ├── marketplace/ # PurchaseEngine.sol
 │   │   ├── registry/    # DatasetRegistry.sol, ModelRegistry.sol
 │   │   ├── tokens/      # AIXToken.sol
 │   │   └── utils/       # AccessControl.sol
-│   ├── ignition/        # Hardhat Ignition deployment modules (Phases 3-6)
-│   ├── scripts/         # Standalone deployment and CLI scripts
-│   └── test/            # 115 automated unit tests across all contract modules
+│   ├── ignition/        # Hardhat Ignition deployment modules (Phases 3-8)
+│   ├── scripts/         # Standalone deployment and CLI scripts (deployModelRegistry.js, etc.)
+│   └── test/            # 156 automated unit tests across all contract modules
 ├── client/              # React 19 + Vite frontend application
 │   ├── src/
 │   │   ├── components/  # Navbar, IPFS preview modal, UI components
@@ -234,19 +254,20 @@ cd ..
 
 ## 🧪 Comprehensive Automated Test Suites
 
-### 1. Smart Contract Test Suite (115 Tests)
+### 1. Smart Contract Test Suite (156 Tests)
 ```bash
 cd blockchain
 npx hardhat test
 ```
 ```text
+  ModelRegistry Smart Contract: 41 passing
   Treasury Smart Contract: 12 passing
   LicenseRegistry Smart Contract: 32 passing
   PurchaseEngine Smart Contract: 30 passing
   DatasetRegistry Smart Contract: 26 passing
   AIXToken Smart Contract: 15 passing
 
-  115 passing (4s)
+  156 passing (4s)
 ```
 
 ### 2. Python AI Execution & Sandbox Test Suite (22 Tests)
@@ -292,10 +313,14 @@ npx hardhat node
 ```
 *Starts local Ethereum node at `http://127.0.0.1:8545` with 20 pre-funded test accounts.*
 
-### Terminal 2: Deploy Smart Contracts (Phases 3–6)
+### Terminal 2: Deploy Smart Contracts (Phases 3–8)
 ```bash
 cd blockchain
-npx hardhat ignition deploy ignition/modules/Phase6.js --network localhost
+# Option A: Deploy full platform stack through Phase 8 via Ignition
+npx hardhat ignition deploy ignition/modules/Phase8.js --network localhost
+
+# Option B: Deploy standalone ModelRegistry with on-chain verification
+npx hardhat run scripts/deployModelRegistry.js --network localhost
 ```
 
 ### Terminal 3: Start the Backend Server
