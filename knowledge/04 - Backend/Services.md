@@ -58,3 +58,8 @@ The Service layer in `server/src/services/` encapsulates core application busine
 - `provenance.service.js`: Orchestrates dataset-to-model lineage tracking, DAG lineage graph construction (nodes for datasets, executions, models, and model versions; edges for `USED_IN`, `PRODUCED`, `HAS_VERSION`), chronological audit trail timeline synthesis, cryptographic verification against smart contracts, and graceful optional enrichment.
 - `provenanceBlockchain.service.js`: Direct Ethers.js v6 interface with `ProvenanceRegistry.sol`. Handles transaction preparation (`prepareRegister`, `prepareSetStatus`), receipt confirmation, canonical timestamp normalization (`uint256 createdAt` to Date and timestamp), and on-chain verification queries (`verifyProvenance`, `verifyProvenanceHash`, `isProvenanceActive`).
 
+### 16. `royalty.service.js` & `royaltyBlockchain.service.js` (Phase 10)
+- `royalty.service.js`: Domain service coordinating off-chain distribution queries, simulation preview (`calculateSplit`), summary aggregation, multi-dimensional reporting, and authoritative on-chain reconciliation (`reconcileDistribution()`). Converts token amounts strictly using BigInt-safe string formatting and human-readable decimal math at the presentation layer only.
+- `royaltyBlockchain.service.js`: Direct Ethers.js v6 interface with `RoyaltyEngine.sol`. Handles zero-custody transaction preparation (`prepareDistributeRoyalty`), receipt confirmation, event decoding, and on-chain contract queries (`getDistribution`, `getDistributionAllocations`, `isSourceDistributed`, `getRecipientTotalClaimed`, `calculateSplit`).
+
+

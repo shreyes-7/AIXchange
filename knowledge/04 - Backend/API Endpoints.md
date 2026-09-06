@@ -127,3 +127,23 @@ This document catalogs all verified REST endpoints implemented in the Express ba
 | `POST` | `/api/v1/sandboxes/:sandboxId/jupyter/stop` | Stop active JupyterLab session | JWT (Owner) | `sandbox.route.js` |
 | `GET` | `/api/v1/sandboxes/:sandboxId/jupyter/status` | Get JupyterLab session status and URL | JWT (Owner) | `sandbox.route.js` |
 
+---
+
+## 10. Royalty Engine (`/api/v1/royalties`)
+
+| Method | Endpoint | Description | Auth Required | File |
+| :--- | :--- | :--- | :---: | :--- |
+| `GET` | `/api/v1/royalties/distributions/:distributionId` | Retrieve single distribution record from MongoDB | None | `royalty.route.js` |
+| `GET` | `/api/v1/royalties/distributions/:distributionId/allocations` | Retrieve recipient allocation breakdown | None | `royalty.route.js` |
+| `GET` | `/api/v1/royalties/recipients/:address` | Total claimed earnings and payout records | None | `royalty.route.js` |
+| `GET` | `/api/v1/royalties/source/:sourceType/:sourceId` | Check if dataset or model has distributed royalties | None | `royalty.route.js` |
+| `GET` | `/api/v1/royalties/history` | Paginated distribution history with filters | None | `royalty.route.js` |
+| `GET` | `/api/v1/royalties/summary` | Platform-wide financial metrics and recipient stats | None | `royalty.route.js` |
+| `GET` | `/api/v1/royalties/reports` | Multi-attribute aggregation by recipient/source | None | `royalty.route.js` |
+| `POST` | `/api/v1/royalties/calculate-split` | Preview revenue split calculations without on-chain state change | None | `royalty.route.js` |
+| `POST` | `/api/v1/royalties/prepare` | Zero-custody calldata encoding for `distributeRoyalty` | JWT | `royalty.route.js` |
+| `POST` | `/api/v1/royalties/sync` | Synchronize and verify on-chain transaction receipt | JWT | `royalty.route.js` |
+| `POST` | `/api/v1/royalties/reconcile` | Authoritative batch reconciliation against smart contract | JWT | `royalty.route.js` |
+| `POST` | `/api/v1/royalties/reconcile/:distributionId` | Reconcile specific distribution against on-chain contract | JWT | `royalty.route.js` |
+
+

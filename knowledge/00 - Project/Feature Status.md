@@ -58,13 +58,11 @@ This document provides an itemized matrix of all platform features, their exact 
 | **AI Inference** | Decoupled Safe Deserialization & Prediction Engine | **Implemented** | `python-services/app/inference/loader.py`, `python-services/app/inference/engine.py` |
 | **AI Execution API** | AI Execution Contract REST API | **Implemented** | `python-services/app/api/execution.py`, `python-services/main.py` |
 | **Model Marketplace**| Model Registry Smart Contract | **Implemented** | `blockchain/contracts/registry/ModelRegistry.sol`, `blockchain/test/registry/ModelRegistry.test.js` |
-| **Model Marketplace**| Backend Model Catalog & APIs | **In Progress** | Owned by teammate (deferred for blockchain sub-phase) |
+| **Model Marketplace**| Backend Model Catalog & APIs (Phase 8) | **Implemented** | `server/src/controllers/model.controller.js`, `server/src/routes/model.route.js`, `server/src/jobs/model-event-indexer.js` |
 | **Model Marketplace**| Marketplace Frontend UI | **Planned** | Frontend deferred |
-
-| **Model Marketplace**| Model Listing & Trading Frontend | **Planned / Not Found** | No files found in `client/` |
 | **AI Provenance** | Lineage Relationship Smart Contract | **Implemented** | `blockchain/contracts/registry/ProvenanceRegistry.sol`, `blockchain/test/registry/ProvenanceRegistry.test.js` |
-| **AI Provenance** | Backend Provenance Graph & Timeline APIs | **In Progress** | Owned by Prabhu (deferred for blockchain sub-phase) |
+| **AI Provenance** | Backend Provenance Graph & Timeline APIs (Phase 9) | **Implemented** | `server/src/controllers/provenance.controller.js`, `server/src/routes/provenance.route.js`, `server/src/jobs/provenance-event-indexer.js` |
 | **AI Provenance** | Frontend Provenance Visualization | **Planned** | Frontend deferred |
 | **Royalty System** | Multi-Party Royalty Split & Settlement Smart Contract | **Implemented** | `blockchain/contracts/royalty/RoyaltyEngine.sol`, `blockchain/test/royalty/RoyaltyEngine.test.js` |
-| **Royalty System** | Backend Royalty History & Reporting APIs | **In Progress** | Owned by Prabhu (deferred for blockchain sub-phase) |
-
+| **Royalty System** | Backend Royalty History, Preparation & Reconcile (Phase 10) | **Implemented** | `server/src/controllers/royalty.controller.js`, `server/src/routes/royalty.route.js`, `server/src/jobs/royalty-event-indexer.js` |
+| **Blockchain Analytics** | Event Ingestion, Gas Tracking & REST APIs (Phase 11) | **Implemented** | `server/src/controllers/blockchain-analytics.controller.js`, `server/src/jobs/blockchain-analytics.indexer.js` |

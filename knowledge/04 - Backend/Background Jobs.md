@@ -53,9 +53,19 @@ The AIXchange backend runs persistent background event indexers in `server/src/j
 - **Target Contracts**: Unified polling for `AIXToken`, `Treasury`, `DatasetRegistry`, `LicenseRegistry`, `PurchaseEngine`, `ModelRegistry`, `ProvenanceRegistry`, `RoyaltyEngine`.
 - **Tracked Data**: Captures cross-contract normalized event logs, gas usage, transaction fees, and ETH values into `blockchain_events` and `blockchain_gas_txes`.
 
+### 7. `royalty-event-indexer.js` (Phase 10)
+- **Target Contract**: `RoyaltyEngine.sol`
+- **Tracked Events**:
+  - `DistributionCreated`: Idempotently creates `RoyaltyDistribution` document in MongoDB with exact string revenue and caller metadata.
+  - `RecipientPaid`: Appends recipient allocation to embedded array with string token amount and basis point shares.
+  - `TreasuryPaid`: Updates platform treasury allocation and fee recipient.
+  - `DistributionCompleted`: Marks distribution status as `DISTRIBUTED`, marks transaction `CONFIRMED`, and sets completion timestamp.
+  - `TreasuryUpdated` / `TreasuryFeeUpdated`: Logs administrative configuration adjustments.
+- **Idempotency**: Every individual event is recorded in `BlockchainEvent` keyed by `chainId:contractAddress:transactionHash:logIndex`, preventing duplicate allocations on replay.
+
 ---
 
-### 7. `sandbox-monitor.job.js` (Phase 7)
+### 8. `sandbox-monitor.job.js` (Phase 7)
 - **Purpose**: Polling and synchronization background worker for active Docker Sandbox training executions.
 - **Interval**: Configurable via `SANDBOX_MONITOR_INTERVAL_MS` (default `10000ms`).
 - **Actions**:

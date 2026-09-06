@@ -16,11 +16,11 @@ This document tracks the verified implementation status across all development p
 | **Phase 6** | Purchase Engine & Settlement | ✅ Verified (30 tests) | ✅ Verified | ⚠️ In Progress | N/A | **Completed (Core)** |
 | **Phase 7** | Docker Sandbox & AI Execution Substrate | N/A | ✅ Verified (22 tests) | ⚠️ Pending | ✅ Verified (22 tests) | **100% Completed** |
 | **Phase 8** | Model Marketplace & Registry | ✅ Verified (41 tests) | ✅ Verified (11 endpoints, 10 tests) | ⚠️ Pending (Deferred) | ✅ Validated Inference | **Completed** |
-| **Phase 9** | AI Provenance & Lineage Tracking | ✅ Verified (36 tests) | ✅ Verified (12 endpoints, 9 tests) | ⚠️ Pending (Deferred) | ✅ Lineage Anchored | **Completed** |
-| **Phase 10** | Advanced Secondary Royalty Engine | ✅ Implemented (`RoyaltyEngine.sol`, 36 tests) | ❌ Pending (Prabhu) | ❌ Deferred | 36 / 36 | **Blockchain Complete** |
-| **Phase 11** | Platform & Blockchain Analytics | ✅ Verified (Shreyes — Blockchain Analytics) | ⚠️ In Progress (Prabhu — Backend Analytics) | ⚠️ Deferred (Phase 14) | ✅ On-chain Data Ingested | **Blockchain Analytics Complete** |
+| **Phase 9** | AI Provenance & Lineage Tracking | ✅ Verified (36 tests) | ✅ Verified (12 endpoints, 10 tests) | ⚠️ Pending (Deferred) | ✅ Lineage Anchored | **Completed** |
+| **Phase 10** | Advanced Secondary Royalty Engine | ✅ Verified (36 tests) | ✅ Verified (12 endpoints, 16 tests) | ⚠️ Pending (Deferred) | ✅ Exact BigInt Accounting | **100% Completed** |
+| **Phase 11** | Platform & Blockchain Analytics | ✅ Verified (Shreyes — Blockchain Analytics) | ✅ Verified (Prabhu — Backend Analytics) | ⚠️ Deferred (Phase 14) | ✅ On-chain Data Ingested | **100% Completed** |
 | **Phase 12** | Admin Backend & Blockchain Monitoring | ✅ Verified (Shreyes — Treasury, Monitoring, Fraud) | ⚠️ In Progress (Prabhu — Moderation/Reports) | ⚠️ Deferred | N/A | **Blockchain Portion Complete** |
-| **Phase 13** | API Testing & Gas Benchmarking | ✅ Verified (Shreyes — Integration & Gas, 34 tests) | ⚠️ In Progress (Prabhu — API Testing) | ⚠️ Deferred (Phase 14) | ✅ Gas Benchmarked | **Blockchain Portion Complete** |
+| **Phase 13** | API Testing & Gas Benchmarking | ✅ Verified (Shreyes — Integration & Gas, 34 tests) | ✅ Verified (Prabhu — 65 Tests Passing) | ⚠️ Deferred (Phase 14) | ✅ Gas Benchmarked | **Verified** |
 
 ---
 
@@ -37,7 +37,7 @@ This document tracks the verified implementation status across all development p
 - `RoyaltyEngine.sol`: **Fully Implemented**. Decentralized multi-party revenue splitting, deterministic rounding remainder absorption by platform Treasury, duplicate distribution prevention, Phase 6 purchase verification, and emergency pause controls. Evidence: `contracts/royalty/RoyaltyEngine.sol`, `interfaces/IRoyaltyEngine.sol`.
 - `Marketplace.sol`: **Placeholder / Stub** (88 bytes). Evidence: `contracts/marketplace/Marketplace.sol`.
 
-### 2. Backend Server (`server/`) — **48 / 48 Tests Passing**
+### 2. Backend Server (`server/`) — **65 / 65 Tests Passing**
 - Express 5 setup, Mongoose connection, Morgan logging, Winston logger: **Fully Implemented**. Evidence: `server/src/app.js`, `server/src/server.js`.
 - Traditional Auth & JWT: **Fully Implemented**. Evidence: `controllers/auth.controller.js`, `services/auth.service.js`.
 - Web3 Wallet Nonce & Signature Verification: **Fully Implemented**. Evidence: `controllers/wallet.controller.js`, `services/wallet.service.js`.
@@ -49,7 +49,8 @@ This document tracks the verified implementation status across all development p
 - Structured Training Logs & Live Monitoring: **Fully Implemented**. Evidence: `services/trainingLog.service.js`, `services/monitoring.service.js`, `jobs/sandbox-monitor.job.js`.
 - Model Marketplace & Registry Backend (Phase 8): **Fully Implemented**. Model registration, versioning, SHA-256 weight hash verification, owner transfer, inference proxying to AI substrate, and background indexer. Evidence: `controllers/model.controller.js`, `services/model.service.js`, `services/modelBlockchain.service.js`, `repositories/model.repository.js`, `jobs/model-event-indexer.js`.
 - Provenance Engine Backend (Phase 9): **Fully Implemented**. Lineage registration preparation, receipt synchronization, composite event idempotency (`chainId:contract:txHash:logIndex`), DAG graph generation, chronological timeline, on-chain cryptographic parameter and hash verification, and background indexer. Evidence: `controllers/provenance.controller.js`, `services/provenance.service.js`, `services/provenanceBlockchain.service.js`, `repositories/provenance.repository.js`, `jobs/provenance-event-indexer.js`.
-- Blockchain Event Indexers: **Fully Implemented** (Background workers for license, purchase, token, model, provenance, and unified blockchain analytics events). Evidence: `jobs/license-event-indexer.js`, `jobs/purchase-event-indexer.js`, `jobs/token-event-indexer.js`, `jobs/model-event-indexer.js`, `jobs/provenance-event-indexer.js`, `jobs/blockchain-analytics.indexer.js`.
+- Royalty Engine Backend (Phase 10): **Fully Implemented**. Exact string token amounts, zero-custody transaction preparation, idempotent multi-event projections into single `RoyaltyDistribution` documents, background event indexing, financial summaries, and authoritative on-chain reconciliation. Evidence: `controllers/royalty.controller.js`, `services/royalty.service.js`, `services/royaltyBlockchain.service.js`, `repositories/royalty.repository.js`, `jobs/royalty-event-indexer.js`, `models/royalty-distribution.model.js`.
+- Blockchain Event Indexers: **Fully Implemented** (Background workers for license, purchase, token, model, provenance, royalty, and unified blockchain analytics events). Evidence: `jobs/license-event-indexer.js`, `jobs/purchase-event-indexer.js`, `jobs/token-event-indexer.js`, `jobs/model-event-indexer.js`, `jobs/provenance-event-indexer.js`, `jobs/royalty-event-indexer.js`, `jobs/blockchain-analytics.indexer.js`.
 - Blockchain Analytics Engine (Phase 11): **Fully Implemented** (Event normalizer, MongoDB models, BigInt precision aggregations, REST APIs at `/api/v1/analytics/blockchain/*`). Evidence: `controllers/blockchain-analytics.controller.js`, `services/blockchain-analytics.service.js`, `repositories/blockchain-analytics.repository.js`, `models/blockchain-event.model.js`, `models/blockchain-gas-tx.model.js`.
 
 ### 3. Sandbox SDK (`sandbox/`) — **10 / 10 Tests Passing**
@@ -72,8 +73,3 @@ This document tracks the verified implementation status across all development p
 - **Model Export & Artifact Validation**: **Fully Implemented** (`.safetensors`, `.pt`, `model_metadata.json` SHA-256 validation). Evidence: `app/models/exporter.py`, `app/models/validator.py`.
 - **Inference Engine**: **Fully Implemented** (Safe deserialization, tensor forward-pass, confidence scoring). Evidence: `app/inference/loader.py`, `app/inference/engine.py`.
 - **AI Execution API Contract**: **Fully Implemented**. Evidence: `app/api/execution.py`, `python-services/main.py`.
-
-### 5. Infrastructure & DevOps
-- `docker/ipfs/`, `docker/mongodb/`, `docker/nginx/`: Skeletons with `.gitkeep`.
-- `docker-compose.sandbox.yml`: Sandbox composition spec.
-- Root `docker-compose.yml`: Skeleton / 0 bytes.

@@ -28,7 +28,7 @@
    - [Step-by-Step Multi-Terminal Launch](#step-by-step-multi-terminal-launch)
 6. [Automated Testing Suites](#-6-automated-testing-suites)
    - [1. Blockchain Smart Contracts & Integration (279 Tests)](#1-blockchain-smart-contracts--integration-279-tests)
-   - [2. Backend Server & Analytics (29 Tests)](#2-backend-server--analytics-29-tests)
+   - [2. Backend Server & Engine Integrations (65 Tests)](#2-backend-server--engine-integrations-65-tests)
    - [3. Python AI Execution Substrate (22 Tests)](#3-python-ai-execution-substrate-22-tests)
    - [4. Sandbox Client SDK (10 Tests)](#4-sandbox-client-sdk-10-tests)
    - [On-Chain Gas Benchmarks](#on-chain-gas-benchmarks)
@@ -301,14 +301,19 @@ Ensure `server/.env` contains the required database, JWT, and contract addresses
 ```ini
 PORT=5000
 NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/aixchange
-JWT_SECRET=aixchange_super_secure_jwt_development_secret_key_2026
-JWT_EXPIRES_IN=7d
-FRONTEND_URL=http://localhost:5173
-RPC_URL=http://127.0.0.1:8545
-AI_SERVICE_URL=http://localhost:8000
-BLOCKCHAIN_INDEXER_ENABLED=true
-INDEXER_POLL_INTERVAL_MS=5000
+MONGODB_URI=mongodb://localhost:27017/aixchange
+ACCESS_TOKEN_SECRET=<secret>
+REFRESH_TOKEN_SECRET=<secret>
+BLOCKCHAIN_RPC_URL=http://127.0.0.1:8545
+BLOCKCHAIN_CHAIN_ID=31337
+AIX_TOKEN_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
+TREASURY_ADDRESS=0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+DATASET_REGISTRY_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+MODEL_REGISTRY_ADDRESS=0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
+PROVENANCE_REGISTRY_ADDRESS=0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
+ROYALTY_ENGINE_ADDRESS=0x8A791620dd6260079BF849Dc5567aDC3F2FdC318
+BLOCKCHAIN_CONFIRMATIONS=1
+BLOCKCHAIN_START_BLOCK=0
 ```
 
 ### Blockchain Environment Configuration (`blockchain/.env`)
@@ -462,25 +467,22 @@ npx hardhat test
   279 passing (9s)
 ```
 
-### 2. Backend Server & Analytics (29 Tests)
+### 2. Backend Server & Engine Integrations (65 Tests)
 ```bash
 cd server
 npm test
 ```
 ```text
-  ✔ Blockchain Analytics HTTP API routes, controllers, and error handling
-  ✔ Contract configurations contain authoritative event ABIs for all 8 contracts
-  ✔ Event argument sanitizer converts BigInt values to precision-safe strings
-  ✔ Event normalizer correctly extracts domain fields across different contract events
-  ✔ Mongoose models enforce required uniqueness and checkpoint tracking indexes
-  ✔ Gas cost arithmetic preserves precision using integer BigInt calculations
-  ✔ Blockchain Analytics Joi validators accept valid requests and reject malformed input
+  ✔ Blockchain Analytics HTTP API routes, controllers, and error handling (7 tests)
   ✔ Dataset & Review Validation (3 tests)
   ✔ Licensing System (6 tests)
-  ✔ Purchase Engine (3 tests)
+  ✔ Purchase Engine & Indexer (3 tests)
   ✔ Docker Sandbox Backend Orchestration (10 tests)
+  ✔ Model Marketplace & Blockchain Integration (10 tests)
+  ✔ Provenance Engine, DAG, Timelines & Verification (10 tests)
+  ✔ Royalty Engine Accounting, Calldata & Reconciliation (16 tests)
 
-  29 passing (1.8s)
+  65 passing (19.5s)
 ```
 
 ### 3. Python AI Execution Substrate (22 Tests)
@@ -597,6 +599,34 @@ Gas usage measured across 12 core operations on a local Hardhat node via `script
 - `GET /api/v1/analytics/blockchain/events` — Paginated log explorer with filtering by contract, event name, block range, and sender.
 - `GET /api/v1/analytics/blockchain/token` — AIX token transfer volume, unique participant metrics, and categorized spending.
 - `GET /api/v1/analytics/blockchain/gas` — Gas usage, cost in wei/ETH, contract breakdown, and time aggregation.
+
+#### Model Marketplace (`/api/v1/models`)
+- `GET  /api/v1/models` — Paginated catalog of public models with framework/task filters.
+- `POST /api/v1/models` — Register off-chain model metadata and generate preparation calldata.
+- `GET  /api/v1/models/:id` — Detailed model information and version history.
+- `POST /api/v1/models/:id/versions` — Register additional model version with weights hash.
+- `POST /api/v1/models/:id/verify-hash` — Cryptographic hash verification against on-chain anchor.
+
+#### Provenance Engine (`/api/v1/provenance`)
+- `POST /api/v1/provenance` — Prepare zero-custody transaction for registering dataset-to-model lineage.
+- `POST /api/v1/provenance/sync` — Verify on-chain registration receipt and project into database.
+- `GET  /api/v1/provenance/:id` — Retrieve single provenance record with optional timeline enrichment.
+- `GET  /api/v1/provenance/graph/:modelId` — Directed Acyclic Graph (DAG) showing nodes and edges.
+- `GET  /api/v1/provenance/timeline/:modelId` — Chronological milestone timeline from dataset to deployment.
+- `POST /api/v1/provenance/:id/verify` — Cryptographically verify dataset, model, and metadata integrity.
+
+#### Royalty Engine (`/api/v1/royalties`)
+- `GET  /api/v1/royalties/distributions/:distributionId` — Retrieve single distribution record from MongoDB.
+- `GET  /api/v1/royalties/distributions/:distributionId/allocations` — Retrieve recipient allocations with percentage splits.
+- `GET  /api/v1/royalties/recipients/:address` — Retrieve total claimed earnings and distribution history for a recipient.
+- `GET  /api/v1/royalties/source/:sourceType/:sourceId` — Check if a dataset or model has distributed royalties.
+- `GET  /api/v1/royalties/history` — Paginated distribution history with filters (`recipient`, `sourceType`, `status`, `dateRange`).
+- `GET  /api/v1/royalties/summary` — Aggregate financial metrics (total distributed, platform treasury share, active recipients).
+- `GET  /api/v1/royalties/reports` — Multi-dimensional reporting grouped by recipient, source, or time interval.
+- `POST /api/v1/royalties/calculate-split` — Preview revenue split calculations without modifying on-chain state.
+- `POST /api/v1/royalties/prepare` — Zero-custody calldata encoding for `distributeRoyalty` (JWT authenticated).
+- `POST /api/v1/royalties/sync` — Synchronize and verify on-chain transaction receipt for newly submitted distributions.
+- `POST /api/v1/royalties/reconcile` — Authoritative cross-check comparing off-chain MongoDB records with on-chain contract state.
 
 ---
 

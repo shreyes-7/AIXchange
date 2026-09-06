@@ -251,3 +251,47 @@ provenanceSchema.index(
 );
 ```
 
+---
+
+## 9. `royalty-distribution.model.js` (`RoyaltyDistribution`) — Phase 10
+
+```javascript
+const recipientAllocationSchema = new mongoose.Schema({
+  recipient: { type: String, required: true, lowercase: true, trim: true },
+  shareBps: { type: Number, required: true, min: 1, max: 10000 },
+  amount: { type: String, required: true, trim: true },
+  paidAt: { type: Date, default: null }
+}, { _id: false });
+
+const royaltyDistributionSchema = new mongoose.Schema({
+  distributionId: { type: String, required: true, unique: true, index: true },
+  sourceType: { type: String, required: true, enum: ["DIRECT", "PURCHASE", "MODEL_USAGE", "SUBSCRIPTION"], index: true },
+  sourceId: { type: String, required: true, index: true },
+  caller: { type: String, required: true, lowercase: true, trim: true },
+  tokenAddress: { type: String, required: true, lowercase: true, trim: true },
+  totalRevenue: { type: String, required: true, trim: true },
+  treasuryFeeBps: { type: Number, required: true, min: 0, max: 2000 },
+  treasuryAmount: { type: String, required: true, trim: true },
+  treasuryAddress: { type: String, default: null, lowercase: true, trim: true },
+  recipients: { type: [recipientAllocationSchema], default: [] },
+  status: { type: String, required: true, enum: ["PENDING", "DISTRIBUTED", "CANCELLED"], default: "PENDING", index: true },
+  transactionStatus: { type: String, required: true, enum: ["PREPARED", "PENDING", "CONFIRMED", "FAILED"], default: "PENDING" },
+  reconciled: { type: Boolean, default: false, index: true },
+  reconciledAt: { type: Date, default: null },
+  blockchain: {
+    chainId: { type: Number, required: true },
+    contractAddress: { type: String, required: true, lowercase: true },
+    transactionHash: { type: String, required: true, lowercase: true, index: true },
+    blockNumber: { type: Number, index: true },
+    logIndex: { type: Number, default: 0 },
+    blockTimestamp: { type: Number }
+  }
+}, { timestamps: true });
+
+// Compound indexes
+royaltyDistributionSchema.index({ sourceType: 1, sourceId: 1 });
+royaltyDistributionSchema.index({ "recipients.recipient": 1, status: 1 });
+royaltyDistributionSchema.index({ "blockchain.chainId": 1, "blockchain.transactionHash": 1 });
+```
+
+

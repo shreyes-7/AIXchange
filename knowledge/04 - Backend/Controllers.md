@@ -71,3 +71,17 @@ Controllers in `server/src/controllers/` process validated HTTP requests, invoke
 - `verify(req, res, next)`: Performs cryptographic on-chain verification via `ProvenanceRegistry.sol`.
 - `verifyHash(req, res, next)`: Performs on-chain metadata hash verification.
 - `setStatus(req, res, next)`: Prepares calldata for provenance deprecation/revocation.
+
+### 9. `royalty.controller.js` (Phase 10)
+- `getDistribution(req, res, next)`: Retrieves distribution document by `distributionId` from MongoDB.
+- `getAllocations(req, res, next)`: Retrieves recipient allocations with computed percentage share.
+- `getRecipientSummary(req, res, next)`: Retrieves total claimed earnings and distribution records for an address.
+- `checkSourceDistributed(req, res, next)`: Checks whether a dataset or model has already distributed royalties.
+- `getHistory(req, res, next)`: Paginated distribution query with filtering by status, sourceType, recipient, and dates.
+- `getSummary(req, res, next)`: Aggregates total distributed, treasury share, and unique recipients using BigInt-safe string math.
+- `getReports(req, res, next)`: Multi-dimensional aggregations grouped by recipient, source, or time interval.
+- `calculateSplit(req, res, next)`: Off-chain preview calculation of basis point allocations and rounding remainders.
+- `prepareDistribution(req, res, next)`: Prepares zero-custody calldata and allowance check for `distributeRoyalty`.
+- `syncDistribution(req, res, next)`: Confirms transaction receipt on-chain and triggers immediate indexing.
+- `reconcile(req, res, next)`: Cross-verifies MongoDB distribution records against on-chain smart contract state.
+

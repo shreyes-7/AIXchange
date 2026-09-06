@@ -13,6 +13,7 @@ import sandboxRoutes from "./sandbox.route.js";
 import blockchainAnalyticsRoutes from "./blockchain-analytics.routes.js";
 import modelRoutes from "./model.route.js";
 import provenanceRoutes from "./provenance.route.js";
+import royaltyRoutes from "./royalty.route.js";
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/datasets", datasetRoutes);
 router.use("/models", modelRoutes);
 router.use("/provenance", provenanceRoutes);
+router.use("/royalties", royaltyRoutes);
 router.use("/licenses", licenseRoutes);
 router.use("/purchases", purchaseRoutes);
 router.use("/sandboxes", sandboxRoutes);

@@ -30,10 +30,10 @@ Welcome to the **AIXchange Knowledge Base**, an Obsidian-compatible documentatio
 - [[Licensing System]] — Multi-tier licensing models, terms, validity windows, and rights management.
 - [[Purchase Engine]] — Atomic token payments, treasury fee deductions, creator earnings, and access checks.
 - [[Token Economy]] — AIX utility token, minting, burning, and treasury vault.
-- [[Model Marketplace]] — AI model registry and trading (Current status: Placeholder / Stub).
-- [[AI Services]] — Python services and AI inference (Current status: Scaffold / Planned).
-- [[AI Provenance]] — Lineage and training tracking (Current status: Planned / Not Implemented).
-- [[Royalty System]] — Secondary royalty distribution engine (Current status: Planned / Phase 10).
+- [[Model Marketplace]] — AI model registry, versioning, SHA-256 weight hash anchoring, and inference proxying (Implemented).
+- [[AI Services]] — Containerized Docker execution substrate, PyTorch training, and safe inference (Implemented).
+- [[AI Provenance]] — Lineage DAG graph, chronological timelines, and on-chain verification (Implemented).
+- [[Royalty System]] — Secondary multi-party royalty engine, zero-custody calldata, event indexer, and on-chain reconciliation (Implemented).
 - [[Trust and Reputation]] — Creator rating and reputation tracking (Current status: Partially Implemented in DB model).
 - [[Analytics]] — Marketplace analytics and activity aggregation (Current status: Partially Implemented).
 

@@ -81,4 +81,18 @@ router.use('/health', healthRoutes);
 - `GET /:id/verify`: `provenanceController.verify`
 - `POST /:id/verify-hash`: `validate(verifyHashSchema) -> provenanceController.verifyHash`
 - `POST /:id/status`: `authenticate -> checkRole -> validate(setStatusSchema) -> provenanceController.setStatus`
-- `POST /faucet`: `validate(faucetSchema) -> tokenController.requestFaucet`
+
+### 10. `royalty.route.js` (Phase 10)
+- `GET /distributions/:distributionId`: `validate(distributionIdParamSchema, 'params') -> royaltyController.getDistribution`
+- `GET /distributions/:distributionId/allocations`: `validate(distributionIdParamSchema, 'params') -> royaltyController.getAllocations`
+- `GET /recipients/:address`: `validate(recipientParamSchema, 'params') -> royaltyController.getRecipientSummary`
+- `GET /source/:sourceType/:sourceId`: `validate(sourceParamSchema, 'params') -> royaltyController.checkSourceDistributed`
+- `GET /history`: `validate(historyQuerySchema, 'query') -> royaltyController.getHistory`
+- `GET /summary`: `royaltyController.getSummary`
+- `GET /reports`: `validate(reportQuerySchema, 'query') -> royaltyController.getReports`
+- `POST /calculate-split`: `validate(calculateSplitSchema) -> royaltyController.calculateSplit`
+- `POST /prepare`: `authenticate -> validate(prepareRoyaltySchema) -> royaltyController.prepareDistribution`
+- `POST /sync`: `authenticate -> validate(syncRoyaltySchema) -> royaltyController.syncDistribution`
+- `POST /reconcile`: `authenticate -> royaltyController.reconcile`
+- `POST /reconcile/:distributionId`: `authenticate -> validate(distributionIdParamSchema, 'params') -> royaltyController.reconcile`
+

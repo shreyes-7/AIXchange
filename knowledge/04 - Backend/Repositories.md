@@ -63,3 +63,17 @@ Repositories in `server/src/repositories/` isolate direct database queries and m
 - `listByModelVersion(modelId, modelVersion, options)`: Returns records for a specific version.
 - `createOrUpsertProjection(data)`: Idempotently upserts provenance projection document keyed by `provenanceId` or unique lineage key.
 - `updateStatus(provenanceId, active, extra)`: Updates active flag and records transaction receipt metadata.
+
+### 9. `royalty.repository.js` (Phase 10)
+- `findByDistributionId(distributionId)`: Queries distribution by on-chain uint256-scale string identifier.
+- `findByMongoId(id)`: Queries distribution by MongoDB ObjectId.
+- `findBySource(sourceType, sourceId)`: Queries distribution for a given source entity.
+- `list(filter, options)`: Queries paginated distributions with safe sorting and whitelist filtering.
+- `upsertDistributionCreated(data)`: Idempotently creates distribution record on `DistributionCreated` event.
+- `recordRecipientPaid(distributionId, paymentData)`: Idempotently appends recipient allocation to embedded array without duplicating records.
+- `recordTreasuryPaid(distributionId, paymentData)`: Updates treasury amount and fee recipient in distribution record.
+- `recordDistributionCompleted(distributionId, completionData)`: Sets status to `DISTRIBUTED`, marks tx `CONFIRMED`, and records completion timestamp.
+- `markReconciled(distributionId, reconcileData)`: Updates `reconciled = true` and persists audit timestamp upon successful on-chain cross-check.
+- `getSummary(options)`: Computes platform-wide financial aggregates using BigInt string math.
+- `getReports(options)`: Multi-dimensional aggregations grouped by recipient, source, or time bucket.
+

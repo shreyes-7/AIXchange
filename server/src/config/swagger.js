@@ -67,6 +67,14 @@ const options = {
                 description: "Wallet linking and verification endpoints",
             },
             {
+                name: "Provenance",
+                description: "AI Provenance, lineage tracking, and on-chain verification APIs",
+            },
+            {
+                name: "Royalties",
+                description: "On-chain royalty engine, revenue splits, reporting, and reconciliation APIs",
+            },
+            {
                 name: "Sandbox",
                 description: "Docker Sandbox and AI Training Orchestration APIs",
             },
