@@ -37,7 +37,7 @@ Server runs at `http://localhost:5000`. Swagger OpenAPI docs available at `http:
 
 - `npm run dev`: Start development server with Nodemon.
 - `npm start`: Start production server.
-- `npm test`: Run automated backend test suites serially (`node --test --test-concurrency=1 tests/**/*.test.js`) — 89 passing tests with zero regressions.
+- `npm test`: Run automated backend test suites serially (`node --test --test-concurrency=1 tests/**/*.test.js`) — 110 passing tests with zero regressions.
 - `npm run lint`: Run ESLint checks.
 
 ## Key Environment Variables
@@ -83,4 +83,32 @@ BLOCKCHAIN_CONFIRMATIONS=1
 - `GET  /api/v1/analytics/downloads` — Dataset download volume, failure status, unique downloaders, top datasets, and trends.
 - `GET  /api/v1/analytics/api-calls` — AI model inference execution metrics, average latency, sanitized error categorization, and trends.
 - `GET  /api/v1/analytics/users` — User lifecycle, registration growth, verification statistics, and historically verifiable active users.
+
+## Reports API Endpoints (`/api/v1/reports`)
+
+- `POST /api/v1/reports` — Submit report against a User, Dataset, or Model entity (JWT authenticated).
+
+## Admin & Moderation API Endpoints (`/api/v1/admin`)
+
+*All `/api/v1/admin/*` endpoints require JWT authentication and `ADMIN` role.*
+
+- `GET   /api/v1/admin/users` — Paginated user listing with search, role, status, and date filters.
+- `GET   /api/v1/admin/users/:userId` — Detailed user profile with activity counts, report history, and audit log.
+- `PATCH /api/v1/admin/users/:userId/status` — Suspend or restore user account (`ACTIVE`, `SUSPENDED`) with self-suspension protection and audit record.
+- `GET   /api/v1/admin/datasets` — Paginated dataset listing with search, category, and status filters.
+- `GET   /api/v1/admin/datasets/:datasetId` — Dataset detail with owner info, report statistics, and moderation audit history.
+- `PATCH /api/v1/admin/datasets/:datasetId/status` — Moderate dataset status (`active`, `hidden`, `under_review`, `removed`) with audit record.
+- `GET   /api/v1/admin/models` — Paginated AI model listing with framework, category, and status filters.
+- `GET   /api/v1/admin/models/:modelId` — Model detail with version history, report statistics, and moderation audit trail.
+- `PATCH /api/v1/admin/models/:modelId/status` — Moderate model status (`active`, `hidden`, `under_review`, `removed`), atomically syncing `active` boolean with audit record.
+- `GET   /api/v1/admin/reports` — Paginated report queue with targetType, category, status, and priority filters.
+- `GET   /api/v1/admin/reports/:reportId` — Detailed report view populated with target summary and resolution audit trail.
+- `PATCH /api/v1/admin/reports/:reportId/assignment` — Assign report to an administrator with audit record.
+- `PATCH /api/v1/admin/reports/:reportId/status` — Update report status (`UNDER_REVIEW`, `RESOLVED`, `REJECTED`) with resolution notes and audit record.
+- `POST  /api/v1/admin/fraud-flags/ingest` — Ingest structured fraud flags emitted by the blockchain monitoring subsystem.
+- `GET   /api/v1/admin/fraud-flags` — Filter and list on-chain fraud flags by ruleId, severity, status, or address.
+- `GET   /api/v1/admin/fraud-flags/:id` — View fraud flag evidence and review history.
+- `PATCH /api/v1/admin/fraud-flags/:id/status` — Review fraud flag (`CONFIRMED`, `DISMISSED`) with audit record (strictly human-in-the-loop, no automatic punishments).
+- `GET   /api/v1/admin/audits` — Query immutable append-only moderation audit log with targetType, moderator, action, and date filters.
+- `GET   /api/v1/admin/treasury` — Authoritative on-chain treasury balances and recent treasury events telemetry.
 

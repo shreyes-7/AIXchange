@@ -1,41 +1,31 @@
 import { verifyAccessToken } from "../utils/jwt.js";
-
 import * as userRepository from "../repositories/user.repository.js";
-
 import ApiError from "../utils/ApiError.js";
 
 const auth = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
 
-        if (
-            !authHeader ||
-            !authHeader.startsWith("Bearer ")
-        ) {
-            throw new ApiError(
-                401,
-                "Access token is required."
-            );
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            throw new ApiError(401, "Access token is required.");
         }
 
         const token = authHeader.split(" ")[1];
-
         const payload = verifyAccessToken(token);
-
-        const user = await userRepository.findById(
-            payload.userId
-        );
+        const user = await userRepository.findById(payload.userId);
 
         if (!user) {
-            throw new ApiError(
-                401,
-                "User not found."
-            );
+            throw new ApiError(401, "User not found.");
+        }
+
+        if (user.status === "SUSPENDED") {
+            throw new ApiError(403, "Account is suspended. Please contact support.");
         }
 
         req.user = {
             userId: user._id,
             role: user.role,
+            status: user.status,
             email: user.email,
             wallet: user.wallet,
         };

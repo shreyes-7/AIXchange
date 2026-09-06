@@ -18,8 +18,10 @@ const requiredAddress = (value, name) => {
     return ethers.getAddress(value);
 };
 
-export const provider = new ethers.JsonRpcProvider(env.BLOCKCHAIN_RPC_URL);
-export const configuredChainId = env.BLOCKCHAIN_CHAIN_ID;
+export const configuredChainId = env.BLOCKCHAIN_CHAIN_ID || 31337;
+export const provider = new ethers.JsonRpcProvider(env.BLOCKCHAIN_RPC_URL, undefined, {
+    staticNetwork: ethers.Network.from(configuredChainId),
+});
 export const aixTokenAddress = requiredAddress(
     env.AIX_TOKEN_ADDRESS,
     "AIX_TOKEN_ADDRESS"

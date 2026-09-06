@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Model from "../models/model.model.js";
 
 const publicProjection = "-__v";
@@ -165,3 +166,95 @@ export const updateOwnership = (blockchainModelId, newOwnerWallet) =>
         },
         { new: true }
     ).select(publicProjection);
+
+export const updateModerationStatus = (id, newStatus) => {
+    const isObjectId = mongoose.isValidObjectId(id);
+    const filter = isObjectId ? { _id: id } : { blockchainModelId: Number(id) };
+    return Model.findOneAndUpdate(
+        filter,
+        {
+            $set: {
+                status: newStatus,
+                active: newStatus === "active",
+            },
+        },
+        { returnDocument: "after" }
+    ).select(publicProjection);
+};
+
+export const findAdminModels = async ({
+    page = 1,
+    limit = 20,
+    search,
+    status,
+    category,
+    framework,
+    owner,
+    startDate,
+    endDate,
+    sort = "newest",
+} = {}) => {
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+
+    const filter = {};
+
+    if (status) {
+        filter.status = status;
+    }
+
+    if (category) {
+        filter.category = category.toLowerCase().trim();
+    }
+
+    if (framework) {
+        filter.framework = framework;
+    }
+
+    if (owner) {
+        if (mongoose.isValidObjectId(owner)) {
+            filter.owner = owner;
+        } else {
+            filter.ownerWallet = owner.toLowerCase().trim();
+        }
+    }
+
+    if (search && search.trim()) {
+        const query = search.trim();
+        filter.$or = [
+            { name: { $regex: query, $options: "i" } },
+            { description: { $regex: query, $options: "i" } },
+            { ownerWallet: { $regex: query, $options: "i" } },
+        ];
+    }
+
+    if (startDate || endDate) {
+        filter.createdAt = {};
+        if (startDate) filter.createdAt.$gte = new Date(startDate);
+        if (endDate) filter.createdAt.$lte = new Date(endDate);
+    }
+
+    const sortOrder = buildSort(sort);
+
+    const [models, total] = await Promise.all([
+        Model.find(filter)
+            .sort(sortOrder)
+            .skip((safePage - 1) * safeLimit)
+            .limit(safeLimit)
+            .select(publicProjection)
+            .populate("owner", "name email wallet.address")
+            .lean(),
+        Model.countDocuments(filter),
+    ]);
+
+    return {
+        models,
+        pagination: {
+            page: safePage,
+            limit: safeLimit,
+            total,
+            totalPages: Math.ceil(total / safeLimit) || 1,
+        },
+    };
+};
+

@@ -90,6 +90,12 @@ const modelSchema = new mongoose.Schema(
             default: true,
             index: true,
         },
+        status: {
+            type: String,
+            enum: ["active", "under_review", "hidden", "removed"],
+            default: "active",
+            index: true,
+        },
         versions: {
             type: [modelVersionSchema],
             default: [],

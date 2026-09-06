@@ -28,7 +28,7 @@
    - [Step-by-Step Multi-Terminal Launch](#step-by-step-multi-terminal-launch)
 6. [Automated Testing Suites](#-6-automated-testing-suites)
    - [1. Blockchain Smart Contracts & Integration (279 Tests)](#1-blockchain-smart-contracts--integration-279-tests)
-   - [2. Backend Server & Engine Integrations (89 Tests)](#2-backend-server--engine-integrations-89-tests)
+   - [2. Backend Server & Engine Integrations (110 Tests)](#2-backend-server--engine-integrations-110-tests)
    - [3. Python AI Execution Substrate (22 Tests)](#3-python-ai-execution-substrate-22-tests)
    - [4. Sandbox Client SDK (10 Tests)](#4-sandbox-client-sdk-10-tests)
    - [On-Chain Gas Benchmarks](#on-chain-gas-benchmarks)
@@ -467,7 +467,7 @@ npx hardhat test
   279 passing (9s)
 ```
 
-### 2. Backend Server & Engine Integrations (89 Tests)
+### 2. Backend Server & Engine Integrations (110 Tests)
 ```bash
 cd server
 npm test
@@ -484,9 +484,12 @@ npm test
   ✔ Backend Analytics Unit Tests: Validators, ISO-8601 Week, Sanitized Errors (7 tests)
   ✔ Backend Analytics HTTP REST APIs: Auth, Validation, Contracts (8 tests)
   ✔ Backend Analytics E2E Repository & Aggregation Battery (6 tests)
-  ✔ Full regression battery across all previous phases (3 tests)
+  ✔ Admin & Moderation Unit Tests: Self-Suspension, Active Sync, Append-Only Audits (8 tests)
+  ✔ Admin & Moderation HTTP REST APIs: Auth, Role Guard, Ingestion, Audits (8 tests)
+  ✔ Admin & Moderation E2E Lifecycle & Audit Battery (6 tests)
+  ✔ Full regression battery across all previous phases (2 tests)
 
-  89 passing (21.7s)
+  110 passing (23.4s)
 ```
 
 ### 3. Python AI Execution Substrate (22 Tests)
@@ -636,6 +639,30 @@ Gas usage measured across 12 core operations on a local Hardhat node via `script
 - `GET /api/v1/analytics/downloads` — Dataset download volume, failure status, unique downloaders, top datasets, and trends.
 - `GET /api/v1/analytics/api-calls` — AI model inference execution metrics, average latency, sanitized error categorization, and trends.
 - `GET /api/v1/analytics/users` — User lifecycle, registration growth, verification statistics, and historically verifiable active users.
+
+#### Reports (`/api/v1/reports`)
+- `POST /api/v1/reports` — Submit report against a User, Dataset, or Model entity (JWT authenticated).
+
+#### Admin & Moderation (`/api/v1/admin`) — *Requires ADMIN Role*
+- `GET   /api/v1/admin/users` — Paginated user listing with search, role, status, and date filters.
+- `GET   /api/v1/admin/users/:userId` — Detailed user profile with activity counts, report history, and audit log.
+- `PATCH /api/v1/admin/users/:userId/status` — Suspend or restore user account (`ACTIVE`, `SUSPENDED`) with self-suspension protection and audit record.
+- `GET   /api/v1/admin/datasets` — Paginated dataset listing with search, category, and status filters.
+- `GET   /api/v1/admin/datasets/:datasetId` — Dataset detail with owner info, report statistics, and moderation audit history.
+- `PATCH /api/v1/admin/datasets/:datasetId/status` — Moderate dataset status (`active`, `hidden`, `under_review`, `removed`) with audit record.
+- `GET   /api/v1/admin/models` — Paginated AI model listing with framework, category, and status filters.
+- `GET   /api/v1/admin/models/:modelId` — Model detail with version history, report statistics, and moderation audit trail.
+- `PATCH /api/v1/admin/models/:modelId/status` — Moderate model status (`active`, `hidden`, `under_review`, `removed`), atomically syncing `active` boolean with audit record.
+- `GET   /api/v1/admin/reports` — Paginated report queue with targetType, category, status, and priority filters.
+- `GET   /api/v1/admin/reports/:reportId` — Detailed report view populated with target summary and resolution audit trail.
+- `PATCH /api/v1/admin/reports/:reportId/assignment` — Assign report to an administrator with audit record.
+- `PATCH /api/v1/admin/reports/:reportId/status` — Update report status (`UNDER_REVIEW`, `RESOLVED`, `REJECTED`) with resolution notes and audit record.
+- `POST  /api/v1/admin/fraud-flags/ingest` — Ingest structured fraud flags emitted by the blockchain monitoring subsystem.
+- `GET   /api/v1/admin/fraud-flags` — Filter and list on-chain fraud flags by ruleId, severity, status, or address.
+- `GET   /api/v1/admin/fraud-flags/:id` — View fraud flag evidence and review history.
+- `PATCH /api/v1/admin/fraud-flags/:id/status` — Review fraud flag (`CONFIRMED`, `DISMISSED`) with audit record (strictly human-in-the-loop, no automatic punishments).
+- `GET   /api/v1/admin/audits` — Query immutable append-only moderation audit log with targetType, moderator, action, and date filters.
+- `GET   /api/v1/admin/treasury` — Authoritative on-chain treasury balances and recent treasury events telemetry.
 
 ---
 

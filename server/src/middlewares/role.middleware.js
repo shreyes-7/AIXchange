@@ -1,8 +1,9 @@
 import ApiError from "../utils/ApiError.js";
+import { USER_ROLES } from "../config/constants.js";
 
-const allowRoles = (...roles) => {
+export const allowRoles = (...roles) => {
     return (req, res, next) => {
-        if (!roles.includes(req.user.role)) {
+        if (!req.user || !roles.includes(req.user.role)) {
             return next(
                 new ApiError(
                     403,
@@ -14,5 +15,7 @@ const allowRoles = (...roles) => {
         next();
     };
 };
+
+export const requireAdmin = allowRoles(USER_ROLES.ADMIN);
 
 export default allowRoles;

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-import { USER_ROLES } from "../config/constants.js";
+import { USER_ROLES, USER_STATUS } from "../config/constants.js";
 
 const walletSchema = new mongoose.Schema(
     {
@@ -72,6 +72,13 @@ const userSchema = new mongoose.Schema(
             type: String,
             enum: Object.values(USER_ROLES),
             default: USER_ROLES.USER,
+        },
+
+        status: {
+            type: String,
+            enum: Object.values(USER_STATUS),
+            default: USER_STATUS.ACTIVE,
+            index: true,
         },
 
         wallet: {

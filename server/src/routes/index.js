@@ -15,6 +15,8 @@ import analyticsRoutes from "./analytics.routes.js";
 import modelRoutes from "./model.route.js";
 import provenanceRoutes from "./provenance.route.js";
 import royaltyRoutes from "./royalty.route.js";
+import adminRoutes from "./admin.routes.js";
+import reportRoutes from "./report.routes.js";
 
 const router = Router();
 
@@ -33,5 +35,7 @@ router.use("/purchases", purchaseRoutes);
 router.use("/sandboxes", sandboxRoutes);
 router.use("/analytics/blockchain", blockchainAnalyticsRoutes);
 router.use("/analytics", analyticsRoutes);
+router.use("/admin", adminRoutes);
+router.use("/reports", reportRoutes);
 
 export default router;

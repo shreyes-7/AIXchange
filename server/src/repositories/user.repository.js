@@ -1,4 +1,8 @@
 import User from "../models/user.model.js";
+import Dataset from "../models/dataset.model.js";
+import Model from "../models/model.model.js";
+import Report from "../models/report.model.js";
+import Purchase from "../models/purchase.model.js";
 
 export const findByEmail = (email) => {
     return User.findOne({ email }).select("+passwordHash");
@@ -184,3 +188,97 @@ export const verifyEmail = (userId) => {
         { new: true }
     );
 };
+
+export const updateUserStatus = (userId, status) => {
+    return User.findByIdAndUpdate(
+        userId,
+        { status },
+        { returnDocument: "after" }
+    );
+};
+
+export const findAdminUsers = async ({
+    page = 1,
+    limit = 20,
+    search,
+    status,
+    role,
+    startDate,
+    endDate,
+    sort = "newest",
+} = {}) => {
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(100, Math.max(1, Number(limit) || 20));
+
+    const filter = {};
+
+    if (status) {
+        filter.status = status;
+    }
+
+    if (role) {
+        filter.role = role;
+    }
+
+    if (search && search.trim()) {
+        const query = search.trim();
+        filter.$or = [
+            { name: { $regex: query, $options: "i" } },
+            { email: { $regex: query, $options: "i" } },
+            { "wallet.address": { $regex: query, $options: "i" } },
+        ];
+    }
+
+    if (startDate || endDate) {
+        filter.createdAt = {};
+        if (startDate) filter.createdAt.$gte = new Date(startDate);
+        if (endDate) filter.createdAt.$lte = new Date(endDate);
+    }
+
+    const sortMap = {
+        newest: { createdAt: -1 },
+        oldest: { createdAt: 1 },
+        name_asc: { name: 1 },
+        name_desc: { name: -1 },
+    };
+    const sortOrder = sortMap[sort] || sortMap.newest;
+
+    const [users, total] = await Promise.all([
+        User.find(filter)
+            .select("-passwordHash -wallet.verificationNonce -wallet.nonceExpiresAt -passwordResetToken -passwordResetExpiresAt -emailVerificationToken")
+            .sort(sortOrder)
+            .skip((safePage - 1) * safeLimit)
+            .limit(safeLimit)
+            .lean(),
+        User.countDocuments(filter),
+    ]);
+
+    return {
+        users,
+        pagination: {
+            page: safePage,
+            limit: safeLimit,
+            total,
+            totalPages: Math.ceil(total / safeLimit) || 1,
+        },
+    };
+};
+
+export const getUserCounts = async (userId) => {
+    const user = await User.findById(userId).select("wallet");
+    const walletAddress = user?.wallet?.address;
+
+    const [datasetCount, modelCount, reportCount, purchaseCount] = await Promise.all([
+        Dataset.countDocuments({ owner: userId }),
+        Model.countDocuments({ owner: userId }),
+        Report.countDocuments({ reporterId: userId }),
+        walletAddress ? Purchase.countDocuments({ buyerWallet: walletAddress.toLowerCase() }) : 0,
+    ]);
+
+    return {
+        datasets: datasetCount,
+        models: modelCount,
+        reportsFiled: reportCount,
+        purchases: purchaseCount,
+    };
+};

@@ -90,6 +90,13 @@ export const login = async (
         );
     }
 
+    if (user.status === "SUSPENDED") {
+        throw new ApiError(
+            403,
+            "Account is suspended. Please contact support."
+        );
+    }
+
     const payload = {
         userId: user._id,
         role: user.role,
@@ -143,6 +150,14 @@ export const refresh = async (refreshToken) => {
         throw new ApiError(
             401,
             "Invalid refresh token."
+        );
+    }
+
+    const user = await userRepository.findById(payload.userId);
+    if (!user || user.status === "SUSPENDED") {
+        throw new ApiError(
+            403,
+            "Account is suspended. Please contact support."
         );
     }
 

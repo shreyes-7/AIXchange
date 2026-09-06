@@ -158,3 +158,39 @@ This document catalogs all verified REST endpoints implemented in the Express ba
 | `GET` | `/api/v1/analytics/downloads` | Dataset download volume, failure status, unique downloaders, and trends | JWT | `analytics.routes.js` |
 | `GET` | `/api/v1/analytics/api-calls` | AI model inference call metrics, latency, error categorization, and trends | JWT | `analytics.routes.js` |
 | `GET` | `/api/v1/analytics/users` | User lifecycle, registration trends, and historically verifiable active users | JWT | `analytics.routes.js` |
+
+---
+
+## 12. Reports (`/api/v1/reports`)
+
+| Method | Endpoint | Description | Auth Required | File |
+| :--- | :--- | :--- | :---: | :--- |
+| `POST` | `/api/v1/reports` | Submit report on User, Dataset, or Model target | JWT | `report.routes.js` |
+
+---
+
+## 13. Admin Backend & Moderation (`/api/v1/admin`)
+
+All endpoints under `/api/v1/admin` require valid JWT authentication and `ADMIN` role (`USER_ROLES.ADMIN`).
+
+| Method | Endpoint | Description | Auth Required | File |
+| :--- | :--- | :--- | :---: | :--- |
+| `GET` | `/api/v1/admin/users` | Paginated user listing with search, role, status, and date filters | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/users/:userId` | Comprehensive user details with activity counts, report history, and audit log | JWT (Admin) | `admin.routes.js` |
+| `PATCH` | `/api/v1/admin/users/:userId/status` | Suspend or restore user account (`ACTIVE`, `SUSPENDED`) with audit logging | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/datasets` | Paginated dataset moderation list with search, category, and status filters | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/datasets/:datasetId` | Dataset details with owner info, report counts, and moderation audit trail | JWT (Admin) | `admin.routes.js` |
+| `PATCH` | `/api/v1/admin/datasets/:datasetId/status` | Moderate dataset status (`active`, `hidden`, `under_review`, `removed`) | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/models` | Paginated AI model listing with framework, category, status, and search filters | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/models/:modelId` | Model details with versions, report counts, and moderation audit trail | JWT (Admin) | `admin.routes.js` |
+| `PATCH` | `/api/v1/admin/models/:modelId/status` | Moderate model status (`active`, `hidden`, `under_review`, `removed`), atomically syncing `active` | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/reports` | Paginated report queue with targetType, category, status, and priority filters | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/reports/:reportId` | Detailed report view populated with target entity summary and audit trail | JWT (Admin) | `admin.routes.js` |
+| `PATCH` | `/api/v1/admin/reports/:reportId/assignment` | Assign report to an administrator (`adminId`) with audit record | JWT (Admin) | `admin.routes.js` |
+| `PATCH` | `/api/v1/admin/reports/:reportId/status` | Update report status (`UNDER_REVIEW`, `RESOLVED`, `REJECTED`) with resolution note | JWT (Admin) | `admin.routes.js` |
+| `POST` | `/api/v1/admin/fraud-flags/ingest` | Ingest structured fraud flags emitted by blockchain monitoring subsystem | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/fraud-flags` | Filter and list on-chain fraud flags by ruleId, severity, status, or address | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/fraud-flags/:id` | View detailed fraud flag evidence, recommended action, and review history | JWT (Admin) | `admin.routes.js` |
+| `PATCH` | `/api/v1/admin/fraud-flags/:id/status` | Review fraud flag (`CONFIRMED`, `DISMISSED`) with audit record (no auto-punishment) | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/audits` | Append-only moderation audit log with targetType, adminId, action, and date filters | JWT (Admin) | `admin.routes.js` |
+| `GET` | `/api/v1/admin/treasury` | Authoritative on-chain treasury balances and recent treasury events overview | JWT (Admin) | `admin.routes.js` |
