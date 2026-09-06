@@ -37,7 +37,7 @@ Server runs at `http://localhost:5000`. Swagger OpenAPI docs available at `http:
 
 - `npm run dev`: Start development server with Nodemon.
 - `npm start`: Start production server.
-- `npm test`: Run automated backend test suites serially (`node --test --test-concurrency=1 tests/**/*.test.js`) — 65 passing tests.
+- `npm test`: Run automated backend test suites serially (`node --test --test-concurrency=1 tests/**/*.test.js`) — 89 passing tests with zero regressions.
 - `npm run lint`: Run ESLint checks.
 
 ## Key Environment Variables
@@ -74,3 +74,13 @@ BLOCKCHAIN_CONFIRMATIONS=1
 - `POST /api/v1/royalties/sync` — Synchronize and verify on-chain transaction receipt for newly submitted distributions.
 - `POST /api/v1/royalties/reconcile` — Authoritative cross-check comparing off-chain MongoDB records with on-chain contract state.
 - `POST /api/v1/royalties/reconcile/:distributionId` — Reconcile a single distribution by ID.
+
+## Backend Analytics API Endpoints (`/api/v1/analytics`)
+
+- `GET  /api/v1/analytics/overview` — High-performance single-pass executive KPI summary across all 5 dimensions (Revenue, Transactions, Downloads, API Calls, Users).
+- `GET  /api/v1/analytics/revenue` — Off-chain confirmed marketplace revenue, fee splits, and ISO-8601 UTC time-series.
+- `GET  /api/v1/analytics/transactions` — Marketplace purchase transaction volume, status breakdown (CONFIRMED/PENDING/FAILED), and audit log.
+- `GET  /api/v1/analytics/downloads` — Dataset download volume, failure status, unique downloaders, top datasets, and trends.
+- `GET  /api/v1/analytics/api-calls` — AI model inference execution metrics, average latency, sanitized error categorization, and trends.
+- `GET  /api/v1/analytics/users` — User lifecycle, registration growth, verification statistics, and historically verifiable active users.
+

@@ -11,6 +11,7 @@ import licenseRoutes from "./license.route.js";
 import purchaseRoutes from "./purchase.route.js";
 import sandboxRoutes from "./sandbox.route.js";
 import blockchainAnalyticsRoutes from "./blockchain-analytics.routes.js";
+import analyticsRoutes from "./analytics.routes.js";
 import modelRoutes from "./model.route.js";
 import provenanceRoutes from "./provenance.route.js";
 import royaltyRoutes from "./royalty.route.js";
@@ -31,5 +32,6 @@ router.use("/licenses", licenseRoutes);
 router.use("/purchases", purchaseRoutes);
 router.use("/sandboxes", sandboxRoutes);
 router.use("/analytics/blockchain", blockchainAnalyticsRoutes);
+router.use("/analytics", analyticsRoutes);
 
 export default router;

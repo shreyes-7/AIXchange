@@ -8,6 +8,7 @@ import aiExecutionService from "./aiExecution.service.js";
 import env from "../config/env.js";
 import ApiError from "../utils/ApiError.js";
 import logger from "../config/logger.js";
+import InferenceCall from "../models/inference-call.model.js";
 
 const now = () => new Date();
 const walletOf = (user) => blockchain.wallet(user);
@@ -503,48 +504,98 @@ class ModelService {
     }
 
     async infer(user, idOrBlockchainId, payload) {
-        const model = await resolveModel(idOrBlockchainId);
+        const startTime = Date.now();
+        let model = null;
+        let targetVersionNumber = 1;
+        let device = "cpu";
+        let status = "SUCCESS";
+        let errorCode = null;
 
-        if (!model.active) {
-            throw new ApiError(409, `Model '${model.name}' is inactive and cannot execute inference.`);
-        }
+        const recordInferenceAsync = (finalStatus, finalErrorCode) => {
+            const executionTimeMs = Date.now() - startTime;
+            Promise.resolve().then(async () => {
+                try {
+                    if (model?._id) {
+                        await InferenceCall.create({
+                            modelRef: model._id,
+                            modelId: model.blockchainModelId ?? null,
+                            modelVersion: targetVersionNumber,
+                            userId: user?._id || user?.userId || null,
+                            userWallet: user?.wallet?.address || null,
+                            device,
+                            status: finalStatus,
+                            executionTimeMs,
+                            errorCode: finalErrorCode,
+                        });
+                    }
+                } catch (err) {
+                    logger.warn(`Analytics inference tracking failed: ${err.message}`);
+                }
+            });
+        };
 
-        if (model.blockchainModelId) {
-            const isChainActive = await blockchain.isModelActive(model.blockchainModelId);
-            if (!isChainActive) {
-                throw new ApiError(409, `Model #${model.blockchainModelId} is inactive on-chain.`);
+        try {
+            model = await resolveModel(idOrBlockchainId);
+
+            if (!model.active) {
+                errorCode = "INACTIVE";
+                recordInferenceAsync("FAILED", errorCode);
+                throw new ApiError(409, `Model '${model.name}' is inactive and cannot execute inference.`);
             }
+
+            if (model.blockchainModelId) {
+                const isChainActive = await blockchain.isModelActive(model.blockchainModelId);
+                if (!isChainActive) {
+                    errorCode = "INACTIVE";
+                    recordInferenceAsync("FAILED", errorCode);
+                    throw new ApiError(409, `Model #${model.blockchainModelId} is inactive on-chain.`);
+                }
+            }
+
+            targetVersionNumber = payload.versionNumber ? Number(payload.versionNumber) : model.currentVersion;
+            const versionRecord = model.versions?.find((v) => v.versionNumber === targetVersionNumber);
+            if (!versionRecord) {
+                errorCode = "NOT_FOUND";
+                recordInferenceAsync("FAILED", errorCode);
+                throw new ApiError(404, `Model version ${targetVersionNumber} not found.`);
+            }
+            if (!versionRecord.active) {
+                errorCode = "INACTIVE";
+                recordInferenceAsync("FAILED", errorCode);
+                throw new ApiError(409, `Model version ${targetVersionNumber} is inactive.`);
+            }
+
+            const rawArtifact = versionRecord.artifactPath || `${model.name.toLowerCase().replace(/[^a-z0-9]/g, "_")}_v${targetVersionNumber}.safetensors`;
+            const safeArtifactPath = sanitizeArtifactPath(rawArtifact);
+
+            device = payload.device || model.inferenceConfig?.device || "cpu";
+
+            const inferenceRequest = {
+                model_artifact_path: safeArtifactPath,
+                inputs: payload.inputs,
+                device,
+                return_probabilities: payload.return_probabilities ?? true,
+                top_k: payload.top_k,
+            };
+
+            const result = await aiExecutionService.runInference(inferenceRequest);
+
+            recordInferenceAsync("SUCCESS", null);
+
+            return {
+                modelId: model.blockchainModelId || model._id,
+                modelName: model.name,
+                version: targetVersionNumber,
+                modelHash: versionRecord.modelHash,
+                execution: result,
+            };
+        } catch (error) {
+            if (!errorCode) {
+                errorCode = error?.statusCode === 408 ? "TIMEOUT" : "EXECUTION_ERROR";
+                recordInferenceAsync("FAILED", errorCode);
+            }
+            throw error;
         }
-
-        const targetVersionNumber = payload.versionNumber ? Number(payload.versionNumber) : model.currentVersion;
-        const versionRecord = model.versions?.find((v) => v.versionNumber === targetVersionNumber);
-        if (!versionRecord) {
-            throw new ApiError(404, `Model version ${targetVersionNumber} not found.`);
-        }
-        if (!versionRecord.active) {
-            throw new ApiError(409, `Model version ${targetVersionNumber} is inactive.`);
-        }
-
-        const rawArtifact = versionRecord.artifactPath || `${model.name.toLowerCase().replace(/[^a-z0-9]/g, "_")}_v${targetVersionNumber}.safetensors`;
-        const safeArtifactPath = sanitizeArtifactPath(rawArtifact);
-
-        const inferenceRequest = {
-            model_artifact_path: safeArtifactPath,
-            inputs: payload.inputs,
-            device: payload.device || model.inferenceConfig?.device || "cpu",
-            return_probabilities: payload.return_probabilities ?? true,
-            top_k: payload.top_k,
-        };
-
-        const result = await aiExecutionService.runInference(inferenceRequest);
-
-        return {
-            modelId: model.blockchainModelId || model._id,
-            modelName: model.name,
-            version: targetVersionNumber,
-            modelHash: versionRecord.modelHash,
-            execution: result,
-        };
     }
 }
 

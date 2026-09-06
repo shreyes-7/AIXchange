@@ -146,4 +146,15 @@ This document catalogs all verified REST endpoints implemented in the Express ba
 | `POST` | `/api/v1/royalties/reconcile` | Authoritative batch reconciliation against smart contract | JWT | `royalty.route.js` |
 | `POST` | `/api/v1/royalties/reconcile/:distributionId` | Reconcile specific distribution against on-chain contract | JWT | `royalty.route.js` |
 
+---
 
+## 11. Backend & Off-Chain Analytics (`/api/v1/analytics`)
+
+| Method | Endpoint | Description | Auth Required | File |
+| :--- | :--- | :--- | :---: | :--- |
+| `GET` | `/api/v1/analytics/overview` | Single-pass executive KPI summary across all 5 dimensions | JWT | `analytics.routes.js` |
+| `GET` | `/api/v1/analytics/revenue` | Off-chain confirmed marketplace revenue, fee splits, and timeline | JWT | `analytics.routes.js` |
+| `GET` | `/api/v1/analytics/transactions` | Marketplace purchase transaction volume, status breakdown, and audit log | JWT | `analytics.routes.js` |
+| `GET` | `/api/v1/analytics/downloads` | Dataset download volume, failure status, unique downloaders, and trends | JWT | `analytics.routes.js` |
+| `GET` | `/api/v1/analytics/api-calls` | AI model inference call metrics, latency, error categorization, and trends | JWT | `analytics.routes.js` |
+| `GET` | `/api/v1/analytics/users` | User lifecycle, registration trends, and historically verifiable active users | JWT | `analytics.routes.js` |

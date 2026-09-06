@@ -28,7 +28,7 @@
    - [Step-by-Step Multi-Terminal Launch](#step-by-step-multi-terminal-launch)
 6. [Automated Testing Suites](#-6-automated-testing-suites)
    - [1. Blockchain Smart Contracts & Integration (279 Tests)](#1-blockchain-smart-contracts--integration-279-tests)
-   - [2. Backend Server & Engine Integrations (65 Tests)](#2-backend-server--engine-integrations-65-tests)
+   - [2. Backend Server & Engine Integrations (89 Tests)](#2-backend-server--engine-integrations-89-tests)
    - [3. Python AI Execution Substrate (22 Tests)](#3-python-ai-execution-substrate-22-tests)
    - [4. Sandbox Client SDK (10 Tests)](#4-sandbox-client-sdk-10-tests)
    - [On-Chain Gas Benchmarks](#on-chain-gas-benchmarks)
@@ -467,7 +467,7 @@ npx hardhat test
   279 passing (9s)
 ```
 
-### 2. Backend Server & Engine Integrations (65 Tests)
+### 2. Backend Server & Engine Integrations (89 Tests)
 ```bash
 cd server
 npm test
@@ -481,8 +481,12 @@ npm test
   ✔ Model Marketplace & Blockchain Integration (10 tests)
   ✔ Provenance Engine, DAG, Timelines & Verification (10 tests)
   ✔ Royalty Engine Accounting, Calldata & Reconciliation (16 tests)
+  ✔ Backend Analytics Unit Tests: Validators, ISO-8601 Week, Sanitized Errors (7 tests)
+  ✔ Backend Analytics HTTP REST APIs: Auth, Validation, Contracts (8 tests)
+  ✔ Backend Analytics E2E Repository & Aggregation Battery (6 tests)
+  ✔ Full regression battery across all previous phases (3 tests)
 
-  65 passing (19.5s)
+  89 passing (21.7s)
 ```
 
 ### 3. Python AI Execution Substrate (22 Tests)
@@ -625,8 +629,13 @@ Gas usage measured across 12 core operations on a local Hardhat node via `script
 - `GET  /api/v1/royalties/reports` — Multi-dimensional reporting grouped by recipient, source, or time interval.
 - `POST /api/v1/royalties/calculate-split` — Preview revenue split calculations without modifying on-chain state.
 - `POST /api/v1/royalties/prepare` — Zero-custody calldata encoding for `distributeRoyalty` (JWT authenticated).
-- `POST /api/v1/royalties/sync` — Synchronize and verify on-chain transaction receipt for newly submitted distributions.
-- `POST /api/v1/royalties/reconcile` — Authoritative cross-check comparing off-chain MongoDB records with on-chain contract state.
+#### Backend Analytics (`/api/v1/analytics`)
+- `GET /api/v1/analytics/overview` — High-performance single-pass executive KPI summary across all 5 dimensions.
+- `GET /api/v1/analytics/revenue` — Off-chain confirmed marketplace revenue, platform fees, creator splits, and ISO-8601 UTC time-series.
+- `GET /api/v1/analytics/transactions` — Marketplace purchase transaction volume, status breakdown (CONFIRMED/PENDING/FAILED), and audit log.
+- `GET /api/v1/analytics/downloads` — Dataset download volume, failure status, unique downloaders, top datasets, and trends.
+- `GET /api/v1/analytics/api-calls` — AI model inference execution metrics, average latency, sanitized error categorization, and trends.
+- `GET /api/v1/analytics/users` — User lifecycle, registration growth, verification statistics, and historically verifiable active users.
 
 ---
 
