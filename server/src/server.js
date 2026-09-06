@@ -9,6 +9,7 @@ import purchaseEventIndexer from "./jobs/purchase-event-indexer.js";
 import sandboxMonitorJob from "./jobs/sandbox-monitor.job.js";
 import blockchainAnalyticsIndexer from "./jobs/blockchain-analytics.indexer.js";
 import modelEventIndexer from "./jobs/model-event-indexer.js";
+import provenanceEventIndexer from "./jobs/provenance-event-indexer.js";
 
 const startServer = async () => {
     try {
@@ -26,6 +27,7 @@ const startServer = async () => {
         const sandboxMonitorTimer = sandboxMonitorJob.start();
         const analyticsIndexerTimer = blockchainAnalyticsIndexer.start();
         const modelIndexerTimer = modelEventIndexer.start();
+        const provenanceIndexerTimer = provenanceEventIndexer.start();
 
         const shutdown = (signal) => {
             logger.info(`${signal} received. Shutting down server...`);
@@ -37,6 +39,7 @@ const startServer = async () => {
                 if (sandboxMonitorTimer) clearInterval(sandboxMonitorTimer);
                 if (analyticsIndexerTimer) clearInterval(analyticsIndexerTimer);
                 if (modelIndexerTimer) clearInterval(modelIndexerTimer);
+                if (provenanceIndexerTimer) clearInterval(provenanceIndexerTimer);
                 logger.info("Server closed successfully.");
                 process.exit(0);
             });

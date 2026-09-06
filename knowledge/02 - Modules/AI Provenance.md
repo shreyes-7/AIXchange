@@ -4,25 +4,31 @@
 
 The **AI Provenance** module is designed to provide immutable traceability and lineage tracking for artificial intelligence datasets, fine-tuned model checkpoints, and derived data assets.
 
-> [!WARNING]
-> **Implementation State: Planned / Not Implemented**
-> AI Provenance is documented as a core project goal in `README.md` and scheduled for Phase 9. No dedicated provenance smart contracts, graph database pipelines, or client views exist in the repository currently.
+> [!NOTE]
+> **Implementation State: Completed (Phase 9)**
+> AI Provenance is fully implemented across the smart contract layer (`ProvenanceRegistry.sol`), backend architecture (`provenance.service.js`, `provenance.controller.js`, `provenanceBlockchain.service.js`, `provenance.repository.js`), MongoDB projections, background event indexing (`provenance-event-indexer.js`), and live E2E integration test suites.
 
 ---
 
-## Existing Codebase References & Foundation
+## Architecture & Implementation
 
-While a standalone provenance engine has not yet been built, fundamental provenance primitives are implemented in existing smart contracts:
-- **`DatasetRegistry.sol`**:
-  - Immutably records dataset creation timestamp (`createdAt`), initial creator (`owner`), and IPFS content hash (`cid`).
-  - Tracks ownership transfer history via `transferDatasetOwnership()`.
-- **`PurchaseEngine.sol`**:
-  - Emits `RoyaltyTriggered` and `DatasetPurchased` events recording the exact block, timestamp, and addresses involved in asset transactions.
+1. **Smart Contract Layer (`ProvenanceRegistry.sol`)**:
+   - Deployed at `PROVENANCE_REGISTRY_ADDRESS`.
+   - Records immutable lineage relationships linking `datasetId` &rarr; `executionId` &rarr; `modelId` (with `modelVersion`) &rarr; `metadataHash`.
+   - Prevents duplicate registrations for the same relationship using a deterministic composite hash key (`keccak256(datasetId, executionId, modelId, modelVersion)`).
+   - On-chain verification engine (`verifyProvenance` and `verifyProvenanceHash`) allows trustless verification of training parameters and metadata hashes directly on Ethereum.
+   - Auditable status management (`setProvenanceStatus`) allows model owners and registrants to toggle active status or deprecate models.
 
----
+2. **Backend Engine (`server/src/`)**:
+   - **Zero-Custody Transaction Flow**: Prepares client-side transaction calldata (`prepareRegister`, `prepareSetStatus`) so users sign via Web3 wallets.
+   - **Receipt Synchronization**: `POST /api/v1/provenance/sync` confirms transactions, decodes on-chain logs, and upserts MongoDB projections.
+   - **Composite Event Idempotency**: Identity format `chainId:contractAddress:transactionHash:logIndex` prevents race conditions and duplicates during indexer sync or backfill.
+   - **DAG Lineage Graph**: `GET /api/v1/provenance/graph/:modelId` builds complete lineage graphs with nodes (`dataset`, `execution`, `model`, `model_version`) and edges (`USED_IN`, `PRODUCED`, `HAS_VERSION`), preserving multi-dataset links.
+   - **Chronological Audit Timeline**: `GET /api/v1/provenance/timeline/:modelId` aggregates on-chain events and Phase 7 Sandbox execution milestones sorted deterministically.
+   - **Cryptographic Verification**: `POST /api/v1/provenance/:id/verify` queries `ProvenanceRegistry.sol` directly, never returning `verified_on_chain: true` from MongoDB presence alone.
 
-## Planned Architecture (Phase 9 Roadmap)
-
-1. **Dataset-to-Model Lineage**: Cryptographically recording which dataset CIDs and license IDs were used to train or fine-tune specific model weights.
-2. **Derivative Tracking**: Generating on-chain parent-child DAGs when datasets are merged, filtered, or synthetically augmented.
-3. **Audit Trails**: Providing verifiable proof of compliance for AI models trained on legally licensed data.
+3. **Background Indexer (`jobs/provenance-event-indexer.js`)**:
+   - Periodically polls blockchain logs every 15s.
+   - Checkpoints synchronization state via `indexer-state.repository.js`.
+   - Performs historical event backfill from `BLOCKCHAIN_START_BLOCK`.
+   - Swallows transient RPC connection drops to prevent server termination.

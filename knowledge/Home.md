@@ -116,9 +116,9 @@ Welcome to the **AIXchange Knowledge Base**, an Obsidian-compatible documentatio
 
 | Subsystem | Implemented / Verified | Status |
 | :--- | :--- | :---: |
-| **Smart Contracts** | `AIXToken`, `Treasury`, `DatasetRegistry`, `LicenseRegistry`, `PurchaseEngine` (115 unit tests passing) | ✅ **100% Implemented (Phases 3–6)** |
-| **Backend API** | Auth, Wallet, Datasets, Licenses, Purchases, Docker Sandbox Orchestration, Monitoring Jobs (22 unit & E2E tests passing) | ✅ **100% Implemented (Phases 1–7)** |
-| **Database** | MongoDB Models: User, Session, Dataset, License, Purchase, Transaction, IndexerState, Sandbox, SandboxFile, ExecutionEvent | ✅ **Implemented (10 Models)** |
+| **Smart Contracts** | `AIXToken`, `Treasury`, `DatasetRegistry`, `LicenseRegistry`, `PurchaseEngine`, `ModelRegistry`, `ProvenanceRegistry`, `RoyaltyEngine` (279 unit tests passing) | ✅ **100% Implemented (Phases 3–6, 8–10, 12–13)** |
+| **Backend API** | Auth, Wallet, Datasets, Licenses, Purchases, Docker Sandbox, Models, Provenance, Blockchain Analytics (48 tests passing) | ✅ **100% Implemented (Phases 1–9, 11)** |
+| **Database** | MongoDB Models: User, Session, Dataset, License, Purchase, Transaction, IndexerState, Sandbox, SandboxFile, ExecutionEvent, Model, Provenance, BlockchainEvent, BlockchainGasTx | ✅ **Implemented (14 Models)** |
 | **Frontend Client** | React 19 SPA: Marketplace, Dataset Details, Register Wizard, Wallet Testbed, Ethers v6 services | ✅ **Implemented (Phases 2–6)** |
 | **Sandbox SDK** | `@aixchange/sandbox` SDK, WorkspaceLayout, stageWorkspaceFiles, SandboxClient (10 unit tests passing) | ✅ **100% Implemented (Phase 7)** |
 | **Python AI Services** | FastAPI AI Execution Substrate, PyTorchTrainer, ModelExporter (.safetensors), Validator, Decoupled Inference, JupyterLab (22 tests passing) | ✅ **100% Implemented (Phase 7)** |

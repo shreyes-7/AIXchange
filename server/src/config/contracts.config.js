@@ -60,12 +60,16 @@ export const getActiveContractSources = (customEnv = env) => {
 
     const addIfConfigured = (name, address, abiKey) => {
         if (address && ethers.isAddress(address)) {
+            const iface = new ethers.Interface(CONTRACT_ABIS[abiKey]);
+            const eventNames = iface.fragments
+                .filter((f) => f.type === "event")
+                .map((f) => f.name);
             sources.push({
                 name,
                 contractName: name,
                 address: ethers.getAddress(address),
-                interface: new ethers.Interface(CONTRACT_ABIS[abiKey]),
-                events: Object.keys(new ethers.Interface(CONTRACT_ABIS[abiKey]).events)
+                interface: iface,
+                events: eventNames,
             });
         }
     };

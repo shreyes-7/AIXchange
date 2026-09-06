@@ -196,6 +196,58 @@ const executionEventSchema = new mongoose.Schema({
   message: { type: String, default: "" },
   data: { type: mongoose.Schema.Types.Mixed, default: {} },
   timestamp: { type: Date, default: Date.now, index: true },
+}, { timestamps: true });## 7. `model.model.js` (`Model`) — Phase 8
+
+```javascript
+const modelSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true, unique: true, index: true },
+  ownerAddress: { type: String, required: true, lowercase: true, index: true },
+  description: { type: String, trim: true, default: "" },
+  framework: { type: String, default: "pytorch" },
+  blockchainModelId: { type: Number, index: true, sparse: true },
+  currentVersion: { type: Number, default: 1 },
+  active: { type: Boolean, default: true, index: true },
+  versions: [{
+    version: { type: Number, required: true },
+    metadataURI: { type: String, required: true },
+    modelHash: { type: String, required: true },
+    releasedAt: { type: Date, default: Date.now },
+  }],
 }, { timestamps: true });
+```
+
+---
+
+## 8. `provenance.model.js` (`Provenance`) — Phase 9
+
+```javascript
+const provenanceSchema = new mongoose.Schema({
+  provenanceId: { type: Number, unique: true, sparse: true, index: true },
+  datasetId: { type: Number, required: true, index: true },
+  modelId: { type: Number, required: true, index: true },
+  modelVersion: { type: Number, required: true, min: 1 },
+  executionId: { type: String, required: true, trim: true, index: true },
+  metadataHash: { type: String, required: true, lowercase: true },
+  registrant: { type: String, required: true, lowercase: true, index: true },
+  createdAtTimestamp: { type: Number, required: true },
+  active: { type: Boolean, default: true, index: true },
+  blockchain: {
+    chainId: { type: Number, required: true },
+    contractAddress: { type: String, required: true, lowercase: true },
+    transactionHash: { type: String, required: true, lowercase: true },
+    blockNumber: { type: Number, index: true },
+    transactionIndex: { type: Number, default: 0 },
+    logIndex: { type: Number, required: true },
+    eventIdentity: { type: String, unique: true, sparse: true, index: true },
+    state: { type: String, enum: ["CONFIRMED", "PENDING", "FAILED"], default: "CONFIRMED" },
+  },
+  indexedAt: { type: Date, default: Date.now },
+}, { timestamps: true });
+
+// Compound unique lineage index
+provenanceSchema.index(
+  { datasetId: 1, executionId: 1, modelId: 1, modelVersion: 1 },
+  { unique: true }
+);
 ```
 

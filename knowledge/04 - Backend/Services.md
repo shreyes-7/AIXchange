@@ -50,3 +50,11 @@ The Service layer in `server/src/services/` encapsulates core application busine
 ### 13. `monitoring.service.js`
 - Synchronizes sandbox execution states (`RUNNING` -> `COMPLETED`, `FAILED`, `TIMEOUT`), updates epoch metrics and best validation scores, records model artifact paths and SHA-256 hashes, and handles batch synchronization for active executions.
 
+### 14. `model.service.js` & `modelBlockchain.service.js` (Phase 8)
+- `model.service.js`: Manages off-chain model documents, version history, local artifact path containment guards, SHA-256 weight hash calculations, inference proxying to AI execution substrate, and resolution by on-chain ID or Mongo ID.
+- `modelBlockchain.service.js`: Direct Ethers.js v6 interface with `ModelRegistry.sol`. Handles zero-custody transaction preparation (`prepareRegister`, `prepareAddVersion`, `prepareSetStatus`, `prepareTransferOwnership`), receipt validation, event log parsing, and on-chain hash verification (`verifyModelHash`).
+
+### 15. `provenance.service.js` & `provenanceBlockchain.service.js` (Phase 9)
+- `provenance.service.js`: Orchestrates dataset-to-model lineage tracking, DAG lineage graph construction (nodes for datasets, executions, models, and model versions; edges for `USED_IN`, `PRODUCED`, `HAS_VERSION`), chronological audit trail timeline synthesis, cryptographic verification against smart contracts, and graceful optional enrichment.
+- `provenanceBlockchain.service.js`: Direct Ethers.js v6 interface with `ProvenanceRegistry.sol`. Handles transaction preparation (`prepareRegister`, `prepareSetStatus`), receipt confirmation, canonical timestamp normalization (`uint256 createdAt` to Date and timestamp), and on-chain verification queries (`verifyProvenance`, `verifyProvenanceHash`, `isProvenanceActive`).
+

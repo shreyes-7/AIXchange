@@ -74,7 +74,43 @@ This document catalogs all verified REST endpoints implemented in the Express ba
 
 ---
 
-## 7. Sandboxes & AI Execution (`/api/v1/sandboxes`)
+## 7. Model Marketplace & Registry (`/api/v1/models`) — Phase 8
+
+| Method | Endpoint | Description | Auth Required | File |
+| :--- | :--- | :--- | :---: | :--- |
+| `POST` | `/api/v1/models` | Prepare model registration calldata or sync | JWT + Wallet | `model.route.js` |
+| `POST` | `/api/v1/models/sync` | Confirm & sync transaction receipt | JWT + Wallet | `model.route.js` |
+| `GET` | `/api/v1/models` | Query models with pagination, search, filters | None | `model.route.js` |
+| `GET` | `/api/v1/models/:id` | Fetch model by on-chain ID or Mongo ID | None | `model.route.js` |
+| `POST` | `/api/v1/models/:id/versions`| Prepare addModelVersion calldata | JWT + Wallet (Owner) | `model.route.js` |
+| `GET` | `/api/v1/models/:id/versions/:version` | Fetch specific version details | None | `model.route.js` |
+| `POST` | `/api/v1/models/:id/verify-hash` | Verify SHA-256 model weights on-chain | None | `model.route.js` |
+| `POST` | `/api/v1/models/:id/status` | Prepare toggle active status calldata | JWT + Wallet (Owner) | `model.route.js` |
+| `POST` | `/api/v1/models/:id/transfer`| Prepare ownership transfer calldata | JWT + Wallet (Owner) | `model.route.js` |
+
+---
+
+## 8. Provenance Engine (`/api/v1/provenance`) — Phase 9
+
+| Method | Endpoint | Description | Auth Required | File |
+| :--- | :--- | :--- | :---: | :--- |
+| `POST` | `/api/v1/provenance` | Prepare provenance registration calldata | JWT + Wallet | `provenance.route.js` |
+| `POST` | `/api/v1/provenance/sync` | Confirm & synchronize transaction receipt | JWT + Wallet | `provenance.route.js` |
+| `GET` | `/api/v1/provenance/:id` | Fetch provenance by on-chain ID or Mongo ID | None | `provenance.route.js` |
+| `GET` | `/api/v1/provenance/dataset/:datasetId` | List provenance records derived from dataset | None | `provenance.route.js` |
+| `GET` | `/api/v1/provenance/execution/:executionId`| List provenance records for execution run | None | `provenance.route.js` |
+| `GET` | `/api/v1/provenance/model/:modelId` | List all provenance records for a model | None | `provenance.route.js` |
+| `GET` | `/api/v1/provenance/model/:modelId/version/:version` | List provenance for a specific model version | None | `provenance.route.js` |
+| `GET` | `/api/v1/provenance/graph/:modelId` | Build full DAG lineage graph (nodes & edges) | None | `provenance.route.js` |
+| `GET` | `/api/v1/provenance/timeline/:modelId` | Build chronological audit trail (on-chain + execution) | None | `provenance.route.js` |
+| `POST` | `/api/v1/provenance/:id/verify` | Verify lineage parameters on-chain | None | `provenance.route.js` |
+| `GET` | `/api/v1/provenance/:id/verify` | Query on-chain record and verification status | None | `provenance.route.js` |
+| `POST` | `/api/v1/provenance/:id/verify-hash` | Verify metadata hash against contract | None | `provenance.route.js` |
+| `POST` | `/api/v1/provenance/:id/status` | Prepare status toggle calldata (revoke/deprecate) | JWT + Wallet | `provenance.route.js` |
+
+---
+
+## 9. Sandboxes & AI Execution (`/api/v1/sandboxes`)
 
 | Method | Endpoint | Description | Auth Required | File |
 | :--- | :--- | :--- | :---: | :--- |

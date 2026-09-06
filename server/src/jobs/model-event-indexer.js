@@ -120,7 +120,14 @@ class ModelEventIndexer {
                             blockchain: txMetadata,
                         };
 
-                        await modelRepository.saveConfirmed(modelId, payload);
+                        const { blockchain: bcData, ...otherFields } = payload;
+                        await modelRepository.saveConfirmed(modelId, {
+                            ...otherFields,
+                            "blockchain.contractAddress": bcData.contractAddress,
+                            "blockchain.transactionHash": bcData.transactionHash,
+                            "blockchain.blockNumber": bcData.blockNumber,
+                            "blockchain.chainId": bcData.chainId,
+                        });
                         logger.info("MODEL_REGISTERED_EVENT_INDEXED", {
                             modelId,
                             ownerWallet,

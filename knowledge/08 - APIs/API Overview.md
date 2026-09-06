@@ -40,4 +40,7 @@ The AIXchange REST API is served on `http://localhost:5000/api/v1` by the Expres
 - [[Marketplace API|/api/v1/licenses]]: License definitions, rights, and pricing.
 - [[Marketplace API|/api/v1/purchases]]: Purchase transaction receipts and access entitlements.
 - [[Blockchain API|/api/v1/token]]: AIX token balances, supply stats, and local test faucet.
+- [[Model Marketplace|/api/v1/models]]: Model registration, versioning, SHA-256 weight verification, and AI inference proxy.
+- [[AI Provenance|/api/v1/provenance]]: Dataset-to-model lineage, DAG graph, timeline, and on-chain verification.
+- [[AI Overview|/api/v1/sandboxes]]: Docker sandbox execution lifecycle, file staging, training logs, and Jupyter sessions.
 - [[API Overview|/api/v1/health]]: Server health check and uptime.

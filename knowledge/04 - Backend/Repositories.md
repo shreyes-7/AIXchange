@@ -43,3 +43,23 @@ Repositories in `server/src/repositories/` isolate direct database queries and m
 ### 6. `indexer-state.repository.js`
 - `getLastProcessedBlock(indexerName)`: Query starting block for indexer sync.
 - `updateLastProcessedBlock(indexerName, blockNumber)`: Save checkpoint block.
+
+### 7. `model.repository.js` (Phase 8)
+- `list(filter, options)`: Queries models with safe pagination, sorting, and public projections.
+- `findById(id)`: Fetches model document by MongoDB ObjectId.
+- `findByBlockchainId(modelId)`: Fetches model by on-chain integer ID.
+- `saveConfirmed(modelId, payload)`: Atomically updates model state to `CONFIRMED` upon blockchain receipt verification.
+- `addVersion(modelId, versionData)`: Pushes new version entry, updates currentVersion counter, and records model SHA-256 weight hash.
+- `updateStatus(modelId, active)`: Toggles active status.
+- `updateOwnership(modelId, newOwner)`: Updates model owner wallet address.
+
+### 8. `provenance.repository.js` (Phase 9)
+- `findByProvenanceId(provenanceId)`: Queries provenance record strictly by on-chain integer identifier.
+- `findByMongoId(id)`: Queries provenance record strictly by MongoDB ObjectId.
+- `findByKey(datasetId, executionId, modelId, modelVersion)`: Queries atomic lineage combination.
+- `listByDataset(datasetId, options)`: Returns paginated provenance records derived from a dataset.
+- `listByExecution(executionId, options)`: Returns paginated records for a training execution run.
+- `listByModel(modelId, options)`: Returns paginated records associated with a model.
+- `listByModelVersion(modelId, modelVersion, options)`: Returns records for a specific version.
+- `createOrUpsertProjection(data)`: Idempotently upserts provenance projection document keyed by `provenanceId` or unique lineage key.
+- `updateStatus(provenanceId, active, extra)`: Updates active flag and records transaction receipt metadata.

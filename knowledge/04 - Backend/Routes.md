@@ -55,7 +55,30 @@ router.use('/health', healthRoutes);
 - `GET /receipt/:id`: `authenticate -> purchaseController.getReceipt`
 - `GET /check-access/:datasetId`: `authenticate -> purchaseController.checkAccess`
 
-### 7. `token.route.js`
-- `GET /stats`: `tokenController.getTokenStats`
-- `GET /balance/:address`: `tokenController.getBalance`
+### 8. `model.route.js` (Phase 8)
+- `POST /`: `authenticate -> checkRole -> modelController.create`
+- `POST /sync`: `authenticate -> modelController.sync`
+- `GET /`: `modelController.list`
+- `GET /:id`: `modelController.get`
+- `POST /:id/versions`: `authenticate -> checkRole -> modelController.addVersion`
+- `GET /:id/versions/:version`: `modelController.getVersion`
+- `POST /:id/verify-hash`: `validate(verifyHashSchema) -> modelController.verifyHash`
+- `POST /:id/status`: `authenticate -> checkRole -> modelController.setStatus`
+- `POST /:id/transfer`: `authenticate -> checkRole -> modelController.transferOwnership`
+- `POST /:id/infer`: `authenticate -> validate(inferSchema) -> modelController.infer`
+
+### 9. `provenance.route.js` (Phase 9)
+- `POST /`: `authenticate -> checkRole -> validate(registerProvenanceSchema) -> provenanceController.create`
+- `POST /sync`: `authenticate -> validate(syncProvenanceSchema) -> provenanceController.sync`
+- `GET /:id`: `provenanceController.get`
+- `GET /dataset/:datasetId`: `provenanceController.listByDataset`
+- `GET /execution/:executionId`: `provenanceController.listByExecution`
+- `GET /model/:modelId`: `provenanceController.listByModel`
+- `GET /model/:modelId/version/:version`: `provenanceController.listByModelVersion`
+- `GET /graph/:modelId`: `provenanceController.getGraph`
+- `GET /timeline/:modelId`: `provenanceController.getTimeline`
+- `POST /:id/verify`: `validate(verifyProvenanceSchema) -> provenanceController.verify`
+- `GET /:id/verify`: `provenanceController.verify`
+- `POST /:id/verify-hash`: `validate(verifyHashSchema) -> provenanceController.verifyHash`
+- `POST /:id/status`: `authenticate -> checkRole -> validate(setStatusSchema) -> provenanceController.setStatus`
 - `POST /faucet`: `validate(faucetSchema) -> tokenController.requestFaucet`

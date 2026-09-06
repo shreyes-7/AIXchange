@@ -38,11 +38,17 @@ server/src/
 │   ├── dataset.controller.js       # Dataset CRUD handlers
 │   ├── license.controller.js       # License handlers
 │   ├── purchase.controller.js      # Purchase handlers
-│   └── token.controller.js         # Token stats & faucet handlers
+│   ├── token.controller.js         # Token stats & faucet handlers
+│   ├── model.controller.js         # Model registry & marketplace handlers (Phase 8)
+│   └── provenance.controller.js    # Provenance engine & verification handlers (Phase 9)
 ├── jobs/
 │   ├── license-event-indexer.js    # Syncs LicenseRegistry events to MongoDB
 │   ├── purchase-event-indexer.js   # Syncs PurchaseEngine events to MongoDB
-│   └── token-event-indexer.js      # Syncs AIXToken transfers to MongoDB
+│   ├── token-event-indexer.js      # Syncs AIXToken transfers to MongoDB
+│   ├── model-event-indexer.js      # Syncs ModelRegistry events to MongoDB (Phase 8)
+│   ├── provenance-event-indexer.js # Syncs ProvenanceRegistry events to MongoDB (Phase 9)
+│   ├── blockchain-analytics.indexer.js # Aggregates cross-contract events & gas (Phase 11)
+│   └── sandbox-monitor.job.js      # Monitors Docker sandbox executions (Phase 7)
 ├── middlewares/
 │   ├── auth.middleware.js          # JWT authentication middleware
 │   ├── role.middleware.js          # Role-based authorization middleware
@@ -58,14 +64,21 @@ server/src/
 │   ├── license.model.js            # Off-chain license terms
 │   ├── purchase.model.js           # Purchase records
 │   ├── transaction.model.js        # Transaction history
-│   └── indexer-state.model.js      # Blockchain block cursors
+│   ├── indexer-state.model.js      # Blockchain block cursors
+│   ├── sandbox.model.js            # Sandbox training runs (Phase 7)
+│   ├── sandbox-file.model.js       # Staged sandbox files (Phase 7)
+│   ├── execution-event.model.js    # Sandbox lifecycle events (Phase 7)
+│   ├── model.model.js              # Model registry documents & versions (Phase 8)
+│   └── provenance.model.js         # Provenance lineage records (Phase 9)
 ├── repositories/
 │   ├── user.repository.js          # Database queries for users
 │   ├── session.repository.js       # Database queries for sessions
 │   ├── license.repository.js       # Database queries for licenses
 │   ├── purchase.repository.js      # Database queries for purchases
 │   ├── transaction.repository.js   # Database queries for transactions
-│   └── indexer-state.repository.js # Database queries for indexers
+│   ├── indexer-state.repository.js # Database queries for indexers
+│   ├── model.repository.js          # Database queries for models (Phase 8)
+│   └── provenance.repository.js     # Database queries for provenance (Phase 9)
 ├── routes/
 │   ├── index.js                    # Master router
 │   ├── auth.routes.js              # Auth endpoints
@@ -76,7 +89,11 @@ server/src/
 │   ├── token.route.js              # Token endpoints
 │   ├── treasury.route.js           # Treasury endpoints
 │   ├── dashboard.route.js          # Dashboard analytics endpoints
-│   └── health.routes.js            # Server health endpoints
+│   ├── health.routes.js            # Server health endpoints
+│   ├── model.route.js              # Model registry endpoints (Phase 8)
+│   ├── provenance.route.js         # Provenance engine endpoints (Phase 9)
+│   ├── sandbox.route.js            # AI sandbox endpoints (Phase 7)
+│   └── blockchain-analytics.routes.js # Analytics endpoints (Phase 11)
 ├── services/
 │   ├── auth.service.js             # User authentication logic
 │   ├── wallet.service.js           # Nonce & signature verification
@@ -88,7 +105,16 @@ server/src/
 │   ├── access-control.service.js   # Access entitlement checking
 │   ├── token.service.js            # Token stats & transfers
 │   ├── download.service.js         # Protected asset downloads
-│   └── email.service.js            # Nodemailer integration
+│   ├── email.service.js            # Nodemailer integration
+│   ├── sandbox.service.js          # Docker sandbox orchestration (Phase 7)
+│   ├── aiExecution.service.js      # AI execution client & inference proxy (Phase 7)
+│   ├── fileUpload.service.js       # Secure file upload & staging (Phase 7)
+│   ├── trainingLog.service.js      # Structured training log formatter (Phase 7)
+│   ├── monitoring.service.js       # Sandbox state synchronization (Phase 7)
+│   ├── model.service.js            # Model lifecycle & verification (Phase 8)
+│   ├── modelBlockchain.service.js  # Blockchain model contract adapter (Phase 8)
+│   ├── provenance.service.js       # Provenance DAG & verification (Phase 9)
+│   └── provenanceBlockchain.service.js # Provenance contract adapter (Phase 9)
 └── utils/
     ├── ApiError.js                 # Custom error class
     ├── ApiResponse.js              # Standardized API response format

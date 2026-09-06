@@ -4,39 +4,27 @@
 
 The **Model Marketplace** is a planned decentralized exchange module for browsing, licensing, and trading trained artificial intelligence and machine learning models.
 
-> [!WARNING]
-> **Implementation State: Placeholder / Stub**
-> The model marketplace smart contract interface exists as a placeholder skeleton in `blockchain/contracts/registry/ModelRegistry.sol` (88 bytes) and `blockchain/contracts/interfaces/IModelRegistry.sol` (178 bytes). Frontend model catalog views and backend model APIs have not yet been implemented in the codebase.
+> [!NOTE]
+> **Implementation State: Completed (Phase 8)**
+> The Model Marketplace & Registry is fully implemented across the smart contract layer (`ModelRegistry.sol`), backend architecture (`model.service.js`, `model.controller.js`, `modelBlockchain.service.js`, `model.repository.js`), MongoDB collections, background event indexing (`model-event-indexer.js`), AI execution inference proxying, and live integration test suites.
 
 ---
 
-## Existing Codebase References
+## Architecture & Implementation
 
-- `blockchain/contracts/registry/ModelRegistry.sol`:
-  ```solidity
-  // SPDX-License-Identifier: MIT
-  pragma solidity ^0.8.28;
+1. **Smart Contract Layer (`ModelRegistry.sol`)**:
+   - Deployed at `MODEL_REGISTRY_ADDRESS`.
+   - Supports model registration (`registerModel`), immutable append-only version history (`addModelVersion`), status management (`setModelStatus`), and ownership transfer (`transferModelOwnership`).
+   - Cryptographic SHA-256 weight hash anchoring (`verifyModelHash`) prevents tampered models.
+   - Enforces unique model names per owner address.
 
-  contract ModelRegistry {
-      // Placeholder for ModelRegistry
-  }
-  ```
-- `blockchain/contracts/interfaces/IModelRegistry.sol`:
-  ```solidity
-  // SPDX-License-Identifier: MIT
-  pragma solidity ^0.8.28;
+2. **Backend Engine (`server/src/`)**:
+   - **Zero-Custody Transaction Flow**: Prepares client-side transaction calldata (`prepareRegister`, `prepareAddVersion`, `prepareSetStatus`, `prepareTransferOwnership`).
+   - **Receipt Synchronization**: `POST /api/v1/models/sync` verifies and synchronizes broadcasted model transactions.
+   - **Model Catalog Queries**: `GET /api/v1/models` supports search, tag filters, sorting, and pagination.
+   - **AI Execution Integration**: `POST /api/v1/models/:id/infer` validates user access, validates containment of local model artifacts, and proxies inference requests to the Phase 7 AI execution substrate (`python-services`).
 
-  interface IModelRegistry {
-      // Placeholder interface for ModelRegistry
-  }
-  ```
-- `blockchain/contracts/libraries/Structs.sol`:
-  `AssetType` enum defines `MODEL` as an asset identifier alongside `DATASET`.
-
----
-
-## Planned Architecture & Responsibilities (Phase 8 Roadmap)
-
-1. **Model Weights & Checkpoints Storage**: Anchoring safetensors, GGUF, or ONNX model files to IPFS.
-2. **Model Evaluation & Benchmarking**: Running automated benchmark suites (MMLU, HumanEval, etc.) via Python services before listing.
-3. **Inference & Fine-Tuning Licensing**: Extending `LicenseRegistry.sol` to grant specific permissions (`canInfer`, `canTrain`, `canCommercialUse`) for AI models.
+3. **Background Indexer (`jobs/model-event-indexer.js`)**:
+   - Periodically polls `ModelRegistry` event logs every 15s.
+   - Checkpoints progress via `indexer-state.repository.js`.
+   - Enforces idempotency on replayed events.

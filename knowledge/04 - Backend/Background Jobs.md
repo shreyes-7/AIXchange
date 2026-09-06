@@ -35,9 +35,27 @@ The AIXchange backend runs persistent background event indexers in `server/src/j
   - `Transfer(from, to, value)`: Tracks token velocity, burns, and large balance transfers.
   - `Approval(owner, spender, value)`: Tracks spending approvals.
 
+### 4. `model-event-indexer.js` (Phase 8)
+- **Target Contract**: `ModelRegistry.sol`
+- **Tracked Events**:
+  - `ModelRegistered`: Upserts model document with on-chain model ID, name, creator, metadata URI, and initial version.
+  - `ModelVersionAdded`: Pushes new version entry, updates current version, and records model SHA-256 weight hash.
+  - `ModelStatusChanged`: Toggles active status off-chain.
+  - `ModelOwnershipTransferred`: Updates model owner address.
+
+### 5. `provenance-event-indexer.js` (Phase 9)
+- **Target Contract**: `ProvenanceRegistry.sol`
+- **Tracked Events**:
+  - `ProvenanceRegistered`: Upserts provenance projection document with deterministic composite event identity (`chainId:contractAddress:transactionHash:logIndex`), canonical timestamp, and indexed lineage links (`datasetId`, `modelId`, `modelVersion`, `executionId`).
+  - `ProvenanceStatusChanged`: Updates active flag on provenance record.
+
+### 6. `blockchain-analytics.indexer.js` (Phase 11)
+- **Target Contracts**: Unified polling for `AIXToken`, `Treasury`, `DatasetRegistry`, `LicenseRegistry`, `PurchaseEngine`, `ModelRegistry`, `ProvenanceRegistry`, `RoyaltyEngine`.
+- **Tracked Data**: Captures cross-contract normalized event logs, gas usage, transaction fees, and ETH values into `blockchain_events` and `blockchain_gas_txes`.
+
 ---
 
-### 4. `sandbox-monitor.job.js`
+### 7. `sandbox-monitor.job.js` (Phase 7)
 - **Purpose**: Polling and synchronization background worker for active Docker Sandbox training executions.
 - **Interval**: Configurable via `SANDBOX_MONITOR_INTERVAL_MS` (default `10000ms`).
 - **Actions**:
