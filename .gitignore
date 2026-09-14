@@ -64,5 +64,6 @@ docker/**/data/
 # Local architectural files (not tracked in repository)
 ARCHITECT_RULES.md
 TASKS.md
+REVIEW_TASKS.md
 
 .agents/

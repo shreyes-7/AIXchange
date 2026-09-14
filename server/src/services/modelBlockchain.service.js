@@ -58,7 +58,7 @@ class ModelBlockchainService {
         const address =
             env.MODEL_REGISTRY_ADDRESS ||
             (Number(env.BLOCKCHAIN_CHAIN_ID) === 31337
-                ? "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+                ? "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
                 : null);
 
         if (!address || !ethers.isAddress(address)) {
