@@ -29,13 +29,23 @@ export function initializeContract(contractAddress, runner) {
   return cachedContract;
 }
 
+export function getAixTokenAddress() {
+  return import.meta.env.VITE_AIX_TOKEN_ADDRESS || "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+}
+
+export function getAixTokenContract(runner) {
+  const address = getAixTokenAddress();
+  const activeRunner = runner || new ethers.JsonRpcProvider(import.meta.env.VITE_BLOCKCHAIN_RPC_URL || "http://127.0.0.1:8545");
+  return new ethers.Contract(address, AIX_TOKEN_ABI, activeRunner);
+}
+
 /**
  * Gets the current active AIX Token contract instance.
  * @returns {ethers.Contract} Active contract instance.
  */
 export function getContract() {
   if (!cachedContract) {
-    throw new Error("AIX Token service contract is not initialized. Call initializeContract() first.");
+    cachedContract = getAixTokenContract();
   }
   return cachedContract;
 }
