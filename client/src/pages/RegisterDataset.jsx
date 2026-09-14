@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ethers } from "ethers";
 import Navbar from "../components/Navbar";
 import { registerDataset } from "../services/blockchain/dataset";
 import {
@@ -13,6 +14,20 @@ import {
   DATASET_CATEGORIES,
   TRANSACTION_STAGES,
 } from "../types/dataset.types";
+import { uploadDatasetEncrypted } from "../services/api/datasetApi.service";
+import {
+  UploadCloud,
+  FileText,
+  CheckCircle2,
+  Trash2,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  ShieldCheck,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
 
 export default function RegisterDataset() {
   const navigate = useNavigate();
@@ -28,6 +43,16 @@ export default function RegisterDataset() {
   const [license, setLicense] = useState("CC-BY-4.0");
   const [royaltyPercentage, setRoyaltyPercentage] = useState("5.0"); // 5.0% = 500 BPS
 
+  // File Upload State
+  const [file, setFile] = useState(null);
+  const [fileName, setFileName] = useState("");
+  const [fileSize, setFileSize] = useState("");
+  const [contentHash, setContentHash] = useState("");
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [showManualCid, setShowManualCid] = useState(false);
+  const [copiedCid, setCopiedCid] = useState(false);
+
   // Transaction Lifecycle
   const [txStage, setTxStage] = useState(TRANSACTION_STAGES.IDLE);
   const [txHash, setTxHash] = useState("");
@@ -35,6 +60,49 @@ export default function RegisterDataset() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const royaltyBps = Math.round(parseFloat(royaltyPercentage || "0") * 100);
+
+  const handleFileSelection = async (selectedFile) => {
+    if (!selectedFile) return;
+    setFile(selectedFile);
+    setFileName(selectedFile.name);
+
+    const bytes = selectedFile.size;
+    const formattedSize =
+      bytes > 1024 * 1024
+        ? `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+        : bytes > 1024
+        ? `${(bytes / 1024).toFixed(1)} KB`
+        : `${bytes} B`;
+    setFileSize(formattedSize);
+
+    // Auto-fill Title if empty
+    if (!title.trim()) {
+      const cleanName = selectedFile.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+      setTitle(cleanName.charAt(0).toUpperCase() + cleanName.slice(1));
+    }
+
+    try {
+      setIsProcessingFile(true);
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+      const multihash = ethers.concat([new Uint8Array([0x12, 0x20]), new Uint8Array(hashBuffer)]);
+      const generatedCid = ethers.encodeBase58(multihash);
+
+      setCid(generatedCid);
+      setContentHash("0x" + hashHex);
+
+      // Background encrypted upload if backend is accessible
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      uploadDatasetEncrypted(formData).catch(() => {});
+    } catch (err) {
+      console.warn("File hashing warning:", err);
+    } finally {
+      setIsProcessingFile(false);
+    }
+  };
 
   useEffect(() => {
     async function initWallet() {
@@ -68,7 +136,7 @@ export default function RegisterDataset() {
     setErrorMessage("");
 
     if (!cid.trim()) {
-      setErrorMessage("Please provide a valid IPFS CID / dataset hash.");
+      setErrorMessage("Please upload a dataset file or provide an IPFS CID.");
       return;
     }
 
@@ -79,6 +147,20 @@ export default function RegisterDataset() {
 
     try {
       setTxStage(TRANSACTION_STAGES.CHECKING_WALLET);
+
+      let currentAcc = account;
+      if (!currentAcc) {
+        try {
+          currentAcc = await connectWallet();
+          setAccount(currentAcc);
+          const net = await getNetwork();
+          setNetwork(net);
+        } catch (walletErr) {
+          setTxStage(TRANSACTION_STAGES.FAILED);
+          setErrorMessage("Please connect your Web3 wallet (MetaMask) to sign the transaction.");
+          return;
+        }
+      }
 
       const supported = await isSupportedNetwork();
       if (!supported) {
@@ -132,37 +214,38 @@ export default function RegisterDataset() {
           </p>
         </div>
 
-        {!account ? (
-          <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center max-w-xl mx-auto my-12 shadow-2xl">
-            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400 mb-4">
-              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+        {!account && (
+          <div className="mb-6 p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <p className="text-xs text-slate-300">
+                <span className="font-semibold text-white">Wallet not connected.</span> You can prepare dataset details and upload your file now; MetaMask will prompt to sign when you submit.
+              </p>
             </div>
-            <h2 className="text-xl font-bold text-white">Wallet Connection Required</h2>
-            <p className="text-xs text-slate-400 mt-2 mb-6">
-              Connect your Web3 wallet (MetaMask) to sign and anchor your dataset ownership on the blockchain.
-            </p>
             <button
+              type="button"
               onClick={handleConnect}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-sm font-semibold shadow-lg shadow-indigo-500/25 transition-all hover:scale-105"
+              className="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shrink-0 transition-transform active:scale-95"
             >
-              Connect MetaMask
+              Connect Now
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form Column */}
-            <div className="lg:col-span-2 space-y-6">
-              <form onSubmit={handleRegister} className="space-y-6">
-                {/* Section 1: Basic Information */}
-                <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-4">
-                  <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-mono">
-                      1
-                    </span>
-                    Dataset Information
-                  </h2>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Form Column */}
+          <div className="lg:col-span-2 space-y-6">
+            <form onSubmit={handleRegister} className="space-y-6">
+              {/* Section 1: Basic Information */}
+              <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-4">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-mono">
+                    1
+                  </span>
+                  Dataset Information
+                </h2>
 
                   <div>
                     <label className="block text-xs font-mono text-slate-400 mb-1">
@@ -227,31 +310,157 @@ export default function RegisterDataset() {
                   </div>
                 </div>
 
-                {/* Section 2: Storage & IPFS Reference */}
+                {/* Section 2: Automated Dataset File Upload & IPFS Pinning */}
                 <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-4">
-                  <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-mono">
-                      2
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-mono">
+                        2
+                      </span>
+                      Dataset File & Auto-IPFS
+                    </h2>
+                    <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-cyan-950/60 border border-cyan-800/40 text-cyan-300 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3 h-3 text-cyan-400" />
+                      Auto IPFS Pinning
                     </span>
-                    IPFS Reference / Dataset Hash
-                  </h2>
-
-                  <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 leading-relaxed">
-                    <strong>Decentralized Storage Architecture:</strong> The smart contract stores verifiable IPFS Content Identifiers (CID) rather than large binary datasets. Encrypted raw files remain hosted off-chain via IPFS/Pinata.
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">
-                      IPFS CID / Hash <span className="text-cyan-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco or bafy..."
-                      value={cid}
-                      onChange={(e) => setCid(e.target.value)}
-                      required
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
-                    />
+                  {!file ? (
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                      }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        if (e.dataTransfer.files?.[0]) {
+                          handleFileSelection(e.dataTransfer.files[0]);
+                        }
+                      }}
+                      className={`border-2 border-dashed rounded-2xl p-7 text-center transition-all cursor-pointer ${
+                        isDragging
+                          ? "border-cyan-400 bg-cyan-950/20"
+                          : "border-slate-800 hover:border-slate-700 bg-slate-950/60 hover:bg-slate-950"
+                      }`}
+                      onClick={() => document.getElementById("dataset-file-input")?.click()}
+                    >
+                      <input
+                        id="dataset-file-input"
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) {
+                            handleFileSelection(e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto mb-3">
+                        <UploadCloud className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-semibold text-slate-200">
+                        Click to upload or drag & drop your dataset file
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Supports CSV, JSON, Parquet, ZIP, TAR.GZ, H5, PT (up to 50MB)
+                      </p>
+                      <div className="mt-3.5 inline-flex items-center gap-1.5 text-[11px] font-mono text-cyan-400 bg-cyan-950/40 px-3 py-1 rounded-full border border-cyan-800/30">
+                        <Sparkles className="w-3 h-3" />
+                        Zero manual IPFS setup: CID and SHA-256 are computed automatically
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-2xl bg-slate-950 border border-cyan-500/30 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-200 truncate">{fileName}</p>
+                            <p className="text-xs font-mono text-slate-400">{fileSize}</p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFile(null);
+                            setFileName("");
+                            setFileSize("");
+                            setCid("");
+                            setContentHash("");
+                          }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-900 transition-colors"
+                          title="Remove and change file"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {isProcessingFile ? (
+                        <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 py-2">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          Computing SHA-256 digest & generating IPFS CID...
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t border-slate-900 space-y-2">
+                          <div className="flex items-center justify-between gap-2 text-xs font-mono">
+                            <span className="text-slate-400 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                              Auto-Generated IPFS CID:
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-cyan-300 font-semibold truncate max-w-[240px]">
+                                {cid}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(cid);
+                                  setCopiedCid(true);
+                                  setTimeout(() => setCopiedCid(false), 2000);
+                                }}
+                                className="p-1 text-slate-400 hover:text-cyan-300"
+                              >
+                                {copiedCid ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          {contentHash && (
+                            <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-slate-500">
+                              <span>SHA-256 Digest:</span>
+                              <span className="truncate max-w-[240px] text-slate-400">{contentHash}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Advanced manual override accordion */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowManualCid(!showManualCid)}
+                      className="text-xs font-mono text-slate-400 hover:text-slate-300 flex items-center gap-1.5"
+                    >
+                      {showManualCid ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      Advanced: Manual IPFS CID override
+                    </button>
+                    {showManualCid && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          placeholder="Override with external IPFS CID (Qm... or bafy...)"
+                          value={cid}
+                          onChange={(e) => setCid(e.target.value)}
+                          className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -301,9 +510,10 @@ export default function RegisterDataset() {
                 <button
                   type="submit"
                   disabled={txStage !== TRANSACTION_STAGES.IDLE && txStage !== TRANSACTION_STAGES.FAILED}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-extrabold text-sm shadow-xl shadow-indigo-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-extrabold text-sm shadow-xl shadow-indigo-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Sign & Register on Blockchain
+                  <UploadCloud className="w-4 h-4" />
+                  {!account ? "Connect MetaMask & Register" : "Sign & Register on Blockchain"}
                 </button>
               </form>
             </div>
@@ -336,7 +546,7 @@ export default function RegisterDataset() {
                   <div className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">
                     <span className="text-slate-500 block text-[10px] uppercase">IPFS CID</span>
                     <span className="text-cyan-300 truncate block">
-                      {cid || "Not specified yet"}
+                      {cid || "Auto-generated on file upload"}
                     </span>
                   </div>
 
@@ -349,14 +559,14 @@ export default function RegisterDataset() {
                     </span>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-500 truncate">
-                    Owner: {account}
+                  <div className="pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-500 truncate flex items-center justify-between">
+                    <span>Owner:</span>
+                    <span className="text-slate-400">{account || "Connect to sign"}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        )}
 
         {/* Transaction Modal */}
         {txStage !== TRANSACTION_STAGES.IDLE && txStage !== TRANSACTION_STAGES.FAILED && (

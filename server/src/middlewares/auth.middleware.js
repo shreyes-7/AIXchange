@@ -36,4 +36,32 @@ const auth = async (req, res, next) => {
     }
 };
 
+export const optionalAuth = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return next();
+        }
+
+        const token = authHeader.split(" ")[1];
+        const payload = verifyAccessToken(token);
+        const user = await userRepository.findById(payload.userId);
+
+        if (user && user.status !== "SUSPENDED") {
+            req.user = {
+                userId: user._id,
+                role: user.role,
+                status: user.status,
+                email: user.email,
+                wallet: user.wallet,
+            };
+        }
+
+        next();
+    } catch {
+        next();
+    }
+};
+
 export default auth;

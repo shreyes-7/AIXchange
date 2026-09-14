@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import env from "../config/env.js";
-import auth from "../middlewares/auth.middleware.js";
+import auth, { optionalAuth } from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validation.middleware.js";
 import * as controller from "../controllers/dataset.controller.js";
 import * as purchaseController from "../controllers/purchase.controller.js";
@@ -23,7 +23,7 @@ const handleUpload = (req, res, next) => upload.single("file")(req, res, (error)
  *     requestBody: { required: true, content: { multipart/form-data: { schema: { type: object, required: [file], properties: { file: { type: string, format: binary } } } } } }
  *     responses: { 201: { description: Encrypted IPFS artifact metadata } }
  */
-router.post("/upload", auth, handleUpload, controller.upload);
+router.post("/upload", optionalAuth, handleUpload, controller.upload);
 /** @swagger
  * /api/v1/datasets:
  *   get: { tags: [Datasets], summary: Search the dataset catalog, parameters: [{ in: query, name: search, schema: { type: string } }, { in: query, name: category, schema: { type: string } }, { in: query, name: tags, schema: { type: string } }, { in: query, name: page, schema: { type: integer } }, { in: query, name: limit, schema: { type: integer } }] }

@@ -1,6 +1,9 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { ethers } from 'ethers';
 import {
+  isMetaMaskInstalled,
   connectWallet,
   getCurrentAccount,
   getNetwork,
@@ -8,33 +11,84 @@ import {
   removeAccountsChangedListener,
   onChainChanged,
   removeChainChangedListener,
-} from "../services/blockchain/wallet";
+} from '@/services/blockchain/wallet';
+import {
+  connectStart,
+  connectSuccess,
+  disconnectWallet,
+  setChainId,
+} from '@/store/slices/walletSlice';
+import { Cpu, Wallet, Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const location = useLocation();
-  const [account, setAccount] = useState(null);
+  const dispatch = useDispatch();
+  const { address, isConnected, aixBalance } = useSelector((state) => state.wallet);
   const [network, setNetwork] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const fetchAixBalance = async (userAddress) => {
+    try {
+      const rpcUrl = import.meta.env.VITE_BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545';
+      const tokenAddress = import.meta.env.VITE_AIX_TOKEN_ADDRESS || '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      const tokenContract = new ethers.Contract(
+        tokenAddress,
+        ['function balanceOf(address) view returns (uint256)'],
+        provider
+      );
+      const bal = await tokenContract.balanceOf(userAddress);
+      const formatted = ethers.formatUnits(bal, 18);
+      const num = parseFloat(formatted);
+      if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+      if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+      if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+      return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    } catch {
+      return '0';
+    }
+  };
 
   useEffect(() => {
+    if (!isMetaMaskInstalled()) {
+      return;
+    }
+
     async function checkConnected() {
       try {
         const current = await getCurrentAccount();
-        setAccount(current);
         if (current) {
           const net = await getNetwork();
           setNetwork(net);
+          const bal = await fetchAixBalance(current);
+          dispatch(
+            connectSuccess({
+              address: current,
+              chainId: net?.chainId,
+              aixBalance: bal,
+            })
+          );
         }
       } catch (err) {
-        console.warn("Wallet status check error:", err.message);
+        console.warn('Wallet status check warning:', err.message);
       }
     }
     checkConnected();
 
-    const handleAccounts = (accounts) => {
-      setAccount(accounts.length ? accounts[0] : null);
+    const handleAccounts = async (accounts) => {
+      if (accounts.length) {
+        const net = await getNetwork();
+        setNetwork(net);
+        const bal = await fetchAixBalance(accounts[0]);
+        dispatch(connectSuccess({ address: accounts[0], chainId: net?.chainId, aixBalance: bal }));
+      } else {
+        dispatch(disconnectWallet());
+      }
     };
-    const handleChain = () => {
+
+    const handleChain = (chainId) => {
+      dispatch(setChainId(chainId));
       window.location.reload();
     };
 
@@ -45,59 +99,77 @@ export default function Navbar() {
       removeAccountsChangedListener(handleAccounts);
       removeChainChangedListener(handleChain);
     };
-  }, []);
+  }, [dispatch]);
 
   const handleConnect = async () => {
+    if (!isMetaMaskInstalled()) {
+      alert('MetaMask is not installed. Please install MetaMask to connect your Web3 wallet.');
+      return;
+    }
     try {
       setIsConnecting(true);
+      dispatch(connectStart());
       const acc = await connectWallet();
-      setAccount(acc);
       const net = await getNetwork();
       setNetwork(net);
+      const bal = await fetchAixBalance(acc);
+      dispatch(
+        connectSuccess({
+          address: acc,
+          chainId: net?.chainId,
+          aixBalance: bal,
+        })
+      );
     } catch (err) {
-      console.error("Connect failed:", err);
+      console.error('Wallet connect failed:', err);
     } finally {
       setIsConnecting(false);
     }
   };
 
   const navLinks = [
-    { to: "/datasets", label: "Dataset Marketplace" },
-    { to: "/datasets/register", label: "Register Dataset" },
-    { to: "/wallet-test", label: "Wallet Test Dashboard" },
+    { to: '/', label: 'Overview' },
+    { to: '/datasets', label: 'Datasets' },
+    { to: '/models', label: 'Models' },
+    { to: '/sandboxes', label: 'Sandboxes' },
+    { to: '/provenance', label: 'Lineage DAG' },
+    { to: '/royalties', label: 'Royalties' },
+    { to: '/wallet-test', label: 'Dev Sandbox' },
   ];
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-900/80 border-b border-slate-800">
+    <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link to="/datasets" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              AI
+        {/* Brand & Desktop Nav */}
+        <div className="flex items-center gap-6 lg:gap-8">
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-purple-600 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+              <Cpu className="w-5 h-5 text-cyan-200" />
             </div>
             <div>
-              <span className="font-extrabold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400">
-                AIXchange
+              <span className="font-extrabold text-lg tracking-tight text-white flex items-center gap-1">
+                AIX<span className="text-cyan-400">change</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse inline-block" />
               </span>
-              <span className="text-[10px] font-mono block text-cyan-400 -mt-1 tracking-widest uppercase">
-                Phase 4 Marketplace
+              <span className="text-[9px] font-mono block text-slate-400 tracking-widest uppercase -mt-0.5">
+                Decentralized Substrate
               </span>
             </div>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => {
               const active =
                 location.pathname === link.to ||
-                (link.to === "/datasets" && location.pathname === "/");
+                (link.to === '/datasets' && location.pathname.startsWith('/datasets'));
               return (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     active
-                      ? "bg-slate-800 text-cyan-400 shadow-sm border border-slate-700/50"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                      ? 'bg-slate-800 text-cyan-300 shadow-sm border border-slate-700/60'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
                   }`}
                 >
                   {link.label}
@@ -107,32 +179,76 @@ export default function Navbar() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Right Actions: Network, Balance, Wallet, Mobile Toggle */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Network Indicator */}
           {network && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-mono text-slate-300">
+            <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-300">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>{network.name || `Chain ${network.chainId}`}</span>
             </div>
           )}
 
-          {account ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-slate-800 to-slate-800/80 border border-slate-700 text-xs font-mono text-cyan-300 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+          {/* AIX Token Balance Badge */}
+          {isConnected && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-950/40 border border-cyan-800/40 text-xs font-mono text-cyan-300">
+              <span className="text-[10px] text-cyan-500 font-semibold">AIX:</span>
+              <span>{aixBalance || '0.00'}</span>
+            </div>
+          )}
+
+          {/* Wallet Connection Button */}
+          {address ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>
-                {account.substring(0, 6)}...{account.substring(account.length - 4)}
+                {address.substring(0, 6)}...{address.substring(address.length - 4)}
               </span>
             </div>
           ) : (
             <button
               onClick={handleConnect}
               disabled={isConnecting}
-              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-semibold shadow-sm shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
             >
-              {isConnecting ? "Connecting..." : "Connect Wallet"}
+              <Wallet className="w-3.5 h-3.5" />
+              <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
             </button>
           )}
+
+          {/* Mobile Menu Toggle Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Navigation Menu"
+            className="lg:hidden p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Drawer */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden bg-slate-950/95 border-b border-slate-800 px-4 pt-2 pb-6 space-y-2">
+          {navLinks.map((link) => {
+            const active = location.pathname === link.to;
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block px-3 py-2 rounded-lg text-sm font-medium ${
+                  active
+                    ? 'bg-slate-800 text-cyan-300 border border-slate-700/60'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </header>
   );
 }

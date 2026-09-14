@@ -37,12 +37,8 @@ export function initializeDatasetContract(contractAddress, runner) {
 
   let activeRunner = runner;
   if (!activeRunner) {
-    if (isMetaMaskInstalled()) {
-      activeRunner = getProvider();
-    } else {
-      const rpcUrl = import.meta.env.VITE_BLOCKCHAIN_RPC_URL || "http://127.0.0.1:8545";
-      activeRunner = new JsonRpcProvider(rpcUrl);
-    }
+    const rpcUrl = import.meta.env.VITE_BLOCKCHAIN_RPC_URL || "http://127.0.0.1:8545";
+    activeRunner = new JsonRpcProvider(rpcUrl);
   }
 
   cachedContract = new Contract(targetAddress, DATASET_REGISTRY_ABI, activeRunner);
