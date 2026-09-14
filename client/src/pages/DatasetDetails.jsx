@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { ethers } from "ethers";
 import Navbar from "../components/Navbar";
 import {
   getDataset,
@@ -8,7 +9,9 @@ import {
   transferDatasetOwnership,
   getDatasetRegistryAddress,
 } from "../services/blockchain/dataset";
-import { getCurrentAccount } from "../services/blockchain/wallet";
+import { getCurrentAccount, getSigner } from "../services/blockchain/wallet/metamask.service";
+import { checkHasAccess, executePurchase, getPurchaseEngineAddress } from "../services/blockchain/purchase/purchase.service";
+import { getAixTokenContract } from "../services/blockchain/token/token.service";
 import { STANDARD_LICENSES } from "../types/dataset.types";
 
 export default function DatasetDetails() {
@@ -19,6 +22,11 @@ export default function DatasetDetails() {
   const [currentAccount, setCurrentAccount] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Access and Purchase State
+  const [hasAccess, setHasAccess] = useState(false);
+  const [selectedLicenseTier, setSelectedLicenseTier] = useState("Commercial");
+  const [purchasing, setPurchasing] = useState(false);
 
   // Edit / Action State
   const [isEditing, setIsEditing] = useState(false);
@@ -49,6 +57,11 @@ export default function DatasetDetails() {
       setEditCid(data.cid);
       setEditLicense(data.license);
       setEditRoyalty(data.royalty);
+
+      if (acc) {
+        const access = await checkHasAccess(acc, id, 1);
+        setHasAccess(access);
+      }
     } catch (err) {
       console.error("Failed to load dataset details:", err);
       setError(err.message || `Dataset #${id} not found on blockchain.`);
@@ -62,6 +75,61 @@ export default function DatasetDetails() {
   }, [loadDatasetData]);
 
   const isOwner = dataset && currentAccount && dataset.owner.toLowerCase() === currentAccount;
+
+  const handlePurchase = async () => {
+    try {
+      setPurchasing(true);
+      setTxState({ stage: "PREPARING", message: "Verifying AIX balance and allowance..." });
+
+      const signer = await getSigner();
+      const userAddress = await signer.getAddress();
+      const tokenContract = getAixTokenContract(signer);
+      const purchaseEngineAddress = getPurchaseEngineAddress();
+
+      const priceAmount = selectedLicenseTier === "Commercial" ? "100" : "25";
+      const decimals = await tokenContract.decimals();
+      const parsedPrice = ethers.parseUnits(priceAmount, decimals);
+
+      // Check balance
+      const balance = await tokenContract.balanceOf(userAddress);
+      if (balance < parsedPrice) {
+        throw new Error(
+          `Insufficient AIX balance. You have ${ethers.formatUnits(balance, decimals)} AIX, but ${priceAmount} AIX is required.`
+        );
+      }
+
+      // Check allowance
+      const currentAllowance = await tokenContract.allowance(userAddress, purchaseEngineAddress);
+      if (currentAllowance < parsedPrice) {
+        setTxState({
+          stage: "APPROVING",
+          message: `Approving ${priceAmount} AIX for PurchaseEngine settlement...`,
+        });
+        const approveTx = await tokenContract.approve(purchaseEngineAddress, parsedPrice);
+        await approveTx.wait(1);
+      }
+
+      setTxState({ stage: "PURCHASING", message: "Executing purchase on PurchaseEngine.sol..." });
+      const { txHash, purchaseId } = await executePurchase(id, 1, (stage, msg) => {
+        setTxState({ stage, message: msg });
+      });
+
+      setHasAccess(true);
+      setTxState({
+        stage: "CONFIRMED",
+        txHash,
+        message: `Dataset #${id} purchased successfully! Access entitlement granted on-chain (Purchase #${purchaseId || "1"}).`,
+      });
+    } catch (err) {
+      console.error("Purchase error:", err);
+      setTxState({
+        stage: "FAILED",
+        message: err.message || "Purchase failed.",
+      });
+    } finally {
+      setPurchasing(false);
+    }
+  };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -395,6 +463,112 @@ export default function DatasetDetails() {
                   </div>
                 )}
               </div>
+
+              {/* License Acquisition & Purchase Flow for Non-Owners */}
+              {!isOwner && (
+                <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase text-slate-500 block">
+                      License Acquisition & Access
+                    </span>
+                    {hasAccess ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Access Entitled
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-semibold">
+                        License Required
+                      </span>
+                    )}
+                  </div>
+
+                  {hasAccess ? (
+                    <div className="space-y-3">
+                      <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
+                        <p className="font-semibold">Cryptographic Entitlement Confirmed</p>
+                        <p className="text-[11px] text-emerald-400/80 mt-1">
+                          You hold an active on-chain license record on PurchaseEngine.sol. You can now execute models in Docker sandboxes.
+                        </p>
+                      </div>
+
+                      <Link
+                        to={`/sandboxes?datasetId=${dataset.datasetId}`}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all"
+                      >
+                        Launch in AI Training Sandbox →
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-mono text-slate-400 mb-1">
+                          Select License Tier
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedLicenseTier("Commercial")}
+                            className={`p-2.5 rounded-xl border text-left transition-all ${
+                              selectedLicenseTier === "Commercial"
+                                ? "bg-cyan-500/10 border-cyan-500/50 text-white"
+                                : "bg-slate-950 border-slate-800 text-slate-400"
+                            }`}
+                          >
+                            <div className="text-xs font-bold">Commercial AI</div>
+                            <div className="text-[11px] font-mono text-cyan-400 mt-0.5">100.00 AIX</div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedLicenseTier("Academic")}
+                            className={`p-2.5 rounded-xl border text-left transition-all ${
+                              selectedLicenseTier === "Academic"
+                                ? "bg-cyan-500/10 border-cyan-500/50 text-white"
+                                : "bg-slate-950 border-slate-800 text-slate-400"
+                            }`}
+                          >
+                            <div className="text-xs font-bold">Academic</div>
+                            <div className="text-[11px] font-mono text-cyan-400 mt-0.5">25.00 AIX</div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Royalty Split Breakdown Card */}
+                      <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-2 text-[11px] font-mono">
+                        <div className="flex justify-between text-slate-400">
+                          <span>License Price:</span>
+                          <span className="text-white font-bold">
+                            {selectedLicenseTier === "Commercial" ? "100.00" : "25.00"} AIX
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-slate-400">
+                          <span>Treasury Fee (2.50%):</span>
+                          <span className="text-purple-400">
+                            {selectedLicenseTier === "Commercial" ? "2.50" : "0.625"} AIX
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-slate-400">
+                          <span>Creator Net (97.50%):</span>
+                          <span className="text-emerald-400">
+                            {selectedLicenseTier === "Commercial" ? "97.50" : "24.375"} AIX
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handlePurchase}
+                        disabled={purchasing || isActionPending || !dataset.active}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold text-xs shadow-xl shadow-indigo-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {purchasing
+                          ? "Processing Settlement..."
+                          : `Purchase License (${selectedLicenseTier === "Commercial" ? "100" : "25"} AIX)`}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Owner Management Controls */}
               {isOwner && (
