@@ -133,8 +133,9 @@ export default function Navbar() {
     { to: '/models', label: 'Models' },
     { to: '/sandboxes', label: 'Sandboxes' },
     { to: '/provenance', label: 'Lineage DAG' },
-    { to: '/royalties', label: 'Royalties' },
-    { to: '/wallet-test', label: 'Dev Sandbox' },
+    { to: '/inference', label: 'Inference' },
+    { to: '/analytics', label: 'Analytics' },
+    { to: '/wallet', label: 'Wallet' },
   ];
 
   return (
