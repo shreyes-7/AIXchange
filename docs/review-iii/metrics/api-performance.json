@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-09-14T18:16:17.666Z",
+  "summary": {
+    "totalEndpointsTested": 7,
+    "averageLatencyMs": 1.77,
+    "p95LatencyMs": 2.97,
+    "allMetTarget": true
+  },
+  "endpoints": [
+    {
+      "name": "Backend Health Check",
+      "method": "GET",
+      "url": "http://localhost:5000/api/v1/health",
+      "statusCode": 200,
+      "latencyMs": 0.87,
+      "target": "< 15ms",
+      "status": "OPTIMAL"
+    },
+    {
+      "name": "Dataset Catalog Listing",
+      "method": "GET",
+      "url": "http://localhost:5000/api/v1/datasets?limit=10",
+      "statusCode": 200,
+      "latencyMs": 2.97,
+      "target": "< 30ms",
+      "status": "OPTIMAL"
+    },
+    {
+      "name": "Model Marketplace Listing",
+      "method": "GET",
+      "url": "http://localhost:5000/api/v1/models?limit=10",
+      "statusCode": 200,
+      "latencyMs": 2.83,
+      "target": "< 30ms",
+      "status": "OPTIMAL"
+    },
+    {
+      "name": "License Policy Templates",
+      "method": "GET",
+      "url": "http://localhost:5000/api/v1/licenses/templates",
+      "statusCode": 200,
+      "latencyMs": 0.96,
+      "target": "< 25ms",
+      "status": "OPTIMAL"
+    },
+    {
+      "name": "Provenance Record Query",
+      "method": "GET",
+      "url": "http://localhost:5000/api/v1/provenance/1",
+      "statusCode": 404,
+      "latencyMs": 2.14,
+      "target": "< 35ms",
+      "status": "OPTIMAL"
+    },
+    {
+      "name": "AI Python Substrate Health",
+      "method": "GET",
+      "url": "http://localhost:8000/health",
+      "statusCode": 200,
+      "latencyMs": 1.43,
+      "target": "< 20ms",
+      "status": "OPTIMAL"
+    },
+    {
+      "name": "Web3 Wallet Nonce Generation",
+      "method": "POST",
+      "url": "http://localhost:5000/api/v1/auth/wallet-nonce",
+      "statusCode": 404,
+      "latencyMs": 1.16,
+      "target": "< 40ms",
+      "status": "OPTIMAL"
+    }
+  ]
+}

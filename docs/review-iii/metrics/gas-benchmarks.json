@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-09-14T18:15:19.163Z",
+  "network": {
+    "chainId": 31337,
+    "name": "Hardhat Localhost",
+    "rpc": "http://127.0.0.1:8545"
+  },
+  "summary": {
+    "totalOperationsTested": 6,
+    "totalGasConsumed": 1432026,
+    "averageGasPerOperation": 238671,
+    "gasPriceGwei": "1.0",
+    "estimatedCostEth": "0.001432026"
+  },
+  "benchmarks": [
+    {
+      "operation": "AIX Token Transfer",
+      "contract": "AIXToken.sol",
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "txHash": "0x354ba8233200c3362f146ace36f6c122d49efc508f2e7f946ff225c1d6716cea",
+      "gasUsed": 34510,
+      "status": "CONFIRMED"
+    },
+    {
+      "operation": "AIX Token Approval (PurchaseEngine)",
+      "contract": "AIXToken.sol",
+      "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      "txHash": "0x884d8e42b73bfa5b45b1d78e650bd6eb3353e48b50d2ea7189d0cd13f6cc2c83",
+      "gasUsed": 26506,
+      "status": "CONFIRMED"
+    },
+    {
+      "operation": "Dataset Registration (Encrypted CID)",
+      "contract": "DatasetRegistry.sol",
+      "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "txHash": "0x135deec2829d100675371bb40d005557982c185b24d66c8793fd2cae199377fe",
+      "gasUsed": 235613,
+      "status": "CONFIRMED"
+    },
+    {
+      "operation": "Model Registration & Checksum Anchoring",
+      "contract": "ModelRegistry.sol",
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "txHash": "0x448a6569695dbe5fb51c758a1d520320fa66521f1fa942133941c7dd6a11b6f6",
+      "gasUsed": 443507,
+      "status": "CONFIRMED"
+    },
+    {
+      "operation": "Model Version State Transition",
+      "contract": "ModelRegistry.sol",
+      "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      "txHash": "0x1cc2f00b8a090700c9671572980d11fbf0eb27eae1b1b5fb303ecdb4210d3b74",
+      "gasUsed": 208534,
+      "status": "CONFIRMED"
+    },
+    {
+      "operation": "Lineage DAG Provenance Anchoring",
+      "contract": "ProvenanceRegistry.sol",
+      "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+      "txHash": "0x83d769047f15ad381b1e893fe94cc78f6a98c287729cf6cd7a0faa4cf0b03e20",
+      "gasUsed": 483356,
+      "status": "CONFIRMED"
+    }
+  ]
+}

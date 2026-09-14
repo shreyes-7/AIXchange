@@ -1,0 +1,45 @@
+{
+  "timestamp": "2026-09-14T18:28:45.682Z",
+  "environment": {
+    "nodeVersion": "v20.19.0",
+    "platform": "win32",
+    "chain": "Hardhat Localhost (Chain ID 31337)"
+  },
+  "suites": [
+    {
+      "name": "Blockchain Smart Contracts (Solidity/Hardhat)",
+      "category": "blockchain",
+      "status": "PASSED",
+      "testsPassed": 279,
+      "durationMs": 10395
+    },
+    {
+      "name": "Python AI Execution Substrate (Pytest)",
+      "category": "ai_services",
+      "status": "PASSED",
+      "testsPassed": 22,
+      "durationMs": 6490
+    },
+    {
+      "name": "AI Sandbox Client SDK (Jest)",
+      "category": "sandbox",
+      "status": "FAILED",
+      "testsPassed": 10,
+      "durationMs": 433
+    },
+    {
+      "name": "Backend Server API (Node Test Runner)",
+      "category": "backend",
+      "status": "FAILED",
+      "testsPassed": 45,
+      "durationMs": 68
+    }
+  ],
+  "summary": {
+    "totalSuites": 4,
+    "passedSuites": 2,
+    "failedSuites": 2,
+    "totalTestsPassed": 356,
+    "totalDurationMs": 17388
+  }
+}

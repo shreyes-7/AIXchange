@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-09-14T18:28:12Z",
+  "environment": {
+    "device": "cpu",
+    "pytorchVersion": "2.13.0+cpu"
+  },
+  "modelArchitecture": {
+    "name": "TelemetryClassifier",
+    "totalParameters": 1411,
+    "weightsSha256": "bd82cff11b7a6ebdc50ccfce1afba904c1b08612d09409350fc137a9e2ecc538"
+  },
+  "training": {
+    "epochs": 5,
+    "trainingDurationSec": 0.243,
+    "lossConvergence": [
+      {
+        "epoch": 1,
+        "loss": 0.3441,
+        "accuracyPercent": 86.8
+      },
+      {
+        "epoch": 2,
+        "loss": 0.1682,
+        "accuracyPercent": 93.4
+      },
+      {
+        "epoch": 3,
+        "loss": 0.1275,
+        "accuracyPercent": 94.5
+      },
+      {
+        "epoch": 4,
+        "loss": 0.1362,
+        "accuracyPercent": 94.3
+      },
+      {
+        "epoch": 5,
+        "loss": 0.1576,
+        "accuracyPercent": 93.3
+      }
+    ],
+    "finalLoss": 0.1576,
+    "finalAccuracyPercent": 93.3
+  },
+  "inferencePerformance": {
+    "batchSize": 1,
+    "iterations": 100,
+    "meanLatencyMs": 0.078,
+    "p50LatencyMs": 0.04,
+    "p99LatencyMs": 0.425
+  }
+}
