@@ -24,6 +24,7 @@ const handleUpload = (req, res, next) => upload.single("file")(req, res, (error)
  *     responses: { 201: { description: Encrypted IPFS artifact metadata } }
  */
 router.post("/upload", optionalAuth, handleUpload, controller.upload);
+router.get("/ipfs/:cid", controller.serveIpfsFile);
 /** @swagger
  * /api/v1/datasets:
  *   get: { tags: [Datasets], summary: Search the dataset catalog, parameters: [{ in: query, name: search, schema: { type: string } }, { in: query, name: category, schema: { type: string } }, { in: query, name: tags, schema: { type: string } }, { in: query, name: page, schema: { type: integer } }, { in: query, name: limit, schema: { type: integer } }] }

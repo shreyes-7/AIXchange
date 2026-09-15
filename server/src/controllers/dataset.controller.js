@@ -16,3 +16,17 @@ export const addReview = async (req, res, next) => { try { respond(res, 201, awa
 export const getVersions = async (req, res, next) => { try { respond(res, 200, await datasetService.versions(req.params.id)); } catch (error) { next(error); } };
 export const addVersion = async (req, res, next) => { try { respond(res, 201, await datasetService.addVersion(req.params.id, req.user, req.body), "Dataset version created."); } catch (error) { next(error); } };
 export const getVersion = async (req, res, next) => { try { respond(res, 200, await datasetService.getVersion(req.params.id, req.params.version)); } catch (error) { next(error); } };
+export const serveIpfsFile = async (req, res, next) => {
+    try {
+        const { cid } = req.params;
+        const fileBuffer = await datasetService.getEncryptedFileLocally(cid);
+        if (fileBuffer) {
+            res.setHeader("Content-Type", "application/octet-stream");
+            res.setHeader("Content-Disposition", `inline; filename="${cid}.enc"`);
+            return res.status(200).send(fileBuffer);
+        }
+        return res.redirect(`https://aqua-acceptable-rat-480.mypinata.cloud/ipfs/${cid}`);
+    } catch (error) {
+        next(error);
+    }
+};
