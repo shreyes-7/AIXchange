@@ -1,6 +1,21 @@
 import dotenv from "dotenv";
 
+import path from "path";
+import fs from "fs";
+
 dotenv.config();
+
+// Also attempt loading from ../blockchain/.env or blockchain/.env if present
+const possibleBlockchainEnvPaths = [
+    path.resolve(process.cwd(), "../blockchain/.env"),
+    path.resolve(process.cwd(), "blockchain/.env"),
+];
+for (const bPath of possibleBlockchainEnvPaths) {
+    if (fs.existsSync(bPath)) {
+        dotenv.config({ path: bPath });
+        break;
+    }
+}
 
 const number = (value, fallback) => Number(value ?? fallback);
 
@@ -25,8 +40,11 @@ const env = {
     PROVENANCE_REGISTRY_ADDRESS: process.env.PROVENANCE_REGISTRY_ADDRESS,
     ROYALTY_ENGINE_ADDRESS: process.env.ROYALTY_ENGINE_ADDRESS,
     PINATA_JWT: process.env.PINATA_JWT,
+    PINATA_API_KEY: process.env.PINATA_API_KEY,
+    PINATA_SECRET_API_KEY: process.env.PINATA_SECRET_API_KEY,
     PINATA_API_URL: process.env.PINATA_API_URL || "https://api.pinata.cloud/pinning/pinFileToIPFS",
     PINATA_GATEWAY_URL: process.env.PINATA_GATEWAY_URL || "https://gateway.pinata.cloud/ipfs",
+    DATASET_STORAGE_DIR: process.env.DATASET_STORAGE_DIR || "uploads/datasets",
     DATASET_ENCRYPTION_KEY: process.env.DATASET_ENCRYPTION_KEY,
     DATASET_MAX_UPLOAD_BYTES: number(process.env.DATASET_MAX_UPLOAD_BYTES, 50 * 1024 * 1024),
     BLOCKCHAIN_CONFIRMATIONS: number(process.env.BLOCKCHAIN_CONFIRMATIONS, 1),

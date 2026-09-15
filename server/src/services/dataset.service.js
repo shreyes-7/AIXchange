@@ -1,7 +1,10 @@
+import fs from "fs";
+import path from "path";
 import crypto from "crypto";
 import { ethers } from "ethers";
 import mongoose from "mongoose";
 import env from "../config/env.js";
+import logger from "../config/logger.js";
 import Dataset from "../models/dataset.model.js";
 import ApiError from "../utils/ApiError.js";
 
@@ -13,6 +16,36 @@ const registryInterface = new ethers.Interface(DATASET_REGISTRY_ABI);
 const findDataset = async (id, projection) => {
     if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid dataset ID.");
     return Dataset.findById(id).select(projection || "");
+};
+
+export const getDatasetStoragePath = (cid) => {
+    const storageDir = path.resolve(env.DATASET_STORAGE_DIR || "uploads/datasets");
+    return path.join(storageDir, `${encodeURIComponent(cid)}.enc`);
+};
+
+export const saveEncryptedFileLocally = async (cid, ciphertext) => {
+    try {
+        const storageDir = path.resolve(env.DATASET_STORAGE_DIR || "uploads/datasets");
+        await fs.promises.mkdir(storageDir, { recursive: true });
+        const filePath = path.join(storageDir, `${encodeURIComponent(cid)}.enc`);
+        await fs.promises.writeFile(filePath, ciphertext);
+        return filePath;
+    } catch (err) {
+        logger.warn(`Failed to save encrypted dataset file locally (${cid}): ${err.message}`);
+        return null;
+    }
+};
+
+export const getEncryptedFileLocally = async (cid) => {
+    try {
+        const filePath = getDatasetStoragePath(cid);
+        if (fs.existsSync(filePath)) {
+            return await fs.promises.readFile(filePath);
+        }
+    } catch (err) {
+        logger.warn(`Failed reading local encrypted dataset (${cid}): ${err.message}`);
+    }
+    return null;
 };
 
 const encryptionKey = () => {
@@ -77,28 +110,74 @@ export const encryptAndPin = async (file) => {
     const authTag = cipher.getAuthTag();
 
     let cid = null;
-    if (env.PINATA_JWT && env.PINATA_JWT !== "placeholder_jwt_for_local_testing") {
+    const hasPinataJwt = Boolean(env.PINATA_JWT && env.PINATA_JWT !== "placeholder_jwt_for_local_testing" && env.PINATA_JWT.trim());
+    const hasPinataKeys = Boolean(env.PINATA_API_KEY && env.PINATA_SECRET_API_KEY && env.PINATA_API_KEY.trim());
+
+    if (hasPinataJwt || hasPinataKeys) {
         try {
             const form = new FormData();
             form.append("file", new Blob([ciphertext], { type: "application/octet-stream" }), `${file.originalname}.enc`);
-            form.append("pinataMetadata", JSON.stringify({ name: `${file.originalname}.enc`, keyvalues: { encrypted: "true", algorithm: "AES-256-GCM", sha256: contentHash } }));
-            const response = await fetch(env.PINATA_API_URL, { method: "POST", headers: { Authorization: `Bearer ${env.PINATA_JWT}` }, body: form });
+            form.append("pinataMetadata", JSON.stringify({
+                name: `${file.originalname}.enc`,
+                keyvalues: { encrypted: "true", algorithm: "AES-256-GCM", sha256: contentHash }
+            }));
+
+            const headers = {};
+            if (hasPinataJwt) {
+                headers["Authorization"] = `Bearer ${env.PINATA_JWT.trim()}`;
+            } else {
+                headers["pinata_api_key"] = env.PINATA_API_KEY.trim();
+                headers["pinata_secret_api_key"] = env.PINATA_SECRET_API_KEY.trim();
+            }
+
+            const response = await fetch(env.PINATA_API_URL, {
+                method: "POST",
+                headers,
+                body: form
+            });
+
             if (response.ok) {
                 const pinned = await response.json();
-                if (pinned.IpfsHash) cid = pinned.IpfsHash;
+                if (pinned.IpfsHash) {
+                    cid = pinned.IpfsHash;
+                    logger.info(`Dataset encrypted and pinned to Pinata IPFS with CID: ${cid}`);
+                }
+            } else {
+                const errText = await response.text().catch(() => "");
+                logger.warn(`Pinata pinning returned status ${response.status}: ${errText}`);
             }
-        } catch {
-            // fallback to deterministic local IPFS CID
+        } catch (pinErr) {
+            logger.warn(`Pinata pinning request failed: ${pinErr.message}`);
         }
     }
 
+    // Deterministic IPFS CIDv0 representation from sha256 content hash
+    const multihash = Buffer.concat([Buffer.from([0x12, 0x20]), Buffer.from(contentHash, "hex")]);
+    const deterministicCid = ethers.encodeBase58(multihash);
+
     if (!cid) {
-        // Deterministic IPFS CIDv0 representation from sha256 content hash
-        const multihash = Buffer.concat([Buffer.from([0x12, 0x20]), Buffer.from(contentHash, "hex")]);
-        cid = ethers.encodeBase58(multihash);
+        cid = deterministicCid;
     }
 
-    return { cid, contentHash, size: file.size, fileName: file.originalname, mimeType: file.mimetype || "application/octet-stream", encryption: { algorithm: "AES-256-GCM", iv: iv.toString("base64"), authTag: authTag.toString("base64") }, preview: safePreview(file.buffer, file.mimetype || "") };
+    // Always save ciphertext to persistent local disk storage
+    await saveEncryptedFileLocally(cid, ciphertext);
+    if (cid !== deterministicCid) {
+        await saveEncryptedFileLocally(deterministicCid, ciphertext);
+    }
+
+    return {
+        cid,
+        contentHash,
+        size: file.size,
+        fileName: file.originalname,
+        mimeType: file.mimetype || "application/octet-stream",
+        encryption: {
+            algorithm: "AES-256-GCM",
+            iv: iv.toString("base64"),
+            authTag: authTag.toString("base64")
+        },
+        preview: safePreview(file.buffer, file.mimetype || "")
+    };
 };
 
 export const create = async (user, payload) => {

@@ -1,6 +1,6 @@
 import env from "../config/env.js";
 import logger from "../config/logger.js";
-import { decryptDatasetBuffer } from "./dataset.service.js";
+import { decryptDatasetBuffer, getEncryptedFileLocally, saveEncryptedFileLocally } from "./dataset.service.js";
 import accessControl from "./access-control.service.js";
 import ApiError from "../utils/ApiError.js";
 import Download from "../models/download.model.js";
@@ -35,10 +35,48 @@ export const fetchAuthorizedDataset = async (user, datasetId, licenseId) => {
             throw new ApiError(404, "Dataset file is unavailable.");
         }
 
-        let response;
-        try {
-            response = await fetch(`${env.PINATA_GATEWAY_URL.replace(/\/$/, "")}/${encodeURIComponent(cid)}`);
-        } catch {
+        // 1. Check local persistent disk storage first
+        let ciphertext = await getEncryptedFileLocally(cid);
+
+        // 2. If not local, query IPFS gateways with fallback
+        if (!ciphertext) {
+            const gateways = [
+                env.PINATA_GATEWAY_URL,
+                "https://ipfs.io/ipfs",
+                "https://cloudflare-ipfs.com/ipfs",
+                "https://dweb.link/ipfs",
+            ].filter(Boolean);
+
+            for (const gateway of gateways) {
+                try {
+                    const url = `${gateway.replace(/\/$/, "")}/${encodeURIComponent(cid)}`;
+                    const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+                    if (response.ok) {
+                        const contentLength = Number(response.headers.get("content-length") || 0);
+                        if (contentLength && contentLength > env.DATASET_MAX_UPLOAD_BYTES + 1024) {
+                            recordDownloadAsync({
+                                datasetId: Number(datasetId),
+                                datasetRef: dataset?._id || null,
+                                userId: user?._id || user?.userId || null,
+                                userWallet: user?.wallet?.address || null,
+                                status: "FAILED",
+                                errorCode: "PAYLOAD_TOO_LARGE",
+                            });
+                            throw new ApiError(413, "Dataset exceeds the configured download limit.");
+                        }
+                        ciphertext = Buffer.from(await response.arrayBuffer());
+                        // Cache locally for fast subsequent reads
+                        await saveEncryptedFileLocally(cid, ciphertext);
+                        break;
+                    }
+                } catch (e) {
+                    if (e instanceof ApiError) throw e;
+                    logger.debug(`Gateway fetch failed for ${gateway}/${cid}: ${e.message}`);
+                }
+            }
+        }
+
+        if (!ciphertext) {
             recordDownloadAsync({
                 datasetId: Number(datasetId),
                 datasetRef: dataset?._id || null,
@@ -47,32 +85,7 @@ export const fetchAuthorizedDataset = async (user, datasetId, licenseId) => {
                 status: "FAILED",
                 errorCode: "STORAGE_ERROR",
             });
-            throw new ApiError(502, "Dataset storage could not be reached.");
-        }
-
-        if (!response.ok) {
-            recordDownloadAsync({
-                datasetId: Number(datasetId),
-                datasetRef: dataset?._id || null,
-                userId: user?._id || user?.userId || null,
-                userWallet: user?.wallet?.address || null,
-                status: "FAILED",
-                errorCode: "STORAGE_ERROR",
-            });
-            throw new ApiError(502, "Dataset storage returned an error.");
-        }
-
-        const contentLength = Number(response.headers.get("content-length") || 0);
-        if (contentLength && contentLength > env.DATASET_MAX_UPLOAD_BYTES + 1024) {
-            recordDownloadAsync({
-                datasetId: Number(datasetId),
-                datasetRef: dataset?._id || null,
-                userId: user?._id || user?.userId || null,
-                userWallet: user?.wallet?.address || null,
-                status: "FAILED",
-                errorCode: "PAYLOAD_TOO_LARGE",
-            });
-            throw new ApiError(413, "Dataset exceeds the configured download limit.");
+            throw new ApiError(502, "Dataset storage could not be reached or file not found.");
         }
 
         const ciphertext = Buffer.from(await response.arrayBuffer());
