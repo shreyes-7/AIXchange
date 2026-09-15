@@ -7,6 +7,7 @@ import {
   fetchProvenanceTimeline,
   verifyProvenanceRecord,
 } from "../services/api/provenanceApi.service";
+import { getDatasetMetadata } from "../services/datasetMetadata";
 import {
   GitBranch,
   ShieldCheck,
@@ -32,21 +33,24 @@ export default function ProvenanceExplorer() {
   const [verifying, setVerifying] = useState(false);
   const [verificationProof, setVerificationProof] = useState(null);
 
+  const dsMeta = getDatasetMetadata(1);
+
   // High-fidelity DAG nodes
   const nodes = [
     {
       id: "dataset-node",
       type: "DATASET",
-      title: "Encrypted Dataset #1",
-      subtitle: "Decentralized Sensor Telemetry",
-      hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      uri: "ipfs://QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco",
+      title: dsMeta.title || "Industrial IoT Sensor Telemetry",
+      subtitle: `${dsMeta.category || "IoT Telemetry"} • ${dsMeta.fileName || "sensor_readings.csv"}`,
+      hash: dsMeta.contentHash || "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      uri: `ipfs://${dsMeta.cid || "QmTXAoLR5ibkGLXVyXFjSoJTgMAxk44DGtGztu6bZkZkrL"}`,
       contract: "DatasetRegistry.sol",
       address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
       badge: "Source Data",
       color: "from-cyan-500 to-blue-600",
       details: {
-        samples: "10,000 telemetry packets",
+        samples: dsMeta.rowCount || "10,000 telemetry packets",
+        fileSize: dsMeta.fileSize || "351 KB",
         encryption: "AES-256-GCM Envelope",
         checksum: "0x4a8f...39d1",
         onChainId: "1",

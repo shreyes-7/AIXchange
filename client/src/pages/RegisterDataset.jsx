@@ -15,6 +15,7 @@ import {
   TRANSACTION_STAGES,
 } from "../types/dataset.types";
 import { uploadDatasetEncrypted } from "../services/api/datasetApi.service";
+import { saveDatasetMetadata } from "../services/datasetMetadata";
 import {
   UploadCloud,
   FileText,
@@ -193,7 +194,26 @@ export default function RegisterDataset() {
         (stage, data) => {
           setTxStage(stage);
           if (data?.txHash) setTxHash(data.txHash);
-          if (data?.datasetId) setNewDatasetId(data.datasetId);
+          if (data?.datasetId) {
+            setNewDatasetId(data.datasetId);
+            saveDatasetMetadata({
+              datasetId: Number(data.datasetId),
+              cid: cid.trim(),
+              title: title.trim() || fileName || `Dataset #${data.datasetId}`,
+              description: description.trim() || "Cryptographically registered dataset on AIXchange substrate.",
+              category: category || "IoT / Sensor Telemetry",
+              tags: ["telemetry", "sensors", (category || "iot").toLowerCase()],
+              fileName: fileName || "dataset.csv",
+              fileSize: fileSize || "351 KB",
+              format: "CSV",
+              license,
+              royaltyPercentage,
+              royaltyBps,
+              contentHash,
+              txHash: data.txHash,
+              owner: currentAcc,
+            });
+          }
         }
       );
     } catch (err) {

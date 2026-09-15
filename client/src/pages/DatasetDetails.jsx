@@ -13,6 +13,8 @@ import { getCurrentAccount, getSigner } from "../services/blockchain/wallet/meta
 import { checkHasAccess, executePurchase, getPurchaseEngineAddress } from "../services/blockchain/purchase/purchase.service";
 import { getAixTokenContract } from "../services/blockchain/token/token.service";
 import { STANDARD_LICENSES } from "../types/dataset.types";
+import { getDatasetMetadata } from "../services/datasetMetadata";
+import IpfsGatewayModal from "../components/common/IpfsGatewayModal";
 
 export default function DatasetDetails() {
   const { id } = useParams();
@@ -41,6 +43,7 @@ export default function DatasetDetails() {
   // Transaction Status
   const [txState, setTxState] = useState(null); // { stage, txHash, message }
   const [isActionPending, setIsActionPending] = useState(false);
+  const [showGatewayModal, setShowGatewayModal] = useState(false);
 
   const ipfsGateway = import.meta.env.VITE_IPFS_GATEWAY_URL || "https://ipfs.io/ipfs";
   const contractAddress = getDatasetRegistryAddress();
@@ -74,6 +77,7 @@ export default function DatasetDetails() {
     loadDatasetData();
   }, [loadDatasetData]);
 
+  const metadata = dataset ? getDatasetMetadata(id, dataset.cid) : {};
   const isOwner = dataset && currentAccount && dataset.owner.toLowerCase() === currentAccount;
 
   const handlePurchase = async () => {
@@ -297,6 +301,11 @@ export default function DatasetDetails() {
                     >
                       {dataset.active ? "Active on Blockchain" : "Inactive"}
                     </span>
+                    {metadata?.category && (
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/30">
+                        {metadata.category}
+                      </span>
+                    )}
                   </div>
 
                   <span className="text-xs text-slate-400 font-mono">
@@ -305,11 +314,29 @@ export default function DatasetDetails() {
                 </div>
 
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-                  AI Training Dataset #{dataset.datasetId}
+                  {metadata?.title || dataset.title || `AI Training Dataset #${dataset.datasetId}`}
                 </h1>
                 <p className="text-slate-400 text-sm mt-2 leading-relaxed">
-                  Cryptographically registered dataset on the AIXchange decentralized registry.
+                  {metadata?.description || "Cryptographically registered dataset on the AIXchange decentralized registry."}
                 </p>
+
+                {/* File Specs & Provenance Metadata */}
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-mono">
+                  <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                    File: <strong className="text-white">{metadata?.fileName || "dataset_payload.csv"}</strong>
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                    Size: <strong className="text-white">{metadata?.fileSize || "351 KB"}</strong>
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                    Format: <strong className="text-cyan-300">{metadata?.format || "CSV / AES-256-GCM"}</strong>
+                  </span>
+                  {metadata?.rowCount && (
+                    <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                      Rows: <strong className="text-purple-300">{metadata.rowCount}</strong>
+                    </span>
+                  )}
+                </div>
 
                 {/* CID Box */}
                 <div className="mt-6 p-4 rounded-2xl bg-slate-950 border border-slate-800/80">
@@ -317,17 +344,16 @@ export default function DatasetDetails() {
                     <span className="font-mono uppercase tracking-wider text-slate-500">
                       IPFS Content Identifier (CID)
                     </span>
-                    <a
-                      href={`${ipfsGateway}/${dataset.cid}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-cyan-400 hover:underline inline-flex items-center gap-1 font-semibold"
+                    <button
+                      type="button"
+                      onClick={() => setShowGatewayModal(true)}
+                      className="text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1.5 font-semibold text-xs transition-colors"
                     >
-                      Open in Gateway
+                      Inspect IPFS Gateway
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                       </svg>
-                    </a>
+                    </button>
                   </div>
                   <p className="font-mono text-xs text-cyan-300 break-all select-all">
                     {dataset.cid}
@@ -695,6 +721,23 @@ export default function DatasetDetails() {
               </button>
             </div>
           </div>
+        )}
+        {/* Interactive IPFS Gateway Modal */}
+        {dataset && (
+          <IpfsGatewayModal
+            dataset={{
+              ...dataset,
+              title: metadata?.title || dataset.title,
+              description: metadata?.description,
+              category: metadata?.category,
+              fileName: metadata?.fileName,
+              fileSize: metadata?.fileSize,
+              format: metadata?.format,
+              rowCount: metadata?.rowCount,
+            }}
+            isOpen={showGatewayModal}
+            onClose={() => setShowGatewayModal(false)}
+          />
         )}
       </main>
     </div>
