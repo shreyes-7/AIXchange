@@ -17,6 +17,7 @@ import provenanceRoutes from "./provenance.route.js";
 import royaltyRoutes from "./royalty.route.js";
 import adminRoutes from "./admin.routes.js";
 import reportRoutes from "./report.routes.js";
+import paymentRoutes from "./payment.route.js";
 
 const router = Router();
 
@@ -24,6 +25,7 @@ router.use("/health", healthRoutes);
 router.use("/auth",authRoutes);
 router.use("/wallet", walletRoutes);
 router.use("/token",tokenRoutes);
+router.use("/payments", paymentRoutes);
 router.use("/treasury", treasuryRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/datasets", datasetRoutes);

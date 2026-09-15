@@ -166,5 +166,18 @@ library Errors {
 
     /// @dev Thrown when setting a default treasury fee exceeding the maximum allowable threshold.
     error TreasuryFeeExceedsMax(uint256 feeBps, uint256 maxFeeBps);
+
+    // ==========================================
+    // Cashout Escrow Errors
+    // ==========================================
+
+    /// @dev Thrown when attempting to lock an escrow ID that is already active or finalized.
+    error EscrowAlreadyExists(bytes32 cashoutId);
+
+    /// @dev Thrown when a queried or actioned cashout ID does not exist in escrow records.
+    error EscrowNotFound(bytes32 cashoutId);
+
+    /// @dev Thrown when an escrow action is attempted on an invalid state.
+    error InvalidEscrowStatus(bytes32 cashoutId, uint8 currentStatus);
 }
 

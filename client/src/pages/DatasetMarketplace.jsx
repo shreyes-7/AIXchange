@@ -263,6 +263,9 @@ export default function DatasetMarketplace() {
 
                   {/* Tags */}
                   <div className="flex items-center gap-2 mt-4 flex-wrap text-xs">
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-bold font-mono">
+                      {dataset.priceTokens || 5} AIX (₹{(dataset.priceTokens || 5) * 50})
+                    </span>
                     <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-medium">
                       {dataset.license}
                     </span>
@@ -338,14 +341,18 @@ export default function DatasetMarketplace() {
                 <span className="font-mono text-cyan-300 break-all">{previewDataset.cid}</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80">
+                  <span className="text-slate-500 block mb-1 font-mono uppercase tracking-wider">Price</span>
+                  <span className="font-bold text-emerald-400 font-mono text-sm">{previewDataset.priceTokens || 5} AIX <span className="text-xs text-slate-400 font-normal">(₹{(previewDataset.priceTokens || 5) * 50})</span></span>
+                </div>
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80">
                   <span className="text-slate-500 block mb-1 font-mono uppercase tracking-wider">License</span>
                   <span className="font-semibold text-slate-200">{previewDataset.license}</span>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80">
                   <span className="text-slate-500 block mb-1 font-mono uppercase tracking-wider">Royalty</span>
-                  <span className="font-semibold text-purple-300">{previewDataset.royaltyPercentage} ({previewDataset.royalty} BPS)</span>
+                  <span className="font-semibold text-purple-300">{previewDataset.royaltyPercentage}</span>
                 </div>
               </div>
             </div>

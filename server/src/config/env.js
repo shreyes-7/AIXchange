@@ -39,6 +39,14 @@ const env = {
     SANDBOX_MAX_FILE_BYTES: number(process.env.SANDBOX_MAX_FILE_BYTES, 50 * 1024 * 1024),
     SANDBOX_UPLOAD_DIR: process.env.SANDBOX_UPLOAD_DIR || "uploads/sandboxes",
     WORKSPACE_DIR: process.env.WORKSPACE_DIR || "../python-services/workspace",
+    BLOCKCHAIN_PRIVATE_KEY: process.env.BLOCKCHAIN_PRIVATE_KEY || process.env.PRIVATE_KEY,
+    TOKEN_PRICE_INR: number(process.env.TOKEN_PRICE_INR, 50),
+    CASHOUT_ESCROW_ADDRESS: process.env.CASHOUT_ESCROW_ADDRESS,
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || "rzp_test_mockkey123",
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || "mocksecret123",
+    RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET || "mockwebhooksecret123",
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
 };
 
 if (!env.BLOCKCHAIN_RPC_URL || !env.BLOCKCHAIN_CHAIN_ID) {

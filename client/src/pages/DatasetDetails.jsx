@@ -10,6 +10,7 @@ import {
 } from "../services/blockchain/dataset";
 import { getCurrentAccount } from "../services/blockchain/wallet";
 import { STANDARD_LICENSES } from "../types/dataset.types";
+import TopUpModal from "../components/TopUpModal";
 
 export default function DatasetDetails() {
   const { id } = useParams();
@@ -19,6 +20,7 @@ export default function DatasetDetails() {
   const [currentAccount, setCurrentAccount] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isTopUpOpen, setIsTopUpOpen] = useState(false);
 
   // Edit / Action State
   const [isEditing, setIsEditing] = useState(false);
@@ -264,6 +266,43 @@ export default function DatasetDetails() {
                   <p className="font-mono text-xs text-cyan-300 break-all select-all">
                     {dataset.cid}
                   </p>
+                </div>
+              </div>
+ 
+              {/* Purchase & Licensing Card */}
+              <div className="p-6 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-slate-900 to-indigo-950/40 border border-cyan-800/40 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                <div>
+                  <span className="text-xs font-mono uppercase tracking-wider text-cyan-400 block mb-1">
+                    Dataset License Price
+                  </span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-extrabold text-white font-mono">
+                      {dataset.priceTokens || 5} <span className="text-cyan-400 text-lg">AIX</span>
+                    </span>
+                    <span className="text-sm font-semibold text-slate-300">
+                      (₹{(dataset.priceTokens || 5) * 50} INR)
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Instant on-chain entitlement · Creator royalty: {dataset.royaltyPercentage}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={() => setIsTopUpOpen(true)}
+                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition-all hover:border-cyan-500/50"
+                  >
+                    + Top Up AIX
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => alert(`Purchasing Dataset #${dataset.datasetId} with ${dataset.priceTokens || 5} AIX on-chain!`)}
+                    className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-cyan-500/20 transition-all hover:scale-105 active:scale-95"
+                  >
+                    Purchase License
+                  </button>
                 </div>
               </div>
 
@@ -522,6 +561,13 @@ export default function DatasetDetails() {
             </div>
           </div>
         )}
+
+        {/* Top-up Modal */}
+        <TopUpModal
+          isOpen={isTopUpOpen}
+          onClose={() => setIsTopUpOpen(false)}
+          userAccount={currentAccount}
+        />
       </main>
     </div>
   );

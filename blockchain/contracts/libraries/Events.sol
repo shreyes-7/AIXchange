@@ -230,5 +230,30 @@ library Events {
         uint256 oldFeeBps,
         uint256 newFeeBps
     );
+
+    // ==========================================
+    // Cashout Escrow Events
+    // ==========================================
+
+    /// @dev Emitted when creator tokens are locked into the CashoutEscrow contract.
+    event CashoutEscrowLocked(
+        bytes32 indexed cashoutId,
+        address indexed creator,
+        uint256 amount
+    );
+
+    /// @dev Emitted when locked cash-out tokens are permanently burned on payout success.
+    event CashoutEscrowBurned(
+        bytes32 indexed cashoutId,
+        address indexed creator,
+        uint256 amount
+    );
+
+    /// @dev Emitted when locked cash-out tokens are returned to creator on payout failure.
+    event CashoutEscrowReleased(
+        bytes32 indexed cashoutId,
+        address indexed creator,
+        uint256 amount
+    );
 }
 

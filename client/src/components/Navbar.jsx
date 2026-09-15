@@ -9,12 +9,14 @@ import {
   onChainChanged,
   removeChainChangedListener,
 } from "../services/blockchain/wallet";
+import TopUpModal from "./TopUpModal";
 
 export default function Navbar() {
   const location = useLocation();
   const [account, setAccount] = useState(null);
   const [network, setNetwork] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isTopUpOpen, setIsTopUpOpen] = useState(false);
 
   useEffect(() => {
     async function checkConnected() {
@@ -116,11 +118,24 @@ export default function Navbar() {
           )}
 
           {account ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-slate-800 to-slate-800/80 border border-slate-700 text-xs font-mono text-cyan-300 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
-              <span>
-                {account.substring(0, 6)}...{account.substring(account.length - 4)}
-              </span>
+            <div className="flex items-center gap-2">
+              <button
+                id="btn-topup-nav"
+                onClick={() => setIsTopUpOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 hover:from-cyan-500/20 hover:to-indigo-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span className="w-4 h-4 rounded-full bg-cyan-500 text-slate-950 font-bold text-[9px] flex items-center justify-center">
+                  +
+                </span>
+                Top Up AIX
+              </button>
+
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-slate-800 to-slate-800/80 border border-slate-700 text-xs font-mono text-cyan-300 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                <span>
+                  {account.substring(0, 6)}...{account.substring(account.length - 4)}
+                </span>
+              </div>
             </div>
           ) : (
             <button
@@ -133,6 +148,12 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      <TopUpModal
+        isOpen={isTopUpOpen}
+        onClose={() => setIsTopUpOpen(false)}
+        userAccount={account}
+      />
     </header>
   );
 }
