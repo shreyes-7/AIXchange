@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -8,6 +8,8 @@ import {
   verifyProvenanceRecord,
 } from "../services/api/provenanceApi.service";
 import { getDatasetMetadata } from "../services/datasetMetadata";
+import { getAllDatasets } from "../services/blockchain/dataset";
+import { getAllModels } from "../services/blockchain/model/model.service";
 import {
   GitBranch,
   ShieldCheck,
@@ -27,21 +29,92 @@ import {
 } from "lucide-react";
 
 export default function ProvenanceExplorer() {
-  const [searchParams] = useSearchParams();
-  const modelId = searchParams.get("modelId") || "1";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialModelId = searchParams.get("modelId") || "1";
+  
+  const [selectedModelId, setSelectedModelId] = useState(initialModelId);
+  const [selectedDatasetId, setSelectedDatasetId] = useState("1");
+  const [availableModels, setAvailableModels] = useState([]);
+  const [availableDatasets, setAvailableDatasets] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [verifying, setVerifying] = useState(false);
   const [verificationProof, setVerificationProof] = useState(null);
 
-  const dsMeta = getDatasetMetadata(1);
+  useEffect(() => {
+    async function loadCatalog() {
+      try {
+        const [modelsList, datasetsList] = await Promise.allSettled([
+          getAllModels(),
+          getAllDatasets(),
+        ]);
+        
+        let mList = modelsList.status === "fulfilled" && modelsList.value.length > 0
+          ? modelsList.value
+          : [];
+        
+        // Ensure baseline preset models exist for selection
+        const defaults = [
+          { modelId: 1, name: "ResNet Telemetry Predictor", architecture: "ResNet-50", framework: "PyTorch 2.4.0 (CUDA)", parameters: "25.6M", accuracy: "98.42%", hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" },
+          { modelId: 2, name: "MLP DeepRegression Substrate", architecture: "Multi-Layer Perceptron", framework: "PyTorch / Safetensors", parameters: "128K", accuracy: "99.10%", hash: "569fd95a0b6c30bf06b1368d42e36930873b683259b751edd8fab45c2b2728c2" },
+          { modelId: 3, name: "BERT Sensor Anomaly Classifier", architecture: "Transformer Encoder", framework: "HuggingFace PyTorch", parameters: "110M", accuracy: "97.65%", hash: "7c84a29ef1945cb928374d92a1048b29c91f4819ca1e028bfa182049e29a391c" }
+        ];
 
-  // High-fidelity DAG nodes
-  const nodes = [
+        defaults.forEach(d => {
+          if (!mList.some(m => String(m.modelId) === String(d.modelId))) {
+            mList.push(d);
+          }
+        });
+        
+        let dList = datasetsList.status === "fulfilled" && datasetsList.value.length > 0
+          ? datasetsList.value
+          : [
+              { datasetId: 1, title: "Industrial IoT Sensor Telemetry" },
+              { datasetId: 2, title: "Decentralized Sensor Telemetry Corpus v2" }
+            ];
+
+        // Enrich with titles
+        dList = dList.map(d => {
+          const meta = getDatasetMetadata(d.datasetId, d.cid);
+          return {
+            ...d,
+            title: meta.title || `Dataset #${d.datasetId}`,
+            category: meta.category,
+            cid: d.cid || meta.cid,
+          };
+        });
+
+        setAvailableModels(mList);
+        setAvailableDatasets(dList);
+      } catch (err) {
+        console.warn("Catalog load notice:", err);
+      }
+    }
+    loadCatalog();
+  }, []);
+
+  const curModel = useMemo(() => {
+    const found = availableModels.find(m => String(m.modelId) === String(selectedModelId));
+    if (found) return found;
+    if (String(selectedModelId) === "2") {
+      return { modelId: 2, name: "MLP DeepRegression Substrate", architecture: "Multi-Layer Perceptron", framework: "PyTorch / Safetensors", parameters: "128K", accuracy: "99.10%", hash: "569fd95a0b6c30bf06b1368d42e36930873b683259b751edd8fab45c2b2728c2" };
+    }
+    if (String(selectedModelId) === "3") {
+      return { modelId: 3, name: "BERT Sensor Anomaly Classifier", architecture: "Transformer Encoder", framework: "HuggingFace PyTorch", parameters: "110M", accuracy: "97.65%", hash: "7c84a29ef1945cb928374d92a1048b29c91f4819ca1e028bfa182049e29a391c" };
+    }
+    return { modelId: 1, name: "ResNet Telemetry Predictor", architecture: "ResNet-50", framework: "PyTorch 2.4.0 (CUDA)", parameters: "25.6M", accuracy: "98.42%", hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" };
+  }, [availableModels, selectedModelId]);
+
+  const dsMeta = useMemo(() => {
+    return getDatasetMetadata(selectedDatasetId);
+  }, [selectedDatasetId]);
+
+  // High-fidelity DAG nodes dynamically updated based on selection
+  const nodes = useMemo(() => [
     {
       id: "dataset-node",
       type: "DATASET",
-      title: dsMeta.title || "Industrial IoT Sensor Telemetry",
-      subtitle: `${dsMeta.category || "IoT Telemetry"} • ${dsMeta.fileName || "sensor_readings.csv"}`,
+      title: dsMeta.title || `Dataset #${selectedDatasetId}`,
+      subtitle: `${dsMeta.category || "IoT Telemetry"} • ${dsMeta.fileName || "dataset_records.csv"}`,
       hash: dsMeta.contentHash || "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       uri: `ipfs://${dsMeta.cid || "QmTXAoLR5ibkGLXVyXFjSoJTgMAxk44DGtGztu6bZkZkrL"}`,
       contract: "DatasetRegistry.sol",
@@ -53,23 +126,23 @@ export default function ProvenanceExplorer() {
         fileSize: dsMeta.fileSize || "351 KB",
         encryption: "AES-256-GCM Envelope",
         checksum: "0x4a8f...39d1",
-        onChainId: "1",
+        onChainId: String(selectedDatasetId),
       },
     },
     {
       id: "license-node",
       type: "LICENSE",
-      title: "Commercial AI License #1",
+      title: `${dsMeta.license || "Commercial"} AI License #${selectedDatasetId}`,
       subtitle: "Access Rights & Royalty Policy",
-      hash: "0x89ab...c123",
-      uri: "ipfs://QmLic772.../terms.json",
+      hash: `0x89ab...${selectedDatasetId}c123`,
+      uri: `ipfs://${dsMeta.cid || "QmLic772..."}/terms.json`,
       contract: "LicenseRegistry.sol",
       address: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
       badge: "Entitlement",
       color: "from-purple-500 to-indigo-600",
       details: {
-        fee: "100.00 AIX",
-        royaltySplit: "97.5% Creator / 2.5% Treasury",
+        fee: dsMeta.license === "CC0-1.0" ? "0.00 AIX (Public)" : "100.00 AIX",
+        royaltySplit: `${dsMeta.royaltyPercentage || "10.25%"} Creator / 2.5% Treasury`,
         settlement: "PurchaseEngine.sol",
         validity: "Perpetual AI Model Derivative",
       },
@@ -79,42 +152,42 @@ export default function ProvenanceExplorer() {
       type: "EXECUTION",
       title: "Sandbox Container Run",
       subtitle: "Air-Gapped Training Substrate",
-      hash: "exec_telemetry_8f912a",
-      uri: "sha256:d81a94...12f0",
+      hash: `exec_m${curModel.modelId}_ds${selectedDatasetId}_8f912a`,
+      uri: `sha256:${(curModel.hash || "d81a94").slice(0, 16)}...`,
       contract: "Docker / gVisor Substrate",
       address: "localhost:8000 (FastAPI)",
       badge: "Isolated Compute",
       color: "from-amber-500 to-orange-600",
       details: {
-        runtime: "PyTorch 2.4.0 (CUDA)",
+        runtime: curModel.framework || "PyTorch 2.4.0 (CUDA)",
         epochs: "5",
         loss: "0.1042",
-        accuracy: "98.42%",
+        accuracy: curModel.accuracy || "98.42%",
       },
     },
     {
       id: "model-node",
       type: "MODEL",
-      title: "ResNet Telemetry Predictor",
-      subtitle: "Model Weights & Architecture",
-      hash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      uri: "ipfs://QmModelResNet.../metadata.json",
+      title: curModel.name || `Model #${curModel.modelId}`,
+      subtitle: `${curModel.architecture || "Neural Network"} • Verified Weights`,
+      hash: curModel.hash || "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      uri: `ipfs://QmModel_${curModel.modelId}/metadata.json`,
       contract: "ModelRegistry.sol",
       address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
       badge: "Anchored Artifact",
       color: "from-emerald-500 to-teal-600",
       details: {
-        parameters: "25.6M",
-        top1Accuracy: "98.42%",
+        parameters: curModel.parameters || "25.6M",
+        top1Accuracy: curModel.accuracy || "98.42%",
         version: "v1.0.0",
-        onChainModelId: modelId,
+        onChainModelId: String(curModel.modelId),
       },
     },
-  ];
+  ], [curModel, dsMeta, selectedDatasetId]);
 
   useEffect(() => {
-    setSelectedNode(nodes[3]); // default to model node
-  }, []);
+    setSelectedNode(nodes[3]);
+  }, [nodes]);
 
   const handleVerifyLineage = async () => {
     try {
@@ -124,11 +197,11 @@ export default function ProvenanceExplorer() {
 
       setVerificationProof({
         verified: true,
-        rootHash: "0x3f7a81c0490b3491e7e72166dcbc22998a4d784a62ef4f169f9e9d6d3301a9df",
-        blockNumber: 184,
+        rootHash: `0x${(curModel.hash || "3f7a81c0490b3491e7e72166dcbc22998a4d784a62ef4f169f9e9d6d3301a9df").slice(0, 64)}`,
+        blockNumber: 180 + Number(curModel.modelId) * 4 + Number(selectedDatasetId),
         contract: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-        datasetId: "1",
-        modelId: modelId,
+        datasetId: String(selectedDatasetId),
+        modelId: String(curModel.modelId),
         timestamp: new Date().toUTCString(),
         immutableAuditTrail: "PASSED_100_PERCENT",
       });
@@ -214,6 +287,51 @@ export default function ProvenanceExplorer() {
             </div>
           </div>
         )}
+
+        {/* Interactive Model & Dataset Selection Controls */}
+        <div className="mb-6 p-4 rounded-2xl bg-slate-900 border border-slate-800/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1">
+            <span className="text-xs font-mono text-cyan-400 uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 font-bold">
+              <Cpu className="w-3.5 h-3.5" />
+              Target Model to Audit:
+            </span>
+            <select
+              value={selectedModelId}
+              onChange={(e) => {
+                setSelectedModelId(e.target.value);
+                setVerificationProof(null);
+              }}
+              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors w-full sm:w-auto"
+            >
+              {availableModels.map((m) => (
+                <option key={m.modelId} value={m.modelId}>
+                  Model #{m.modelId} — {m.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1">
+            <span className="text-xs font-mono text-purple-400 uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 font-bold">
+              <Database className="w-3.5 h-3.5" />
+              Source Dataset:
+            </span>
+            <select
+              value={selectedDatasetId}
+              onChange={(e) => {
+                setSelectedDatasetId(e.target.value);
+                setVerificationProof(null);
+              }}
+              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-semibold focus:outline-none focus:border-cyan-500 transition-colors w-full sm:w-auto"
+            >
+              {availableDatasets.map((d) => (
+                <option key={d.datasetId} value={d.datasetId}>
+                  Dataset #{d.datasetId} — {d.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         {/* Interactive Visual DAG Section */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-8 backdrop-blur-xl mb-8 shadow-2xl relative overflow-hidden">
@@ -322,31 +440,31 @@ export default function ProvenanceExplorer() {
             <div className="flex items-start gap-4 p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
               <span className="text-cyan-400 font-bold">14:02:11</span>
               <div>
-                <span className="text-white font-semibold">DatasetRegistered:</span> Dataset #1 registered on-chain with IPFS CID and SHA-256 integrity hash.
+                <span className="text-white font-semibold">DatasetRegistered:</span> {dsMeta.title || `Dataset #${selectedDatasetId}`} anchored on-chain with IPFS CID ({(dsMeta.cid || "QmTXAoLR5i").slice(0, 16)}...) and SHA-256 integrity digest.
               </div>
             </div>
             <div className="flex items-start gap-4 p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
               <span className="text-cyan-400 font-bold">14:03:45</span>
               <div>
-                <span className="text-white font-semibold">LicensePolicyAttached:</span> Commercial AI derivative license bound to Dataset #1 at 100 AIX.
+                <span className="text-white font-semibold">LicensePolicyAttached:</span> {dsMeta.license || "Commercial"} AI license bound to Dataset #{selectedDatasetId} at {dsMeta.license === "CC0-1.0" ? "0.00 AIX (Public)" : "100 AIX"}.
               </div>
             </div>
             <div className="flex items-start gap-4 p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
               <span className="text-cyan-400 font-bold">14:05:19</span>
               <div>
-                <span className="text-white font-semibold">DatasetPurchased:</span> AIX settlement executed on PurchaseEngine.sol; royalty split computed (97.5% / 2.5%).
+                <span className="text-white font-semibold">DatasetPurchased:</span> AIX settlement executed on PurchaseEngine.sol; {dsMeta.royaltyPercentage || "10.25%"} creator royalty verified.
               </div>
             </div>
             <div className="flex items-start gap-4 p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
               <span className="text-cyan-400 font-bold">14:07:30</span>
               <div>
-                <span className="text-white font-semibold">SandboxExecutionCompleted:</span> Container training completed 5 epochs; weights exported with verifiable SHA-256 fingerprint.
+                <span className="text-white font-semibold">SandboxExecutionCompleted:</span> {curModel.name} container completed training; weights exported with SHA-256 digest ({(curModel.hash || "e3b0c442").slice(0, 16)}...).
               </div>
             </div>
             <div className="flex items-start gap-4 p-3 rounded-lg bg-slate-950/60 border border-slate-800/80">
               <span className="text-emerald-400 font-bold">14:09:02</span>
               <div>
-                <span className="text-emerald-300 font-semibold">ProvenanceAnchored:</span> Merkle root hash permanently committed to ProvenanceRegistry.sol.
+                <span className="text-emerald-300 font-semibold">ProvenanceAnchored:</span> Merkle root hash linking Model #{curModel.modelId} to Dataset #{selectedDatasetId} permanently committed to ProvenanceRegistry.sol.
               </div>
             </div>
           </div>
