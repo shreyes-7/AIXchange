@@ -88,7 +88,6 @@ export const fetchAuthorizedDataset = async (user, datasetId, licenseId) => {
             throw new ApiError(502, "Dataset storage could not be reached or file not found.");
         }
 
-        const ciphertext = Buffer.from(await response.arrayBuffer());
         try {
             const buffer = decryptDatasetBuffer(ciphertext, dataset.file.encryption);
             const fileName = safeFileName(dataset.file.fileName);
