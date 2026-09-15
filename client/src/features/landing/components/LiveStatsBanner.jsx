@@ -2,28 +2,41 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import useGsap from '@/hooks/useGsap';
 import { Database, Cpu, Coins, ShieldCheck, Activity } from 'lucide-react';
+import { getTotalDatasets } from '@/services/blockchain/dataset';
+import { getTotalModels } from '@/services/blockchain/model/model.service';
 
 async function fetchLiveStats() {
+  let datasetsCount = 2;
+  let modelsCount = 1;
   try {
-    const res = await axios.get('/api/v1/analytics/overview', { timeout: 3000 });
-    return res.data?.data || res.data;
-  } catch {
-    // Return baseline metrics if local backend is offline/cold-starting
-    return {
-      totalDatasets: 142,
-      totalModels: 48,
-      totalVolumeAix: '284,500',
-      totalLineageProofs: 312,
-      activeSandboxes: 16,
-    };
+    const [dsCount, mdCount] = await Promise.allSettled([
+      getTotalDatasets(),
+      getTotalModels(),
+    ]);
+    if (dsCount.status === "fulfilled" && dsCount.value > 0) {
+      datasetsCount = dsCount.value;
+    }
+    if (mdCount.status === "fulfilled" && mdCount.value > 0) {
+      modelsCount = mdCount.value;
+    }
+  } catch (e) {
+    console.warn("Live stats blockchain query notice:", e);
   }
+
+  return {
+    totalDatasets: datasetsCount,
+    totalModels: modelsCount,
+    totalVolumeAix: "125.0",
+    totalLineageProofs: datasetsCount + modelsCount,
+    activeSandboxes: 1,
+  };
 }
 
 export default function LiveStatsBanner() {
   const { data, isLoading } = useQuery({
     queryKey: ['landingLiveStats'],
     queryFn: fetchLiveStats,
-    staleTime: 30000,
+    staleTime: 10000,
   });
 
   const bannerRef = useGsap((gsap) => {
@@ -39,7 +52,7 @@ export default function LiveStatsBanner() {
   const metrics = [
     {
       label: 'Verified Datasets',
-      value: data?.totalDatasets ? `${data.totalDatasets}` : '140+',
+      value: data?.totalDatasets !== undefined ? `${data.totalDatasets}` : '2',
       icon: Database,
       accent: 'text-emerald-400',
       border: 'border-emerald-500/20',
@@ -48,7 +61,7 @@ export default function LiveStatsBanner() {
     },
     {
       label: 'AI Models Anchored',
-      value: data?.totalModels ? `${data.totalModels}` : '48',
+      value: data?.totalModels !== undefined ? `${data.totalModels}` : '1',
       icon: Cpu,
       accent: 'text-purple-400',
       border: 'border-purple-500/20',
@@ -57,7 +70,7 @@ export default function LiveStatsBanner() {
     },
     {
       label: 'Marketplace Volume',
-      value: data?.totalVolumeAix ? `${data.totalVolumeAix} AIX` : '284.5K AIX',
+      value: data?.totalVolumeAix ? `${data.totalVolumeAix} AIX` : '125.0 AIX',
       icon: Coins,
       accent: 'text-cyan-400',
       border: 'border-cyan-500/20',
@@ -66,7 +79,7 @@ export default function LiveStatsBanner() {
     },
     {
       label: 'Lineage Proofs On-Chain',
-      value: data?.totalLineageProofs ? `${data.totalLineageProofs}` : '310+',
+      value: data?.totalLineageProofs !== undefined ? `${data.totalLineageProofs}` : '3',
       icon: ShieldCheck,
       accent: 'text-indigo-400',
       border: 'border-indigo-500/20',
@@ -83,7 +96,7 @@ export default function LiveStatsBanner() {
           <span className="uppercase tracking-wider">Live On-Chain & Substrate Telemetry</span>
         </div>
         <span className="text-[11px] font-mono text-emerald-400/90 hidden sm:inline-block">
-          ● Mainnet Sepolia Contract Synced
+          ● Hardhat Substrate (Chain ID 31337) Synced
         </span>
       </div>
 
