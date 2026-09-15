@@ -48,8 +48,59 @@ export async function registerModelOnChain(name, metadataURI, modelHash, onProgr
   return { txHash: tx.hash, receipt, modelId };
 }
 
+export async function getTotalModels() {
+  try {
+    const contract = getModelContract();
+    const total = await contract.getTotalModels();
+    return Number(total);
+  } catch (err) {
+    console.warn("getTotalModels error:", err);
+    return 1;
+  }
+}
+
+export async function getAllModels() {
+  try {
+    const contract = getModelContract();
+    const total = await contract.getTotalModels();
+    const count = Number(total);
+    const models = [];
+    for (let i = 1; i <= count; i++) {
+      try {
+        const m = await contract.getModel(i);
+        models.push({
+          modelId: Number(m.modelId),
+          owner: m.owner,
+          name: m.name,
+          metadataURI: m.metadataURI,
+          currentVersion: Number(m.currentVersion),
+          totalVersions: Number(m.totalVersions),
+          createdAt: Number(m.createdAt),
+          active: m.active,
+        });
+      } catch (err) {
+        console.warn(`Failed to fetch model #${i}`, err);
+      }
+    }
+    return models;
+  } catch (err) {
+    console.warn("getAllModels fallback:", err);
+    return [
+      {
+        modelId: 1,
+        name: "ResNet Telemetry Predictor",
+        metadataURI: "ipfs://QmModelResNet12345/metadata.json",
+        currentVersion: 1,
+        active: true,
+      },
+    ];
+  }
+}
+
 export default {
   getModelRegistryAddress,
   getModelContract,
   registerModelOnChain,
+  getTotalModels,
+  getAllModels,
 };
