@@ -33,6 +33,9 @@ class JupyterManager:
             return self.get_connection_info()
 
         root_dir = str(workspace_root or settings.base_workspace_dir)
+        os.makedirs(root_dir, exist_ok=True)
+        log_file_path = Path(root_dir) / "jupyter_server.log"
+
         cmd = [
             sys.executable,
             "-m",
@@ -45,16 +48,19 @@ class JupyterManager:
             "--ServerApp.open_browser=False",
             "--ServerApp.allow_remote_access=True",
             "--ServerApp.allow_origin=*",
+            "--ServerApp.disable_check_xsrf=True",
+            "--ServerApp.tornado_settings={\"headers\":{\"Content-Security-Policy\":\"frame-ancestors 'self' http://localhost:5173 http://127.0.0.1:5173 *\"}}",
         ]
 
         if settings.disable_jupyter_terminal:
             cmd.append("--ServerApp.terminals_enabled=False")
 
         try:
+            self._log_file = open(log_file_path, "a", encoding="utf-8")
             self._process = subprocess.Popen(
                 cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=self._log_file,
+                stderr=subprocess.STDOUT,
                 text=True,
             )
             logger.info(f"Started Jupyter server on port {self._port} bounded to {root_dir}")

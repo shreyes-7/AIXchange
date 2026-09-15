@@ -52,7 +52,7 @@ export default function SandboxDashboard() {
     status: "RUNNING",
     port: "8888",
     token: "aixchange_sandbox_token",
-    url: "http://localhost:8888/lab?token=aixchange_sandbox_token",
+    url: "http://127.0.0.1:8888/lab?token=aixchange_sandbox_token",
   });
   const [embedJupyter, setEmbedJupyter] = useState(false);
   const [tokenCopied, setTokenCopied] = useState(false);
@@ -118,7 +118,10 @@ export default function SandboxDashboard() {
     try {
       const info = await getJupyterSessionStatus(selectedSandbox?.sandboxId || "sbx_telemetry_01");
       if (info && info.status) {
-        setJupyterStatus(info);
+        setJupyterStatus({
+          ...info,
+          url: (info.url || "http://127.0.0.1:8888/lab?token=aixchange_sandbox_token").replace("localhost", "127.0.0.1"),
+        });
       }
     } catch {
       // Keep running default from python-services
