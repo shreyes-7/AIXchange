@@ -16,6 +16,7 @@ import LineageGraphView from "./pages/LineageGraphView";
 import InferencePlayground from "./pages/InferencePlayground";
 import RoyaltyDashboard from "./pages/RoyaltyDashboard";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import WalletTest from "./pages/WalletTest";
 import NotFoundPage from "./pages/NotFoundPage";
 
@@ -54,6 +55,9 @@ function App() {
 
         {/* Analytics & Benchmarks */}
         <Route path="/analytics" element={<AnalyticsDashboard />} />
+
+        {/* Phase 12: Admin & Fraud Oversight */}
+        <Route path="/admin" element={<AdminDashboard />} />
 
         {/* Dev & Wallet Testbed */}
         <Route path="/wallet-test" element={<WalletTest />} />

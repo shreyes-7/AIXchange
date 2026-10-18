@@ -146,6 +146,7 @@ export default function Navbar() {
     { to: '/royalties', label: 'Royalties' },
     { to: '/my-assets', label: 'My Assets' },
     { to: '/analytics', label: 'Analytics' },
+    { to: '/admin', label: 'Admin' },
     { to: '/wallet', label: 'Wallet' },
   ];
 

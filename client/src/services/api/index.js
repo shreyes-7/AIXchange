@@ -16,3 +16,4 @@ export * from "./sandboxApi.service.js";
 export * from "./provenanceApi.service.js";
 export * from "./royaltyApi.service.js";
 export * from "./analyticsApi.service.js";
+export * from "./adminApi.service.js";
