@@ -18,15 +18,26 @@ import {
   disconnectWallet,
   setChainId,
 } from '@/store/slices/walletSlice';
-import { Cpu, Wallet, Menu, X } from 'lucide-react';
+import { logout } from '@/store/slices/authSlice';
+import { logoutUser } from '@/services/api/authApi.service';
+import { Cpu, Wallet, Menu, X, LogIn, LogOut, User } from 'lucide-react';
 
 export default function Navbar() {
   const location = useLocation();
   const dispatch = useDispatch();
   const { address, isConnected, aixBalance } = useSelector((state) => state.wallet);
+  const { isAuthenticated, user, role } = useSelector((state) => state.auth);
   const [network, setNetwork] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } finally {
+      dispatch(logout());
+    }
+  };
 
   const fetchAixBalance = async (userAddress) => {
     try {
@@ -51,14 +62,12 @@ export default function Navbar() {
   };
 
   useEffect(() => {
-    if (!isMetaMaskInstalled()) {
-      return;
-    }
+    let mounted = true;
 
     async function checkConnected() {
       try {
         const current = await getCurrentAccount();
-        if (current) {
+        if (current && mounted) {
           const net = await getNetwork();
           setNetwork(net);
           const bal = await fetchAixBalance(current);
@@ -77,6 +86,7 @@ export default function Navbar() {
     checkConnected();
 
     const handleAccounts = async (accounts) => {
+      if (!mounted) return;
       if (accounts.length) {
         const net = await getNetwork();
         setNetwork(net);
@@ -96,20 +106,18 @@ export default function Navbar() {
     onChainChanged(handleChain);
 
     return () => {
+      mounted = false;
       removeAccountsChangedListener(handleAccounts);
       removeChainChangedListener(handleChain);
     };
   }, [dispatch]);
 
   const handleConnect = async () => {
-    if (!isMetaMaskInstalled()) {
-      alert('MetaMask is not installed. Please install MetaMask to connect your Web3 wallet.');
-      return;
-    }
     try {
       setIsConnecting(true);
       dispatch(connectStart());
       const acc = await connectWallet();
+      if (!acc) return;
       const net = await getNetwork();
       setNetwork(net);
       const bal = await fetchAixBalance(acc);
@@ -122,6 +130,7 @@ export default function Navbar() {
       );
     } catch (err) {
       console.error('Wallet connect failed:', err);
+      alert(err.message || 'Failed to connect MetaMask.');
     } finally {
       setIsConnecting(false);
     }
@@ -134,6 +143,7 @@ export default function Navbar() {
     { to: '/sandboxes', label: 'Sandboxes' },
     { to: '/provenance', label: 'Lineage DAG' },
     { to: '/inference', label: 'Inference' },
+    { to: '/my-assets', label: 'My Assets' },
     { to: '/analytics', label: 'Analytics' },
     { to: '/wallet', label: 'Wallet' },
   ];
@@ -180,7 +190,7 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Right Actions: Network, Balance, Wallet, Mobile Toggle */}
+        {/* Right Actions: Auth, Network, Balance, Wallet, Mobile Toggle */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Network Indicator */}
           {network && (
@@ -210,11 +220,48 @@ export default function Navbar() {
             <button
               onClick={handleConnect}
               disabled={isConnecting}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-semibold shadow-sm shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white text-xs font-semibold shadow-sm shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
             >
               <Wallet className="w-3.5 h-3.5" />
-              <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+              <span>{isConnecting ? 'Connecting...' : 'Connect'}</span>
             </button>
+          )}
+
+          {/* User Auth Status / Sign In / Out */}
+          {isAuthenticated ? (
+            <div className="hidden md:flex items-center gap-2 pl-1 border-l border-slate-800/80">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+                <User className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="text-slate-200 font-medium max-w-[100px] truncate">
+                  {user?.name || user?.email?.split('@')[0] || 'Member'}
+                </span>
+                <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                  {role || 'user'}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                title="Sign Out"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-2 pl-1 border-l border-slate-800/80">
+              <Link
+                to="/login"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/register"
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-900/60 transition-all"
+              >
+                Join
+              </Link>
+            </div>
           )}
 
           {/* Mobile Menu Toggle Button */}
@@ -248,6 +295,49 @@ export default function Navbar() {
               </Link>
             );
           })}
+
+          <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+            {isAuthenticated ? (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-cyan-400" />
+                  <span className="text-xs text-slate-200 font-medium">
+                    {user?.name || user?.email || 'Logged In'}
+                  </span>
+                  <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                    {role || 'user'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-xs text-rose-400 hover:underline flex items-center gap-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 w-full">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 text-center py-2 rounded-lg text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-200"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex-1 text-center py-2 rounded-lg text-xs font-semibold bg-gradient-to-r from-cyan-500 to-indigo-600 text-white"
+                >
+                  Join Substrate
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </header>
