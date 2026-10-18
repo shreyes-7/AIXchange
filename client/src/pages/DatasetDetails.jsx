@@ -15,6 +15,7 @@ import { getAixTokenContract } from "../services/blockchain/token/token.service"
 import { STANDARD_LICENSES } from "../types/dataset.types";
 import { getDatasetMetadata } from "../services/datasetMetadata";
 import IpfsGatewayModal from "../components/common/IpfsGatewayModal";
+import PurchaseModal from "../components/marketplace/PurchaseModal";
 
 export default function DatasetDetails() {
   const { id } = useParams();
@@ -29,6 +30,8 @@ export default function DatasetDetails() {
   const [hasAccess, setHasAccess] = useState(false);
   const [selectedLicenseTier, setSelectedLicenseTier] = useState("Commercial");
   const [purchasing, setPurchasing] = useState(false);
+  const [purchaseModalOpen, setPurchaseModalOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   // Edit / Action State
   const [isEditing, setIsEditing] = useState(false);
@@ -79,6 +82,39 @@ export default function DatasetDetails() {
 
   const metadata = dataset ? getDatasetMetadata(id, dataset.cid) : {};
   const isOwner = dataset && currentAccount && dataset.owner.toLowerCase() === currentAccount;
+
+  const handleDownload = async () => {
+    try {
+      setDownloading(true);
+      const token = localStorage.getItem("aix_token");
+      const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+      const downloadUrl = `${apiBase}/datasets/${id}/download`;
+
+      const response = await fetch(downloadUrl, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      if (!response.ok) {
+        window.open(`${ipfsGateway}/${dataset.cid}`, "_blank");
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(dataset.title || `dataset_${id}`).replace(/\\s+/g, "_")}_archive.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      window.open(`${ipfsGateway}/${dataset.cid}`, "_blank");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handlePurchase = async () => {
     try {
@@ -514,12 +550,21 @@ export default function DatasetDetails() {
                       <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
                         <p className="font-semibold">Cryptographic Entitlement Confirmed</p>
                         <p className="text-[11px] text-emerald-400/80 mt-1">
-                          You hold an active on-chain license record on PurchaseEngine.sol. You can now execute models in Docker sandboxes.
+                          You hold an active on-chain license record on PurchaseEngine.sol. You can now download the encrypted archive or execute models in Docker sandboxes.
                         </p>
                       </div>
 
+                      <button
+                        type="button"
+                        onClick={handleDownload}
+                        disabled={downloading}
+                        className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs border border-slate-700 shadow-sm flex items-center justify-center gap-2 transition-all"
+                      >
+                        {downloading ? "Preparing Archive..." : "Download Dataset Archive (Decrypted) ↓"}
+                      </button>
+
                       <Link
-                        to={`/sandboxes?datasetId=${dataset.datasetId}`}
+                        to={`/sandboxes?datasetId=${dataset.datasetId || id}`}
                         className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all"
                       >
                         Launch in AI Training Sandbox →
@@ -583,13 +628,11 @@ export default function DatasetDetails() {
 
                       <button
                         type="button"
-                        onClick={handlePurchase}
-                        disabled={purchasing || isActionPending || !dataset.active}
+                        onClick={() => setPurchaseModalOpen(true)}
+                        disabled={isActionPending || !dataset.active}
                         className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold text-xs shadow-xl shadow-indigo-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                       >
-                        {purchasing
-                          ? "Processing Settlement..."
-                          : `Purchase License (${selectedLicenseTier === "Commercial" ? "100" : "25"} AIX)`}
+                        Purchase License ({selectedLicenseTier === "Commercial" ? "100" : "25"} AIX)
                       </button>
                     </div>
                   )}
@@ -737,6 +780,26 @@ export default function DatasetDetails() {
             }}
             isOpen={showGatewayModal}
             onClose={() => setShowGatewayModal(false)}
+          />
+        )}
+
+        {/* 2-Step Atomic Purchase Modal */}
+        {dataset && (
+          <PurchaseModal
+            isOpen={purchaseModalOpen}
+            onClose={() => setPurchaseModalOpen(false)}
+            dataset={{
+              ...dataset,
+              id: id,
+              title: metadata?.title || dataset.title,
+            }}
+            licenseTier={selectedLicenseTier}
+            priceAix={selectedLicenseTier === "Commercial" ? 100 : 25}
+            licenseId={selectedLicenseTier === "Commercial" ? 1 : 2}
+            onSuccess={() => {
+              setHasAccess(true);
+              loadDatasetData();
+            }}
           />
         )}
       </main>

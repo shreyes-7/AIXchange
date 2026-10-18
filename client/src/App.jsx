@@ -3,6 +3,7 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import WalletPage from "./pages/WalletPage";
+import MyAssets from "./pages/MyAssets";
 import DatasetMarketplace from "./pages/DatasetMarketplace";
 import DatasetDetails from "./pages/DatasetDetails";
 import RegisterDataset from "./pages/RegisterDataset";
@@ -24,6 +25,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/wallet" element={<WalletPage />} />
+        <Route path="/my-assets" element={<MyAssets />} />
         
         {/* Datasets */}
         <Route path="/datasets" element={<DatasetMarketplace />} />
