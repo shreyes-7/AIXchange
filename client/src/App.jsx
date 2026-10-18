@@ -12,6 +12,7 @@ import ModelDetails from "./pages/ModelDetails";
 import RegisterModel from "./pages/RegisterModel";
 import SandboxDashboard from "./pages/SandboxDashboard";
 import ProvenanceExplorer from "./pages/ProvenanceExplorer";
+import LineageGraphView from "./pages/LineageGraphView";
 import InferencePlayground from "./pages/InferencePlayground";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import WalletTest from "./pages/WalletTest";
@@ -42,6 +43,7 @@ function App() {
 
         {/* Provenance Lineage DAG */}
         <Route path="/provenance" element={<ProvenanceExplorer />} />
+        <Route path="/provenance/graph/:modelId" element={<LineageGraphView />} />
 
         {/* Real-time Inference Playground */}
         <Route path="/inference" element={<InferencePlayground />} />
