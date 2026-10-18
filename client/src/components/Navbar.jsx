@@ -143,6 +143,7 @@ export default function Navbar() {
     { to: '/sandboxes', label: 'Sandboxes' },
     { to: '/provenance', label: 'Lineage DAG' },
     { to: '/inference', label: 'Inference' },
+    { to: '/royalties', label: 'Royalties' },
     { to: '/my-assets', label: 'My Assets' },
     { to: '/analytics', label: 'Analytics' },
     { to: '/wallet', label: 'Wallet' },

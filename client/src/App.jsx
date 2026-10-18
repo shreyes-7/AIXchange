@@ -14,6 +14,7 @@ import SandboxDashboard from "./pages/SandboxDashboard";
 import ProvenanceExplorer from "./pages/ProvenanceExplorer";
 import LineageGraphView from "./pages/LineageGraphView";
 import InferencePlayground from "./pages/InferencePlayground";
+import RoyaltyDashboard from "./pages/RoyaltyDashboard";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import WalletTest from "./pages/WalletTest";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -47,6 +48,9 @@ function App() {
 
         {/* Real-time Inference Playground */}
         <Route path="/inference" element={<InferencePlayground />} />
+
+        {/* Secondary Royalty Engine */}
+        <Route path="/royalties" element={<RoyaltyDashboard />} />
 
         {/* Analytics & Benchmarks */}
         <Route path="/analytics" element={<AnalyticsDashboard />} />
