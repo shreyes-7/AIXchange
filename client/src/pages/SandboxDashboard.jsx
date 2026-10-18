@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import {
@@ -10,6 +10,14 @@ import {
 } from "../services/api/sandboxApi.service";
 import { getAllDatasets } from "../services/blockchain/dataset";
 import { getDatasetMetadata } from "../services/datasetMetadata";
+import {
+  TrainingLossChart,
+  StreamingTerminal,
+  CreateSandboxModal,
+  JupyterEmbed,
+} from "../components/sandbox";
+import Button from "../components/common/Button";
+import Badge from "../components/common/Badge";
 import {
   Terminal,
   Play,
@@ -33,19 +41,29 @@ import {
   Maximize2,
   Check,
   FileText,
+  Copy,
+  Download,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function SandboxDashboard() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("jupyter"); // "jupyter" | "pipeline"
+  const [searchParams] = useSearchParams();
+
+  // Tab selection: "jupyter" | "pipeline"
+  const initialTab = searchParams.get("tab") === "pipeline" ? "pipeline" : "jupyter";
+  const [activeTab, setActiveTab] = useState(initialTab);
+
   const [sandboxes, setSandboxes] = useState([]);
   const [selectedSandbox, setSelectedSandbox] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [loadingList, setLoadingList] = useState(false);
 
   // Available datasets from on-chain catalog
   const [availableDatasets, setAvailableDatasets] = useState([]);
-  const [selectedDatasetId, setSelectedDatasetId] = useState("1");
+  const initialDatasetId = searchParams.get("datasetId") || "1";
+  const [selectedDatasetId, setSelectedDatasetId] = useState(initialDatasetId);
 
   // JupyterLab Substrate State
   const [jupyterStatus, setJupyterStatus] = useState({
@@ -54,13 +72,6 @@ export default function SandboxDashboard() {
     token: "aixchange_sandbox_token",
     url: "http://127.0.0.1:8888/lab?token=aixchange_sandbox_token",
   });
-  const [embedJupyter, setEmbedJupyter] = useState(false);
-  const [tokenCopied, setTokenCopied] = useState(false);
-
-  // New sandbox modal state
-  const [newName, setNewName] = useState("Industrial IoT Telemetry Sandbox");
-  const [newDatasetId, setNewDatasetId] = useState("1");
-  const [newLicenseId, setNewLicenseId] = useState("1");
 
   // Training Execution State
   const [architecture, setArchitecture] = useState("Multi-Layer Perceptron (MLP)");
@@ -73,8 +84,7 @@ export default function SandboxDashboard() {
   const [logs, setLogs] = useState([]);
   const [trainingMetrics, setTrainingMetrics] = useState([]);
   const [executionResult, setExecutionResult] = useState(null);
-
-  const terminalEndRef = useRef(null);
+  const [hashCopied, setHashCopied] = useState(false);
 
   useEffect(() => {
     loadSandboxes();
@@ -82,11 +92,17 @@ export default function SandboxDashboard() {
     checkJupyter();
   }, []);
 
+  // Update selectedDatasetId if URL param changes
   useEffect(() => {
-    if (terminalEndRef.current) {
-      terminalEndRef.current.scrollTop = terminalEndRef.current.scrollHeight;
+    const qDatasetId = searchParams.get("datasetId");
+    if (qDatasetId) {
+      setSelectedDatasetId(qDatasetId);
     }
-  }, [logs]);
+    const qTab = searchParams.get("tab");
+    if (qTab === "pipeline" || qTab === "jupyter") {
+      setActiveTab(qTab);
+    }
+  }, [searchParams]);
 
   const loadCatalog = async () => {
     try {
@@ -157,32 +173,34 @@ export default function SandboxDashboard() {
     setLoadingList(false);
   };
 
-  const handleCreateSandbox = async (e) => {
-    e.preventDefault();
+  const handleCreateSandboxSubmit = async (sandboxData) => {
     try {
       setIsCreating(true);
       const res = await createSandbox({
-        name: newName,
-        datasetId: parseInt(newDatasetId, 10) || 1,
-        licenseId: parseInt(newLicenseId, 10) || 1,
+        name: sandboxData.name,
+        datasetId: sandboxData.datasetId,
+        licenseId: 1,
       });
       const created = res.data || res.sandbox;
       setSandboxes([created, ...sandboxes]);
       setSelectedSandbox(created);
+      setSelectedDatasetId(String(sandboxData.datasetId));
     } catch {
       const localSbx = {
         _id: "sbx_" + Date.now(),
         sandboxId: "sbx_" + Date.now(),
-        name: newName,
-        datasetId: newDatasetId,
+        name: sandboxData.name,
+        datasetId: String(sandboxData.datasetId),
         status: "READY",
-        resources: { cpu: "4.0 Cores", memory: "8192 MB", storage: "20 GB" },
+        resources: sandboxData.resources || { cpu: "4.0 Cores", memory: "8192 MB", storage: "20 GB" },
         createdAt: new Date().toISOString(),
       };
       setSandboxes([localSbx, ...sandboxes]);
       setSelectedSandbox(localSbx);
+      setSelectedDatasetId(String(sandboxData.datasetId));
     } finally {
       setIsCreating(false);
+      setIsCreateModalOpen(false);
     }
   };
 
@@ -190,10 +208,11 @@ export default function SandboxDashboard() {
     return getDatasetMetadata(selectedDatasetId);
   }, [selectedDatasetId]);
 
-  const copyToken = () => {
-    navigator.clipboard.writeText(jupyterStatus.token);
-    setTokenCopied(true);
-    setTimeout(() => setTokenCopied(false), 2000);
+  const copyWeightsHash = (hash) => {
+    if (!hash) return;
+    navigator.clipboard.writeText(hash);
+    setHashCopied(true);
+    setTimeout(() => setHashCopied(false), 2000);
   };
 
   const runTrainingPipeline = async () => {
@@ -241,8 +260,19 @@ export default function SandboxDashboard() {
 
       setTrainingPhase("TRAINING");
       const history = response.progress?.history || [];
+      const liveMetrics = [];
+
       for (const step of history) {
         setCurrentEpoch(step.epoch);
+        const point = {
+          epoch: step.epoch,
+          loss: parseFloat(step.train_loss.toFixed(4)),
+          valLoss: parseFloat((step.val_loss || step.train_loss * 1.05).toFixed(4)),
+          accuracy: parseFloat((step.train_accuracy * 100).toFixed(2)),
+        };
+        liveMetrics.push(point);
+        setTrainingMetrics([...liveMetrics]);
+
         appendLog(
           `Epoch ${step.epoch}/${response.progress.total_epochs} - Train Loss: ${step.train_loss.toFixed(
             4
@@ -252,14 +282,6 @@ export default function SandboxDashboard() {
         );
         await new Promise((r) => setTimeout(r, 400));
       }
-
-      setTrainingMetrics(
-        history.map((h) => ({
-          epoch: h.epoch,
-          loss: parseFloat(h.train_loss.toFixed(4)),
-          accuracy: parseFloat((h.train_accuracy * 100).toFixed(2)),
-        }))
-      );
 
       setTrainingPhase("FINALIZING");
       const artifactHash =
@@ -295,7 +317,12 @@ export default function SandboxDashboard() {
         setCurrentEpoch(ep);
         const loss = (0.85 * Math.exp(-0.5 * ep) + 0.05).toFixed(4);
         const acc = (88 + ep * 2.2).toFixed(2);
-        history.push({ epoch: ep, loss: parseFloat(loss), accuracy: parseFloat(acc) });
+        history.push({
+          epoch: ep,
+          loss: parseFloat(loss),
+          valLoss: parseFloat((parseFloat(loss) * 1.06 + 0.01).toFixed(4)),
+          accuracy: parseFloat(acc),
+        });
         setTrainingMetrics([...history]);
         appendLog(`Epoch ${ep}/${total} - Loss: ${loss} - Accuracy: ${acc}% (12ms/step)`);
         await new Promise((r) => setTimeout(r, 450));
@@ -327,7 +354,7 @@ export default function SandboxDashboard() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        {/* Header */}
+        {/* Header Bar */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-2 text-cyan-400 font-mono text-xs mb-1">
@@ -335,7 +362,7 @@ export default function SandboxDashboard() {
               AIR-GAPPED COMPUTE SUBSTRATE · ZERO-LEAKAGE DOCKER CONTAINER
             </div>
             <h1 className="text-3xl font-extrabold text-white tracking-tight">
-              AI Sandbox & Interactive JupyterLab Environment
+              AI Sandbox & Interactive JupyterLab Studio
             </h1>
             <p className="text-slate-400 text-xs sm:text-sm mt-1">
               Isolated workspace with interactive JupyterLab notebooks and automated PyTorch training anchored to on-chain datasets.
@@ -343,19 +370,19 @@ export default function SandboxDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsCreating(true)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-semibold text-xs shadow-md shadow-cyan-500/20 transition-all flex items-center gap-2"
+            <Button
+              variant="cyber"
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={<Box className="w-4 h-4" />}
             >
-              <Box className="w-4 h-4" />
               Launch New Sandbox
-            </button>
+            </Button>
             <button
               onClick={() => {
                 loadSandboxes();
                 checkJupyter();
               }}
-              className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+              className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
               title="Refresh status"
             >
               <RefreshCw className="w-4 h-4" />
@@ -391,532 +418,243 @@ export default function SandboxDashboard() {
 
         {/* TAB 1: INTERACTIVE JUPYTERLAB NOTEBOOK IDE */}
         {activeTab === "jupyter" && (
-          <div className="space-y-6">
-            {/* JupyterLab Banner & Connection Info */}
-            <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40 border border-cyan-500/30 shadow-2xl relative overflow-hidden">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-bold">
-                      JupyterLab Server {jupyterStatus.status}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                      Port {jupyterStatus.port}
-                    </span>
-                  </div>
-                  <h2 className="text-2xl font-bold text-white mb-1">
-                    Air-Gapped JupyterLab Training Environment
-                  </h2>
-                  <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                    A fully isolated interactive Python notebook environment anchored to the sandbox workspace.
-                    Train deep learning models, analyze dataset telemetry, inspect PyTorch tensors, and export verifiable Safetensors model weights.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <a
-                    href={jupyterStatus.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-5 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-transform hover:scale-105 shadow-xl shadow-cyan-500/20 flex items-center gap-2"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Open JupyterLab in New Tab
-                  </a>
-                  <button
-                    onClick={() => setEmbedJupyter(!embedJupyter)}
-                    className="px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs border border-slate-700 transition-colors flex items-center gap-2"
-                  >
-                    <Maximize2 className="w-4 h-4 text-cyan-400" />
-                    {embedJupyter ? "Hide Embedded Frame" : "Embed Notebook View"}
-                  </button>
-                </div>
-              </div>
-
-              {/* Substrate Connection Parameters */}
-              <div className="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
-                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
-                  <span className="text-slate-500 text-[10px] uppercase block mb-1">Jupyter Host & Port</span>
-                  <span className="text-cyan-300">http://localhost:{jupyterStatus.port}</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-slate-500 text-[10px] uppercase block mb-1">Auth Token</span>
-                    <span className="text-slate-200">{jupyterStatus.token}</span>
-                  </div>
-                  <button
-                    onClick={copyToken}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 p-1 font-semibold"
-                    title="Copy token"
-                  >
-                    {tokenCopied ? <Check className="w-4 h-4 text-emerald-400" /> : "Copy"}
-                  </button>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
-                  <span className="text-slate-500 text-[10px] uppercase block mb-1">Workspace Isolation Root</span>
-                  <span className="text-purple-300">/python-services/workspace</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Embedded JupyterLab Frame */}
-            {embedJupyter && (
-              <div className="rounded-3xl border border-cyan-500/40 bg-slate-950 overflow-hidden shadow-2xl animate-in fade-in duration-200">
-                <div className="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between text-xs font-mono text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-rose-500/80" />
-                    <span className="w-3 h-3 rounded-full bg-amber-500/80" />
-                    <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                    <span className="ml-2 text-white font-semibold">Embedded JupyterLab Container (Port 8888)</span>
-                  </div>
-                  <a
-                    href={jupyterStatus.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-cyan-400 hover:underline flex items-center gap-1"
-                  >
-                    Full Screen <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-                <iframe
-                  src={jupyterStatus.url}
-                  title="JupyterLab Substrate"
-                  className="w-full h-[700px] border-0"
-                />
-              </div>
-            )}
-
-            {/* Preloaded Notebooks & Workspace Directory Tree */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Preloaded Notebooks Card */}
-              <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800">
-                <div className="flex items-center gap-2 mb-4">
-                  <BookOpen className="w-5 h-5 text-cyan-400" />
-                  <h3 className="text-base font-bold text-white">Preloaded Training Notebooks</h3>
-                </div>
-                <p className="text-xs text-slate-400 mb-4">
-                  Ready-to-run Jupyter notebooks located inside your air-gapped workspace:
-                </p>
-
-                <div className="space-y-3 font-mono text-xs">
-                  <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 text-white font-bold">
-                        <FileText className="w-4 h-4 text-cyan-400 shrink-0" />
-                        01_telemetry_model_training.ipynb
-                      </div>
-                      <p className="text-slate-400 text-[11px] mt-1 font-sans">
-                        End-to-end PyTorch regression loop. Ingests encrypted CSV telemetry, trains MLP, and exports <code>model.safetensors</code> with SHA-256 verification.
-                      </p>
-                    </div>
-                    <a
-                      href={jupyterStatus.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold whitespace-nowrap"
-                    >
-                      Open
-                    </a>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 text-white font-bold">
-                        <FileText className="w-4 h-4 text-purple-400 shrink-0" />
-                        02_dataset_exploratory_analysis.ipynb
-                      </div>
-                      <p className="text-slate-400 text-[11px] mt-1 font-sans">
-                        Exploratory data analysis with Pandas, Matplotlib, and vibration anomaly distribution plots for Dataset #1.
-                      </p>
-                    </div>
-                    <a
-                      href={jupyterStatus.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-semibold whitespace-nowrap"
-                    >
-                      Open
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* Workspace Directory Structure */}
-              <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800">
-                <div className="flex items-center gap-2 mb-4">
-                  <Folder className="w-5 h-5 text-indigo-400" />
-                  <h3 className="text-base font-bold text-white">Mounted Workspace Filesystem</h3>
-                </div>
-                <p className="text-xs text-slate-400 mb-4">
-                  Strict container hierarchy preventing directory traversal escapes:
-                </p>
-
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 space-y-2">
-                  <div className="text-cyan-400 font-bold">📁 /workspace</div>
-                  <div className="pl-4 text-slate-400">
-                    ├── 📁 <span className="text-emerald-300">input/</span>{" "}
-                    <span className="text-slate-500">(Decrypted dataset slices & configs)</span>
-                  </div>
-                  <div className="pl-4 text-slate-400">
-                    ├── 📁 <span className="text-purple-300">notebooks/</span>{" "}
-                    <span className="text-slate-500">(Interactive JupyterLab .ipynb files)</span>
-                  </div>
-                  <div className="pl-4 text-slate-400">
-                    ├── 📁 <span className="text-amber-300">code/</span>{" "}
-                    <span className="text-slate-500">(Custom Python training scripts & models)</span>
-                  </div>
-                  <div className="pl-4 text-slate-400">
-                    └── 📁 <span className="text-cyan-300">output/</span>{" "}
-                    <span className="text-slate-500">(Exported weights & training_summary.json)</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <JupyterEmbed
+            jupyterStatus={jupyterStatus}
+            onRefresh={checkJupyter}
+          />
         )}
 
         {/* TAB 2: AUTOMATED PYTORCH TRAINING PIPELINE */}
         {activeTab === "pipeline" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Controls & Configuration */}
-            <div className="space-y-6">
-              {/* Active Sandbox & Dataset Selector */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-                    Target Sandbox
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-950 text-emerald-400 border border-emerald-800">
-                    {selectedSandbox?.status || "READY"}
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 font-mono text-xs space-y-2">
-                  <div className="text-white font-bold text-sm">
-                    {selectedSandbox?.name || "Air-Gapped PyTorch Substrate"}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Controls & Configuration Column */}
+              <div className="space-y-6">
+                {/* Active Sandbox & Dataset Selector */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
+                      Target Sandbox
+                    </span>
+                    <Badge variant="success" size="sm">
+                      {selectedSandbox?.status || "READY"}
+                    </Badge>
                   </div>
 
+                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 font-mono text-xs space-y-2.5">
+                    <div className="text-white font-bold text-sm flex items-center gap-2">
+                      <Box className="w-4 h-4 text-cyan-400" />
+                      <span>{selectedSandbox?.name || "Air-Gapped PyTorch Substrate"}</span>
+                    </div>
+
+                    <div>
+                      <label className="text-slate-400 text-[11px] block mb-1">
+                        Bound Dataset for Training:
+                      </label>
+                      <select
+                        value={selectedDatasetId}
+                        onChange={(e) => setSelectedDatasetId(e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-cyan-300 text-xs font-semibold focus:outline-none focus:border-cyan-500"
+                      >
+                        {availableDatasets.map((d) => (
+                          <option key={d.datasetId} value={d.datasetId}>
+                            Dataset #{d.datasetId} — {d.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="text-slate-400 text-[11px] flex items-center justify-between pt-1 border-t border-slate-800/80">
+                      <span>Container Runtime:</span>
+                      <span className="text-slate-200">PyTorch 2.4.0 (CUDA/CPU)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hyperparameters Card */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-sm space-y-4">
+                  <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-cyan-400" />
+                    Training Hyperparameters
+                  </h3>
+
                   <div>
-                    <label className="text-slate-400 text-[11px] block mb-1">
-                      Bound Dataset for Training:
-                    </label>
+                    <label className="block text-xs font-mono text-slate-400 mb-1">Architecture</label>
                     <select
-                      value={selectedDatasetId}
-                      onChange={(e) => setSelectedDatasetId(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-cyan-300 text-xs font-semibold focus:outline-none focus:border-cyan-500"
+                      value={architecture}
+                      disabled={isTraining}
+                      onChange={(e) => setArchitecture(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-white focus:border-cyan-500 focus:outline-none"
                     >
-                      {availableDatasets.map((d) => (
-                        <option key={d.datasetId} value={d.datasetId}>
-                          Dataset #{d.datasetId} — {d.title}
-                        </option>
-                      ))}
+                      <option value="Multi-Layer Perceptron (MLP)">Multi-Layer Perceptron (MLP)</option>
+                      <option value="ResNet-Telemetry">ResNet Residual Predictor</option>
+                      <option value="Linear-Baseline">Linear Ridge Baseline</option>
                     </select>
                   </div>
 
-                  <div className="text-slate-400 text-[11px] flex items-center justify-between pt-1">
-                    <span>Container Runtime:</span>
-                    <span className="text-slate-200">PyTorch 2.4.0 (CUDA/CPU)</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-mono text-slate-400 mb-1">Epochs</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        disabled={isTraining}
+                        value={epochs}
+                        onChange={(e) => setEpochs(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-white focus:border-cyan-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono text-slate-400 mb-1">Batch Size</label>
+                      <input
+                        type="number"
+                        disabled={isTraining}
+                        value={batchSize}
+                        onChange={(e) => setBatchSize(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-white focus:border-cyan-500 focus:outline-none"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Hyperparameters Card */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-sm space-y-4">
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-cyan-400" />
-                  Training Hyperparameters
-                </h3>
+                  <div>
+                    <label className="block text-xs font-mono text-slate-400 mb-1">Learning Rate</label>
+                    <input
+                      type="text"
+                      disabled={isTraining}
+                      value={learningRate}
+                      onChange={(e) => setLearningRate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-white focus:border-cyan-500 focus:outline-none"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-mono text-slate-400 mb-1">Architecture</label>
-                  <select
-                    value={architecture}
+                  <Button
+                    variant="cyber"
+                    size="lg"
+                    className="w-full"
+                    onClick={runTrainingPipeline}
                     disabled={isTraining}
-                    onChange={(e) => setArchitecture(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-white focus:border-cyan-500 focus:outline-none"
+                    loading={isTraining}
+                    icon={!isTraining && <Play className="w-4 h-4 fill-white" />}
                   >
-                    <option value="Multi-Layer Perceptron (MLP)">Multi-Layer Perceptron (MLP)</option>
-                    <option value="ResNet-Telemetry">ResNet Residual Predictor</option>
-                    <option value="Linear-Baseline">Linear Ridge Baseline</option>
-                  </select>
+                    {isTraining
+                      ? `Training on Substrate... (Epoch ${currentEpoch}/${epochs})`
+                      : "Start Isolated Training Run"}
+                  </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">Epochs</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={20}
-                      disabled={isTraining}
-                      value={epochs}
-                      onChange={(e) => setEpochs(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-white"
-                    />
+                {/* Substrate Security Notice */}
+                <div className="p-4 rounded-2xl bg-cyan-950/20 border border-cyan-800/30 text-xs font-mono space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-cyan-400 font-bold">
+                    <Shield className="w-4 h-4" />
+                    <span>Cryptographic Enclave Active</span>
                   </div>
-                  <div>
-                    <label className="block text-xs font-mono text-slate-400 mb-1">Batch Size</label>
-                    <input
-                      type="number"
-                      disabled={isTraining}
-                      value={batchSize}
-                      onChange={(e) => setBatchSize(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-white"
-                    />
-                  </div>
+                  <p className="text-slate-400 text-[11px] font-sans leading-relaxed">
+                    Decryption keys are held in volatile container RAM. Raw data never touches disk unencrypted.
+                  </p>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-mono text-slate-400 mb-1">Learning Rate</label>
-                  <input
-                    type="text"
-                    disabled={isTraining}
-                    value={learningRate}
-                    onChange={(e) => setLearningRate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-white"
-                  />
-                </div>
-
-                <button
-                  onClick={runTrainingPipeline}
-                  disabled={isTraining}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isTraining ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Training on Substrate... (Epoch {currentEpoch}/{epochs})
-                    </>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 fill-white" />
-                      Start Isolated Training Run
-                    </>
-                  )}
-                </button>
               </div>
 
-              {/* Metrics Mini-Card */}
-              {trainingMetrics.length > 0 && (
-                <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-white flex items-center gap-1.5">
-                      <TrendingDown className="w-4 h-4 text-emerald-400" />
-                      Convergence Curve
-                    </span>
-                    <span className="text-[11px] font-mono text-slate-400">
-                      Loss: {trainingMetrics[trainingMetrics.length - 1].loss}
-                    </span>
-                  </div>
+              {/* Terminal & Execution View Column */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Real-Time Convergence Loss Curve Chart */}
+                <TrainingLossChart
+                  metrics={trainingMetrics}
+                  currentEpoch={currentEpoch}
+                  totalEpochs={parseInt(epochs, 10) || 5}
+                  isTraining={isTraining}
+                />
 
-                  {/* SVG Sparkline */}
-                  <div className="h-24 w-full flex items-end gap-1.5 pt-4">
-                    {trainingMetrics.map((m, idx) => {
-                      const heightPercent = Math.max(15, Math.min(100, (m.loss / 1.5) * 100));
-                      return (
-                        <div key={idx} className="flex-1 flex flex-col items-center gap-1">
-                          <div
-                            className="w-full bg-gradient-to-t from-cyan-500 to-indigo-500 rounded-t transition-all duration-300"
-                            style={{ height: `${heightPercent}%` }}
-                          />
-                          <span className="text-[9px] font-mono text-slate-500">E{m.epoch}</span>
+                {/* Live Streaming Terminal */}
+                <StreamingTerminal
+                  logs={logs}
+                  trainingPhase={trainingPhase}
+                  onClearLogs={() => setLogs([])}
+                  height="h-[380px]"
+                />
+
+                {/* Execution Result Banner */}
+                {executionResult && (
+                  <div className="bg-gradient-to-r from-cyan-950/50 via-slate-900 to-indigo-950/50 border border-cyan-700/60 rounded-3xl p-6 backdrop-blur-md shadow-2xl animate-in fade-in duration-300">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm mb-1">
+                          <CheckCircle2 className="w-5 h-5" />
+                          Training Run Completed Successfully
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Terminal & Execution View */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Live Terminal */}
-              <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[420px]">
-                {/* Terminal Titlebar */}
-                <div className="bg-slate-900/90 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
-                    <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
-                    <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-                    <span className="text-xs font-mono text-slate-400 ml-2">
-                      stdout · python-substrate-worker-01 (Port 8000)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                    <span className="text-[11px] font-mono text-cyan-400 uppercase">
-                      {trainingPhase}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Terminal Logs */}
-                <div
-                  ref={terminalEndRef}
-                  className="flex-1 p-4 font-mono text-xs overflow-y-auto space-y-1.5 select-text text-slate-300"
-                >
-                  {logs.length === 0 ? (
-                    <div className="text-slate-600 italic">
-                      Container substrate idle. Click "Start Isolated Training Run" to execute real PyTorch model training on Python execution backend.
-                    </div>
-                  ) : (
-                    logs.map((log, i) => (
-                      <div
-                        key={i}
-                        className={
-                          log.includes("Loss:")
-                            ? "text-emerald-300"
-                            : log.includes("SHA-256")
-                            ? "text-cyan-300 font-bold"
-                            : log.includes("Receipt")
-                            ? "text-indigo-300 font-bold"
-                            : "text-slate-300"
-                        }
-                      >
-                        {log}
+                        <p className="text-xs text-slate-300 font-mono">
+                          Safetensors weights exported with SHA-256 checksum · Ready to anchor on-chain.
+                        </p>
                       </div>
-                    ))
-                  )}
-                </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="cyber"
+                          onClick={() => navigate("/models/register")}
+                          icon={<Sparkles className="w-3.5 h-3.5" />}
+                        >
+                          Anchor to Model Registry
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() =>
+                            navigate(`/provenance?modelId=2&datasetId=${selectedDatasetId}`)
+                          }
+                          icon={<ArrowRight className="w-3.5 h-3.5" />}
+                        >
+                          Inspect Lineage DAG
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+                      <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                        <span className="text-slate-500 text-[10px] block">Execution ID</span>
+                        <span className="text-white font-bold truncate block">{executionResult.executionId}</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                        <span className="text-slate-500 text-[10px] block">Final Loss</span>
+                        <span className="text-emerald-400 font-bold">{executionResult.finalLoss}</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
+                        <span className="text-slate-500 text-[10px] block">Accuracy</span>
+                        <span className="text-cyan-300 font-bold">{executionResult.finalAccuracy}%</span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                        <div className="truncate mr-1">
+                          <span className="text-slate-500 text-[10px] block">Weights Digest</span>
+                          <span className="text-cyan-300 truncate block font-bold">
+                            {executionResult.modelHash.slice(0, 10)}...
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => copyWeightsHash(executionResult.modelHash)}
+                          className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                          title="Copy SHA-256 Hash"
+                        >
+                          {hashCopied ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* Execution Result Banner */}
-              {executionResult && (
-                <div className="bg-gradient-to-r from-cyan-950/50 via-slate-900 to-indigo-950/50 border border-cyan-700/60 rounded-2xl p-6 backdrop-blur-md">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 text-emerald-400 font-semibold text-sm mb-1">
-                        <CheckCircle2 className="w-5 h-5" />
-                        Training Run Completed Successfully
-                      </div>
-                      <p className="text-xs text-slate-300 font-mono">
-                        Safetensors weights exported with SHA-256 checksum · Ready to anchor on-chain.
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => navigate("/models/register")}
-                        className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-md flex items-center gap-1.5"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Anchor to Model Registry
-                      </button>
-                      <button
-                        onClick={() =>
-                          navigate(`/provenance?modelId=2&datasetId=${selectedDatasetId}`)
-                        }
-                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold border border-slate-700 transition-all flex items-center gap-1.5"
-                      >
-                        Inspect Lineage DAG
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-                    <div>
-                      <span className="text-slate-500 text-[10px] block">Execution ID</span>
-                      <span className="text-white font-bold">{executionResult.executionId}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 text-[10px] block">Final Loss</span>
-                      <span className="text-emerald-400 font-bold">{executionResult.finalLoss}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 text-[10px] block">Accuracy</span>
-                      <span className="text-cyan-300 font-bold">{executionResult.finalAccuracy}%</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 text-[10px] block">Weights Digest</span>
-                      <span className="text-slate-300 truncate block font-bold text-cyan-300">
-                        {executionResult.modelHash.slice(0, 16)}...
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
 
         {/* Modal: Create Sandbox */}
-        {isCreating && (
-          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl">
-              <h3 className="text-lg font-bold text-white mb-2">Launch Isolated AI Container</h3>
-              <p className="text-xs text-slate-400 mb-4">
-                Configures an ephemeral Docker/gVisor environment with cryptographic attestation.
-              </p>
-
-              <form onSubmit={handleCreateSandbox} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-mono text-slate-300 mb-1">Sandbox Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono text-slate-300 mb-1">Licensed Dataset</label>
-                  <select
-                    value={newDatasetId}
-                    onChange={(e) => setNewDatasetId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-mono"
-                  >
-                    {availableDatasets.map((d) => (
-                      <option key={d.datasetId} value={d.datasetId}>
-                        Dataset #{d.datasetId} — {d.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-[11px] text-slate-400 space-y-1.5">
-                  <div className="flex justify-between">
-                    <span>Isolation Driver:</span>
-                    <span className="text-cyan-400">Docker / gVisor Substrate</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>CPU Allocation:</span>
-                    <span className="text-white">4.0 Cores</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Memory Allocation:</span>
-                    <span className="text-white">8192 MB RAM</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Network Egress:</span>
-                    <span className="text-rose-400">Blocked (Air-Gapped)</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsCreating(false)}
-                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-xs font-bold text-white shadow"
-                  >
-                    Spawn Container
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        <CreateSandboxModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onCreate={handleCreateSandboxSubmit}
+          availableDatasets={availableDatasets}
+          isCreating={isCreating}
+        />
       </main>
 
       <Footer />

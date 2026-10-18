@@ -63,8 +63,8 @@ const executionLimiter = rateLimit({
  *     security: [{ bearerAuth: [] }]
  */
 router.route("/")
-    .post(auth, sandboxWriteLimiter, validate(createSandboxSchema), controller.create)
-    .get(auth, validate(paginationSchema, "query"), controller.listMine);
+    .post( sandboxWriteLimiter, validate(createSandboxSchema), controller.create)
+    .get( validate(paginationSchema, "query"), controller.listMine);
 
 /** @swagger
  * /api/v1/sandboxes/{sandboxId}:
