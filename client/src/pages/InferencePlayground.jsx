@@ -65,33 +65,26 @@ export default function InferencePlayground() {
     return getModelMetadata(selectedModelId);
   }, [selectedModelId]);
 
-  // Telemetry anomaly presets
-  const presets = [
-    {
-      name: "Nominal Operating Baseline",
-      vector: [24.5, 0.082, 380.2, 1.42, 1850],
-      desc: "Optimal operating temperature, low vibration, and steady 380V line voltage.",
-      type: "optimal",
-    },
-    {
-      name: "Critical Thermal Spike",
-      vector: [89.2, 0.354, 342.1, 2.85, 2400],
-      desc: "High bearing temperature (89.2°C) with elevated radial mechanical stress.",
-      type: "critical",
-    },
-    {
-      name: "Voltage Sag Anomaly",
-      vector: [31.0, 0.120, 210.5, 1.10, 1600],
-      desc: "Severe brownout voltage drop (210.5V) causing electrical oscillation.",
-      type: "warning",
-    },
-    {
-      name: "Bearing Mechanical Cavitation",
-      vector: [78.4, 0.890, 395.0, 4.80, 2950],
-      desc: "High harmonic vibration (0.89g) and extreme hydraulic pressure spike.",
-      type: "critical",
-    },
-  ];
+  const activeSchema = useMemo(() => {
+    return selectedModel?.featureSchema || [];
+  }, [selectedModel]);
+
+  const activePresets = useMemo(() => {
+    return selectedModel?.presets || [];
+  }, [selectedModel]);
+
+  // Synchronize features when selected model or its schema changes
+  useEffect(() => {
+    if (activeSchema.length > 0) {
+      const defaultVec = activeSchema.map(
+        (f) => f.defaultValue ?? (f.min + f.max) / 2
+      );
+      setFeatures(defaultVec);
+      setInputFeaturesJson(JSON.stringify(defaultVec, null, 2));
+    }
+    setResult(null);
+    setError(null);
+  }, [selectedModelId, activeSchema]);
 
   const handleApplyPreset = (vector) => {
     setFeatures(vector);
@@ -148,16 +141,35 @@ export default function InferencePlayground() {
         // High fidelity deterministic inference forward-pass simulation
         await new Promise((r) => setTimeout(r, 60)); // realistic forward-pass time
 
-        const [temp, vib, volt, press, rpm] = parsedInput;
+        // Calculate model-specific stress deviation based on active schema nominal ranges
+        let stressCount = 0;
+        let totalDeviation = 0;
+
+        parsedInput.forEach((val, idx) => {
+          const field = activeSchema[idx];
+          if (field && field.nominal) {
+            const [nomMin, nomMax] = field.nominal;
+            if (val < nomMin) {
+              stressCount++;
+              const span = nomMax - nomMin || 1;
+              totalDeviation += Math.min((nomMin - val) / span, 2.0);
+            } else if (val > nomMax) {
+              stressCount++;
+              const span = nomMax - nomMin || 1;
+              totalDeviation += Math.min((val - nomMax) / span, 2.0);
+            }
+          }
+        });
+
         let prediction = "NOMINAL_HEALTHY";
         let confidence = 0.984;
         let anomalyScore = 0.016;
 
-        if (temp > 75 || vib > 0.4 || volt < 250 || press > 4.0) {
+        if (stressCount >= 2 || totalDeviation > 1.2) {
           prediction = "CRITICAL_ANOMALY_ALERT";
-          confidence = 0.965;
-          anomalyScore = 0.942;
-        } else if (temp > 50 || vib > 0.18 || volt < 320 || rpm > 2600) {
+          confidence = Math.min(0.92 + totalDeviation * 0.03, 0.995);
+          anomalyScore = Math.min(0.86 + totalDeviation * 0.05, 0.988);
+        } else if (stressCount >= 1 || totalDeviation > 0.3) {
           prediction = "WARNING_MAINTENANCE_REQUIRED";
           confidence = 0.891;
           anomalyScore = 0.485;
@@ -170,7 +182,9 @@ export default function InferencePlayground() {
           anomalyScore,
           modelId: selectedModelId,
           modelVersion: modelMeta.version || "v1.2.0",
-          modelHash: modelMeta.modelHash || "569fd95a0b6c30bf06b1368d42e36930873b683259b751edd8fab45c2b2728c2",
+          modelHash:
+            modelMeta.modelHash ||
+            "569fd95a0b6c30bf06b1368d42e36930873b683259b751edd8fab45c2b2728c2",
           executionTimestamp: new Date().toISOString(),
           receiptHash:
             "0x" +
@@ -284,7 +298,7 @@ export default function InferencePlayground() {
             <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-5 backdrop-blur-md">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-                  Telemetry Feature Vector Input
+                  {selectedModel.name} · Feature Vector Input
                 </span>
 
                 {/* Tab Switcher: Sliders vs JSON */}
@@ -313,34 +327,42 @@ export default function InferencePlayground() {
               </div>
 
               {/* Anomaly Presets Strip */}
-              <div className="space-y-2">
-                <span className="text-[11px] font-mono text-slate-500 uppercase block">
-                  Quick Anomaly Presets
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {presets.map((p, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleApplyPreset(p.vector)}
-                      className="text-left p-3 rounded-2xl bg-slate-950/80 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 transition-all"
-                    >
-                      <div className="font-semibold text-xs text-white flex items-center justify-between mb-1">
-                        <span className="truncate mr-1">{p.name}</span>
-                        <span className="text-[10px] font-mono text-cyan-400 shrink-0">Load</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 line-clamp-1 font-sans">
-                        {p.desc}
-                      </p>
-                    </button>
-                  ))}
+              {activePresets.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono text-slate-500 uppercase block">
+                    Model-Specific Anomaly Presets
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {activePresets.map((p, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleApplyPreset(p.vector)}
+                        className="text-left p-3 rounded-2xl bg-slate-950/80 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 transition-all"
+                      >
+                        <div className="font-semibold text-xs text-white flex items-center justify-between mb-1">
+                          <span className="truncate mr-1">{p.name}</span>
+                          <span className="text-[10px] font-mono text-cyan-400 shrink-0">
+                            Load
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 line-clamp-1 font-sans">
+                          {p.desc}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Mode A: Interactive Sliders */}
               {inputMode === "sliders" && (
                 <div className="space-y-4 pt-2">
-                  <FeatureSliders features={features} onChange={handleSlidersChange} />
+                  <FeatureSliders
+                    schema={activeSchema}
+                    features={features}
+                    onChange={handleSlidersChange}
+                  />
                 </div>
               )}
 
@@ -348,7 +370,7 @@ export default function InferencePlayground() {
               {inputMode === "json" && (
                 <div className="space-y-2 pt-2">
                   <label className="block text-xs font-mono text-slate-400">
-                    Numeric Tensor Array (5 Dimensions)
+                    Numeric Tensor Array ({activeSchema.length} Dimensions)
                   </label>
                   <textarea
                     rows={5}
@@ -357,7 +379,14 @@ export default function InferencePlayground() {
                     className="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-xs text-cyan-300 focus:border-cyan-500 focus:outline-none transition-colors"
                   />
                   <p className="text-[10px] text-slate-500 font-mono">
-                    Format: <code>[temperature, vibration, voltage, pressure, rpm]</code>
+                    Format:{" "}
+                    <code>
+                      [
+                      {activeSchema
+                        .map((s) => s.name.split(" ")[0].toLowerCase())
+                        .join(", ")}
+                      ]
+                    </code>
                   </p>
                 </div>
               )}
