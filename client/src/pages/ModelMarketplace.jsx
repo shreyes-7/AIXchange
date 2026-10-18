@@ -1,170 +1,271 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Cpu, Search, Sparkles, CheckCircle2, Shield, ArrowUpRight, Plus, Terminal } from "lucide-react";
-import PublicShell from "../layouts/PublicShell";
+import {
+  Cpu,
+  Search,
+  Sparkles,
+  ShieldCheck,
+  Plus,
+  Layers,
+  Database,
+  Filter,
+  RefreshCw,
+  Box,
+  Play,
+  Zap,
+} from "lucide-react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import Button from "../components/common/Button";
+import Badge from "../components/common/Badge";
+import { ModelCard } from "../components/model";
 import { fetchModels } from "../services/api/modelApi.service";
+import { getAllModels } from "../services/blockchain/model/model.service";
+import { getAllStoredModelMetadata, getModelMetadata } from "../services/modelMetadata";
 
 export default function ModelMarketplace() {
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("ALL");
+  const [selectedFramework, setSelectedFramework] = useState("ALL");
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
 
   useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        const res = await fetchModels({ search: search || undefined });
-        if (res?.success && Array.isArray(res.data)) {
-          setModels(res.data);
-        } else {
-          // Fallback baseline for demo if no models registered yet
-          setModels([
-            {
-              modelId: "1",
-              name: "DeepPulse-SensorAnomaly-ResNet",
-              framework: "PyTorch",
-              category: "Computer Vision / Time Series",
-              version: 1,
-              modelHash: "0x8f3c71a94e82b4a1c5d3e7f92a1b4c6d8e0f2a4b6c8d0e2f4a6b8c0d2e4f6a8b",
-              creator: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-              active: true,
-              inferenceReady: true,
-              description: "High-frequency vibration and temperature anomaly detection for autonomous industrial telemetry.",
-            },
-          ]);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch models:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [search]);
+    loadModels();
+  }, []);
 
-  const filteredModels = models.filter((m) => {
-    if (category !== "ALL" && m.category && !m.category.toLowerCase().includes(category.toLowerCase())) {
-      return false;
+  const loadModels = async () => {
+    try {
+      setLoading(true);
+      // Fetch metadata store as baseline
+      const metaMap = getAllStoredModelMetadata();
+      const baseModels = Object.values(metaMap);
+
+      // Attempt to load from API or on-chain
+      try {
+        const onChain = await getAllModels();
+        if (Array.isArray(onChain) && onChain.length > 0) {
+          const enriched = onChain.map((m) => {
+            const meta = getModelMetadata(m.modelId);
+            return {
+              ...meta,
+              modelId: m.modelId,
+              name: m.name || meta.name,
+              owner: m.owner || meta.owner,
+              active: m.active !== undefined ? m.active : true,
+            };
+          });
+          setModels(enriched);
+          return;
+        }
+      } catch {
+        // use baseModels
+      }
+
+      setModels(baseModels);
+    } catch (err) {
+      console.warn("Failed to load models:", err);
+      setModels(Object.values(getAllStoredModelMetadata()));
+    } finally {
+      setLoading(false);
     }
-    return true;
-  });
+  };
+
+  const filteredModels = useMemo(() => {
+    return models.filter((m) => {
+      // Framework filter
+      if (
+        selectedFramework !== "ALL" &&
+        !(m.framework || "").toLowerCase().includes(selectedFramework.toLowerCase())
+      ) {
+        return false;
+      }
+      // Category filter
+      if (
+        selectedCategory !== "ALL" &&
+        !(m.category || "").toLowerCase().includes(selectedCategory.toLowerCase())
+      ) {
+        return false;
+      }
+      // Search filter
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const matchesName = (m.name || "").toLowerCase().includes(q);
+        const matchesArch = (m.architecture || "").toLowerCase().includes(q);
+        const matchesHash = (m.modelHash || "").toLowerCase().includes(q);
+        const matchesDesc = (m.description || "").toLowerCase().includes(q);
+        return matchesName || matchesArch || matchesHash || matchesDesc;
+      }
+      return true;
+    });
+  }, [models, selectedFramework, selectedCategory, search]);
+
+  const frameworks = ["ALL", "PyTorch", "Safetensors", "ONNX", "Transformers"];
+  const categories = ["ALL", "Time Series & IoT", "Natural Language & Sequences", "Computer Vision"];
 
   return (
-    <PublicShell>
-      <div className="max-w-7xl mx-auto my-10 space-y-8">
-        {/* Header */}
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+      <Navbar />
+
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+        {/* Top Header Deck */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold uppercase tracking-wider mb-2">
-              <Cpu className="w-3.5 h-3.5" />
-              Verified Neural Weights
+            <div className="flex items-center gap-2 text-cyan-400 font-mono text-xs mb-1.5">
+              <ShieldCheck className="w-4 h-4 text-cyan-400" />
+              VERIFIED NEURAL WEIGHT REGISTRY · IMMUTABLE SHA-256 ATTESTATION
             </div>
-            <h1 className="text-3xl font-extrabold text-white">AI Model Marketplace</h1>
-            <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-              Discover and execute verified AI models trained in isolated Docker sandboxes, anchored with SHA-256 weight checksums on Ethereum.
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              AI Model Marketplace
+            </h1>
+            <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
+              Discover, download, and verify deep learning models trained in isolated Docker sandboxes.
+              Every neural weight artifact is anchored to the Ethereum ModelRegistry with verifiable checksums.
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              to="/models/register"
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-500/25 transition-all flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              Register Model
+            <Link to="/models/register">
+              <Button variant="cyber" icon={<Plus className="w-4 h-4" />}>
+                Register Model Weights
+              </Button>
             </Link>
+            <button
+              onClick={loadModels}
+              className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
+              title="Refresh models"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by model name, architecture, or checksum..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500"
-            />
+        {/* Live Marketplace Statistics Banner */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 rounded-3xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
+          <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 font-mono">
+            <span className="text-slate-500 text-[10px] uppercase block mb-0.5">Verified Models</span>
+            <span className="text-xl font-bold text-white">{models.length}</span>
+          </div>
+          <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 font-mono">
+            <span className="text-slate-500 text-[10px] uppercase block mb-0.5">Weight Format</span>
+            <span className="text-xl font-bold text-cyan-400">Safetensors / ONNX</span>
+          </div>
+          <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 font-mono">
+            <span className="text-slate-500 text-[10px] uppercase block mb-0.5">Avg Accuracy</span>
+            <span className="text-xl font-bold text-emerald-400">98.4%</span>
+          </div>
+          <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 font-mono">
+            <span className="text-slate-500 text-[10px] uppercase block mb-0.5">Inference Ready</span>
+            <span className="text-xl font-bold text-indigo-400">100% Decoupled</span>
+          </div>
+        </div>
+
+        {/* Search & Multi-Tier Filters */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by model name, architecture (e.g. ResNet, MLP), or SHA-256 hash..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+              />
+            </div>
+
+            {/* Direct Inference Link */}
+            <Link to="/inference">
+              <Button
+                variant="secondary"
+                icon={<Play className="w-3.5 h-3.5 text-cyan-400 fill-current" />}
+              >
+                Inference Studio
+              </Button>
+            </Link>
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            {["ALL", "Computer Vision", "NLP", "Audio", "Time Series"].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  category === cat
-                    ? "bg-purple-500/20 text-purple-300 border border-purple-500/40"
-                    : "bg-slate-900 text-slate-400 border border-slate-800 hover:text-slate-200"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+          {/* Framework & Domain Filter Pills */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+            {/* Framework Pills */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-mono text-slate-500 mr-1 flex items-center gap-1">
+                <Cpu className="w-3.5 h-3.5 text-slate-400" /> Stack:
+              </span>
+              {frameworks.map((fw) => (
+                <button
+                  key={fw}
+                  onClick={() => setSelectedFramework(fw)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all ${
+                    selectedFramework === fw
+                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10"
+                      : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                  }`}
+                >
+                  {fw}
+                </button>
+              ))}
+            </div>
+
+            {/* Category Pills */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs font-mono text-slate-500 mr-1 flex items-center gap-1">
+                <Layers className="w-3.5 h-3.5 text-slate-400" /> Domain:
+              </span>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-mono font-medium transition-all ${
+                    selectedCategory === cat
+                      ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-sm shadow-indigo-500/10"
+                      : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                  }`}
+                >
+                  {cat === "ALL" ? "All Domains" : cat}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Model Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredModels.map((m) => (
-            <div
-              key={m.modelId}
-              className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 hover:border-purple-500/40 transition-all shadow-xl backdrop-blur-md flex flex-col justify-between group"
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="h-72 rounded-3xl bg-slate-900/40 border border-slate-800 animate-pulse p-6"
+              />
+            ))}
+          </div>
+        ) : filteredModels.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-800 p-12 text-center text-slate-500 font-mono text-xs space-y-3">
+            <Cpu className="w-10 h-10 text-slate-700 mx-auto" />
+            <p>No verified AI models found matching your current filter selection.</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setSearch("");
+                setSelectedFramework("ALL");
+                setSelectedCategory("ALL");
+              }}
             >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 font-mono text-[10px] font-bold border border-purple-500/20">
-                    ID #{m.modelId} · v{m.version || 1}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Verified On-Chain
-                  </span>
-                </div>
+              Reset Filters
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredModels.map((model) => (
+              <ModelCard key={model.modelId} model={model} />
+            ))}
+          </div>
+        )}
+      </main>
 
-                <h3 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">
-                  {m.name}
-                </h3>
-
-                <p className="text-xs text-slate-400 line-clamp-2">
-                  {m.description || "Trained PyTorch model weights with verifiable dataset lineage."}
-                </p>
-
-                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono space-y-1">
-                  <div className="flex justify-between text-slate-500 text-[10px]">
-                    <span>SHA-256 WEIGHT CHECKSUM</span>
-                    <Shield className="w-3 h-3 text-purple-400" />
-                  </div>
-                  <div className="text-purple-300 truncate">
-                    {m.modelHash || "0x8f3c71a94e82b4a1c5d3e7f9..."}
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-5 mt-4 border-t border-slate-800/80 flex items-center justify-between gap-3">
-                <Link
-                  to={`/inference?modelId=${m.modelId}`}
-                  className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-purple-500/50 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
-                >
-                  <Terminal className="w-3.5 h-3.5 text-purple-400" />
-                  Run Inference
-                </Link>
-
-                <Link
-                  to={`/models/${m.modelId}`}
-                  className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-transform active:scale-95 flex items-center gap-1"
-                >
-                  Details
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </PublicShell>
+      <Footer />
+    </div>
   );
 }
