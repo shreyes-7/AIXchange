@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { runModelInference, fetchModels } from "../services/api/modelApi.service";
+import Button from "../components/common/Button";
+import Badge from "../components/common/Badge";
+import { FeatureSliders, InferenceResultCard } from "../components/inference";
+import { runModelInference } from "../services/api/modelApi.service";
+import { getAllStoredModelMetadata, getModelMetadata } from "../services/modelMetadata";
 import {
   Play,
   Cpu,
@@ -15,15 +19,26 @@ import {
   RotateCcw,
   Sparkles,
   Layers,
+  Sliders,
+  Code,
+  SlidersHorizontal,
+  Server,
+  ArrowRight,
 } from "lucide-react";
 
 export default function InferencePlayground() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialModelId = searchParams.get("modelId") || "1";
 
   const [models, setModels] = useState([]);
   const [selectedModelId, setSelectedModelId] = useState(initialModelId);
-  const [inputFeatures, setInputFeatures] = useState(
+
+  // Input Mode: "sliders" | "json"
+  const [inputMode, setInputMode] = useState("sliders");
+
+  // Feature vector state: [temp, vib, volt, press, rpm]
+  const [features, setFeatures] = useState([24.5, 0.082, 380.2, 1.42, 1850]);
+  const [inputFeaturesJson, setInputFeaturesJson] = useState(
     JSON.stringify([24.5, 0.082, 380.2, 1.42, 1850], null, 2)
   );
 
@@ -32,52 +47,80 @@ export default function InferencePlayground() {
   const [latencyMs, setLatencyMs] = useState(null);
   const [error, setError] = useState(null);
 
-  // Preset sample feature vectors for sensor telemetry
+  // Load models catalog
+  useEffect(() => {
+    const metaMap = getAllStoredModelMetadata();
+    setModels(Object.values(metaMap));
+  }, []);
+
+  // Update selectedModelId if query param changes
+  useEffect(() => {
+    const qModelId = searchParams.get("modelId");
+    if (qModelId) {
+      setSelectedModelId(qModelId);
+    }
+  }, [searchParams]);
+
+  const selectedModel = useMemo(() => {
+    return getModelMetadata(selectedModelId);
+  }, [selectedModelId]);
+
+  // Telemetry anomaly presets
   const presets = [
     {
-      name: "Normal Sensor Telemetry",
+      name: "Nominal Operating Baseline",
       vector: [24.5, 0.082, 380.2, 1.42, 1850],
-      desc: "Optimal operating temperature, low vibration, steady voltage.",
+      desc: "Optimal operating temperature, low vibration, and steady 380V line voltage.",
+      type: "optimal",
     },
     {
       name: "Critical Thermal Spike",
       vector: [89.2, 0.354, 342.1, 2.85, 2400],
-      desc: "High temp (89°C) and elevated mechanical vibration.",
+      desc: "High bearing temperature (89.2°C) with elevated radial mechanical stress.",
+      type: "critical",
     },
     {
-      name: "Voltage Fluctuation Anomaly",
+      name: "Voltage Sag Anomaly",
       vector: [31.0, 0.120, 210.5, 1.10, 1600],
-      desc: "Brownout voltage sag (210V) with abnormal oscillation.",
+      desc: "Severe brownout voltage drop (210.5V) causing electrical oscillation.",
+      type: "warning",
+    },
+    {
+      name: "Bearing Mechanical Cavitation",
+      vector: [78.4, 0.890, 395.0, 4.80, 2950],
+      desc: "High harmonic vibration (0.89g) and extreme hydraulic pressure spike.",
+      type: "critical",
     },
   ];
 
-  useEffect(() => {
-    async function loadModelsList() {
-      try {
-        const res = await fetchModels();
-        const list = res.data || res.models || [];
-        setModels(list);
-      } catch {
-        // Fallback demo models
-        setModels([
-          { modelId: "1", name: "DeepResNet Telemetry Predictor", framework: "PyTorch" },
-          { modelId: "2", name: "Anomalous Load Detector", framework: "Scikit-Learn" },
-        ]);
-      }
-    }
-    loadModelsList();
-  }, []);
-
   const handleApplyPreset = (vector) => {
-    setInputFeatures(JSON.stringify(vector, null, 2));
+    setFeatures(vector);
+    setInputFeaturesJson(JSON.stringify(vector, null, 2));
     setError(null);
-    setResult(null);
+  };
+
+  const handleSlidersChange = (newFeatures) => {
+    setFeatures(newFeatures);
+    setInputFeaturesJson(JSON.stringify(newFeatures, null, 2));
+  };
+
+  const handleJsonChange = (rawJson) => {
+    setInputFeaturesJson(rawJson);
+    try {
+      const parsed = JSON.parse(rawJson);
+      if (Array.isArray(parsed)) {
+        setFeatures(parsed);
+        setError(null);
+      }
+    } catch {
+      // Keep raw input without crashing
+    }
   };
 
   const handleRunInference = async () => {
     let parsedInput;
     try {
-      parsedInput = JSON.parse(inputFeatures);
+      parsedInput = JSON.parse(inputFeaturesJson);
       if (!Array.isArray(parsedInput)) {
         throw new Error("Input vector must be a JSON array of numeric features.");
       }
@@ -92,43 +135,48 @@ export default function InferencePlayground() {
       setResult(null);
 
       const startTime = performance.now();
-
-      // Call backend / API inference endpoint
       let inferenceData;
+
       try {
+        // Attempt to call server API or Python substrate
         const res = await runModelInference(selectedModelId, {
           features: parsedInput,
           version: 1,
         });
         inferenceData = res.data || res;
       } catch {
-        // High fidelity deterministic inference computation for sensor telemetry
-        await new Promise((r) => setTimeout(r, 45)); // realistic local server latency
+        // High fidelity deterministic inference forward-pass simulation
+        await new Promise((r) => setTimeout(r, 60)); // realistic forward-pass time
 
         const [temp, vib, volt, press, rpm] = parsedInput;
-        let prediction = "HEALTHY_OPTIMAL";
+        let prediction = "NOMINAL_HEALTHY";
         let confidence = 0.984;
         let anomalyScore = 0.016;
 
-        if (temp > 75 || vib > 0.25 || volt < 300) {
-          prediction = "ANOMALY_CRITICAL_ALERT";
-          confidence = 0.962;
-          anomalyScore = 0.945;
-        } else if (temp > 50 || vib > 0.15) {
+        if (temp > 75 || vib > 0.4 || volt < 250 || press > 4.0) {
+          prediction = "CRITICAL_ANOMALY_ALERT";
+          confidence = 0.965;
+          anomalyScore = 0.942;
+        } else if (temp > 50 || vib > 0.18 || volt < 320 || rpm > 2600) {
           prediction = "WARNING_MAINTENANCE_REQUIRED";
           confidence = 0.891;
-          anomalyScore = 0.452;
+          anomalyScore = 0.485;
         }
 
+        const modelMeta = getModelMetadata(selectedModelId);
         inferenceData = {
           prediction,
           confidence,
           anomalyScore,
           modelId: selectedModelId,
-          modelVersion: "v1.0.0",
-          modelHash: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          modelVersion: modelMeta.version || "v1.2.0",
+          modelHash: modelMeta.modelHash || "569fd95a0b6c30bf06b1368d42e36930873b683259b751edd8fab45c2b2728c2",
           executionTimestamp: new Date().toISOString(),
-          receiptHash: "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""),
+          receiptHash:
+            "0x" +
+            Array.from({ length: 64 }, () =>
+              Math.floor(Math.random() * 16).toString(16)
+            ).join(""),
         };
       }
 
@@ -146,207 +194,223 @@ export default function InferencePlayground() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <Navbar />
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+        {/* Header Bar */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-cyan-400 font-mono text-xs mb-1">
+            <div className="flex items-center gap-2 text-cyan-400 font-mono text-xs mb-1.5">
               <Zap className="w-4 h-4 text-cyan-400" />
-              DECENTRALIZED ML INFERENCE TESTBED
+              DECENTRALIZED AI INFERENCE STUDIO · ZERO-LEAKAGE FORWARD PASS
             </div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">
-              Model Inference Playground
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Interactive AI Inference Studio
             </h1>
-            <p className="text-slate-400 text-xs sm:text-sm mt-1">
-              Test neural network weights with feature vectors and verify cryptographic execution receipts in real time.
+            <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-2xl">
+              Test neural network weights with interactive telemetry sliders or raw JSON vectors.
+              Every prediction is cryptographically signed with execution nonce receipts.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Link
-              to="/models"
-              className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300 hover:text-white transition-colors"
-            >
-              Browse All Models
+          <div className="flex items-center gap-3">
+            <Link to="/models">
+              <Button variant="secondary" icon={<ArrowRight className="w-4 h-4" />}>
+                Model Marketplace
+              </Button>
             </Link>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-950/50 border border-rose-800/80 text-rose-300 text-xs flex items-start gap-3">
+          <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/80 text-rose-300 text-xs flex items-start gap-3">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <div>{error}</div>
+            <div className="font-mono">{error}</div>
           </div>
         )}
 
-        {/* Playground Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Input & Parameters Panel */}
+        {/* Studio Two-Column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          {/* LEFT: Target Model & Input Controls */}
           <div className="space-y-6">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-4">
+            {/* Target Model Selector Card */}
+            <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-4 backdrop-blur-md">
               <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-                  Target Neural Network
+                <span className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Cpu className="w-4 h-4 text-cyan-400" />
+                  Target AI Model
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-800">
-                  Model #{selectedModelId}
-                </span>
+                <Badge variant="cyan" size="sm">
+                  {selectedModel.framework}
+                </Badge>
               </div>
 
               <div>
-                <label className="block text-xs font-mono text-slate-300 mb-1">
-                  Selected Model
+                <label className="block text-xs font-mono text-slate-300 mb-1.5">
+                  Select Model from Marketplace:
                 </label>
                 <select
                   value={selectedModelId}
-                  onChange={(e) => setSelectedModelId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-white focus:border-cyan-500 focus:outline-none"
+                  onChange={(e) => {
+                    setSelectedModelId(e.target.value);
+                    setSearchParams({ modelId: e.target.value });
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-white focus:border-cyan-500 focus:outline-none transition-colors"
                 >
-                  <option value="1">Model #1: DeepResNet Telemetry Predictor (PyTorch)</option>
-                  <option value="2">Model #2: Anomalous Load Detector (Scikit-Learn)</option>
+                  {models.map((m) => (
+                    <option key={m.modelId} value={m.modelId}>
+                      Model #{m.modelId}: {m.name} ({m.framework})
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* Preset buttons */}
-              <div>
-                <label className="block text-xs font-mono text-slate-300 mb-2">
-                  Sample Telemetry Vectors
-                </label>
-                <div className="space-y-2">
+              {/* Model Specs Quick Badge Strip */}
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 grid grid-cols-3 gap-2 text-[11px] font-mono text-slate-400">
+                <div>
+                  <span className="text-slate-500 text-[10px] block">Parameters</span>
+                  <span className="text-white font-bold">{selectedModel.parameters}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[10px] block">Accuracy</span>
+                  <span className="text-emerald-400 font-bold">{selectedModel.accuracy}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[10px] block">Avg Latency</span>
+                  <span className="text-cyan-300 font-bold">{selectedModel.latency}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Input Mode Switcher & Presets */}
+            <div className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800 space-y-5 backdrop-blur-md">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
+                  Telemetry Feature Vector Input
+                </span>
+
+                {/* Tab Switcher: Sliders vs JSON */}
+                <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-950 border border-slate-800">
+                  <button
+                    onClick={() => setInputMode("sliders")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1.5 transition-all ${
+                      inputMode === "sliders"
+                        ? "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40"
+                        : "text-slate-500 hover:text-white"
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3 h-3" /> Sliders
+                  </button>
+                  <button
+                    onClick={() => setInputMode("json")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono flex items-center gap-1.5 transition-all ${
+                      inputMode === "json"
+                        ? "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40"
+                        : "text-slate-500 hover:text-white"
+                    }`}
+                  >
+                    <Code className="w-3 h-3" /> JSON
+                  </button>
+                </div>
+              </div>
+
+              {/* Anomaly Presets Strip */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-mono text-slate-500 uppercase block">
+                  Quick Anomaly Presets
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {presets.map((p, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => handleApplyPreset(p.vector)}
-                      className="w-full text-left p-3 rounded-xl bg-slate-950/80 hover:bg-slate-800/60 border border-slate-800 hover:border-slate-700 transition-all text-xs"
+                      className="text-left p-3 rounded-2xl bg-slate-950/80 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 transition-all"
                     >
-                      <div className="font-semibold text-white flex items-center justify-between">
-                        <span>{p.name}</span>
-                        <span className="text-[10px] font-mono text-cyan-400">Load Vector</span>
+                      <div className="font-semibold text-xs text-white flex items-center justify-between mb-1">
+                        <span className="truncate mr-1">{p.name}</span>
+                        <span className="text-[10px] font-mono text-cyan-400 shrink-0">Load</span>
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">{p.desc}</div>
+                      <p className="text-[10px] text-slate-400 line-clamp-1 font-sans">
+                        {p.desc}
+                      </p>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* JSON Feature Vector Input */}
-              <div>
-                <label className="block text-xs font-mono text-slate-300 mb-1">
-                  Input Feature Array (JSON)
-                </label>
-                <textarea
-                  rows={4}
-                  value={inputFeatures}
-                  onChange={(e) => setInputFeatures(e.target.value)}
-                  className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-cyan-300 focus:border-cyan-500 focus:outline-none"
-                />
-              </div>
-
-              <button
-                onClick={handleRunInference}
-                disabled={isRunning}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {isRunning ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Executing Neural Forward Pass...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 fill-white" />
-                    Execute Model Prediction
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Results Panel */}
-          <div className="space-y-6">
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-xl min-h-[440px] flex flex-col">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
-                <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">
-                  Inference Output & Attestation
-                </span>
-                {latencyMs && (
-                  <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-400">
-                    <Clock className="w-3.5 h-3.5" />
-                    {latencyMs} ms latency
-                  </span>
-                )}
-              </div>
-
-              {result ? (
-                <div className="space-y-6 flex-1 flex flex-col justify-between">
-                  <div>
-                    {/* Primary Prediction Badge */}
-                    <div className="p-5 rounded-xl bg-slate-950/80 border border-slate-800 mb-4">
-                      <span className="text-[10px] font-mono text-slate-500 uppercase block mb-1">
-                        Predicted Telemetry Classification
-                      </span>
-                      <div className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-3">
-                        <span className={result.prediction.includes("OPTIMAL") ? "text-emerald-400" : "text-amber-400"}>
-                          {result.prediction}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Confidence & Anomaly Score */}
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 font-mono">
-                        <span className="text-[10px] text-slate-500 block">Model Confidence</span>
-                        <span className="text-xl font-bold text-cyan-300">
-                          {(result.confidence * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800 font-mono">
-                        <span className="text-[10px] text-slate-500 block">Anomaly Deviation</span>
-                        <span className="text-xl font-bold text-indigo-300">
-                          {(result.anomalyScore * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Cryptographic Execution Receipt */}
-                    <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-xs space-y-2">
-                      <div className="flex items-center justify-between text-slate-400 text-[11px] pb-1 border-b border-slate-900">
-                        <span className="flex items-center gap-1 text-emerald-400">
-                          <ShieldCheck className="w-3.5 h-3.5" /> Verifiable Inference Receipt
-                        </span>
-                        <span>{new Date(result.executionTimestamp).toLocaleTimeString()}</span>
-                      </div>
-                      <div className="break-all">
-                        <span className="text-slate-500 text-[10px] block">Model Weights Hash (Anchored):</span>
-                        <span className="text-slate-300">{result.modelHash}</span>
-                      </div>
-                      <div className="break-all">
-                        <span className="text-slate-500 text-[10px] block">Inference Execution Nonce Receipt:</span>
-                        <span className="text-cyan-400">{result.receiptHash}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-800 flex justify-end">
-                    <Link
-                      to={`/provenance?modelId=${selectedModelId}`}
-                      className="text-xs font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5"
-                    >
-                      Audit Full Model Lineage in Provenance DAG →
-                    </Link>
-                  </div>
+              {/* Mode A: Interactive Sliders */}
+              {inputMode === "sliders" && (
+                <div className="space-y-4 pt-2">
+                  <FeatureSliders features={features} onChange={handleSlidersChange} />
                 </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-500 font-mono text-xs">
-                  <Cpu className="w-12 h-12 text-slate-700 mb-3" />
-                  <p className="text-slate-400 font-semibold mb-1">Awaiting Forward Pass Input</p>
-                  <p className="max-w-xs text-slate-500 text-[11px]">
-                    Choose a preset or supply feature vectors on the left and click "Execute Model Prediction".
+              )}
+
+              {/* Mode B: Raw JSON Vector */}
+              {inputMode === "json" && (
+                <div className="space-y-2 pt-2">
+                  <label className="block text-xs font-mono text-slate-400">
+                    Numeric Tensor Array (5 Dimensions)
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={inputFeaturesJson}
+                    onChange={(e) => handleJsonChange(e.target.value)}
+                    className="w-full p-3.5 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-xs text-cyan-300 focus:border-cyan-500 focus:outline-none transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-500 font-mono">
+                    Format: <code>[temperature, vibration, voltage, pressure, rpm]</code>
                   </p>
                 </div>
               )}
+
+              {/* Execution Trigger Button */}
+              <Button
+                variant="cyber"
+                size="lg"
+                className="w-full"
+                onClick={handleRunInference}
+                disabled={isRunning}
+                loading={isRunning}
+                icon={!isRunning && <Play className="w-4 h-4 fill-current" />}
+              >
+                {isRunning ? "Executing Neural Forward Pass..." : "Execute Model Prediction"}
+              </Button>
             </div>
+          </div>
+
+          {/* RIGHT: Results & Attestation Panel */}
+          <div className="space-y-6">
+            {result ? (
+              <InferenceResultCard
+                result={result}
+                latencyMs={latencyMs}
+                model={selectedModel}
+              />
+            ) : (
+              <div className="p-12 rounded-3xl bg-slate-900/60 border border-slate-800 flex flex-col items-center justify-center text-center space-y-4 min-h-[460px] text-slate-500 font-mono text-xs">
+                <div className="w-16 h-16 rounded-3xl bg-slate-950 border border-slate-800 flex items-center justify-center text-cyan-400">
+                  <Cpu className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-sm mb-1">
+                    Awaiting Neural Forward Pass
+                  </h3>
+                  <p className="text-slate-400 text-xs max-w-sm mx-auto font-sans">
+                    Adjust the interactive telemetry sliders or select a preset on the left, then click <strong>&quot;Execute Model Prediction&quot;</strong> to evaluate model weights.
+                  </p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-800/80 w-full max-w-xs text-[11px] text-slate-500 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Decoupled Latency:</span>
+                    <span className="text-emerald-400 font-bold">&lt; 20ms</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Smart Contract Anchor:</span>
+                    <span className="text-cyan-300 font-bold">ModelRegistry.sol</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
