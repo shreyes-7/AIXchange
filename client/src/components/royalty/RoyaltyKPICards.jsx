@@ -10,13 +10,49 @@ import {
   Sparkles,
 } from "lucide-react";
 
+function formatAixAmount(val) {
+  if (val === undefined || val === null || val === "") return null;
+  try {
+    const str = String(val).trim();
+    let num = parseFloat(str);
+    if (isNaN(num)) return null;
+
+    // Detect if this is in wei (18 decimals: > 1e14 or length >= 14 with no decimal point)
+    if ((str.length >= 14 && !str.includes(".")) || num > 1e14) {
+      num = num / 1e18;
+    }
+
+    if (num >= 1e9) {
+      return (num / 1e9).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "B";
+    }
+    if (num >= 1e6) {
+      return (num / 1e6).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + "M";
+    }
+
+    return num.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  } catch {
+    return null;
+  }
+}
+
 export default function RoyaltyKPICards({ summary = {} }) {
+  const formattedDistributed = formatAixAmount(summary.totalDistributed);
+  const formattedPending = formatAixAmount(summary.pendingAmount);
+  const formattedTreasury = formatAixAmount(
+    summary.treasuryTotal !== undefined
+      ? summary.treasuryTotal
+      : summary.totalTreasury && summary.totalTreasury !== "0"
+      ? summary.totalTreasury
+      : null
+  );
+
   const cards = [
     {
       title: "Total Distributed Revenue",
-      value: summary.totalDistributed
-        ? `${parseFloat(summary.totalDistributed).toLocaleString(undefined, { maximumFractionDigits: 2 })} AIX`
-        : "48,920.00 AIX",
+      value: formattedDistributed ? `${formattedDistributed} AIX` : "48,920.00 AIX",
       change: "+18.4% vs last cycle",
       trend: "positive",
       icon: Coins,
@@ -27,9 +63,7 @@ export default function RoyaltyKPICards({ summary = {} }) {
     },
     {
       title: "Pending Settlement Queue",
-      value: summary.pendingAmount
-        ? `${parseFloat(summary.pendingAmount).toLocaleString(undefined, { maximumFractionDigits: 2 })} AIX`
-        : "1,250.00 AIX",
+      value: formattedPending ? `${formattedPending} AIX` : "1,250.00 AIX",
       change: "3 Batches Queued",
       trend: "neutral",
       icon: Clock,
@@ -40,9 +74,7 @@ export default function RoyaltyKPICards({ summary = {} }) {
     },
     {
       title: "Protocol Treasury Fee (2.50%)",
-      value: summary.treasuryTotal
-        ? `${parseFloat(summary.treasuryTotal).toLocaleString(undefined, { maximumFractionDigits: 2 })} AIX`
-        : "1,223.00 AIX",
+      value: formattedTreasury ? `${formattedTreasury} AIX` : "1,223.00 AIX",
       change: "Zero-Leakage Dust Verified",
       trend: "positive",
       icon: ShieldCheck,
@@ -53,8 +85,8 @@ export default function RoyaltyKPICards({ summary = {} }) {
     },
     {
       title: "Active Contributor Recipients",
-      value: summary.recipientCount
-        ? `${summary.recipientCount} Accounts`
+      value: summary.recipientCount || summary.uniqueRecipientsCount
+        ? `${summary.recipientCount || summary.uniqueRecipientsCount} Wallets`
         : "24 Recipient Wallets",
       change: "100% On-Chain Audited",
       trend: "positive",
@@ -73,21 +105,24 @@ export default function RoyaltyKPICards({ summary = {} }) {
         return (
           <div
             key={idx}
-            className={`p-6 rounded-3xl bg-slate-900/70 border ${card.borderColor} backdrop-blur-md space-y-4 transition-all duration-300 shadow-xl flex flex-col justify-between`}
+            className={`p-6 rounded-3xl bg-slate-900/70 border ${card.borderColor} backdrop-blur-md space-y-4 transition-all duration-300 shadow-xl flex flex-col justify-between overflow-hidden`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-slate-400 tracking-wider uppercase">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-mono text-slate-400 tracking-wider uppercase truncate" title={card.title}>
                 {card.title}
               </span>
               <div
-                className={`w-9 h-9 rounded-xl border flex items-center justify-center ${card.iconBg}`}
+                className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${card.iconBg}`}
               >
                 <IconComponent className="w-4 h-4" />
               </div>
             </div>
 
-            <div>
-              <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-mono">
+            <div className="min-w-0">
+              <div
+                className="text-xl sm:text-2xl font-extrabold text-white tracking-tight font-mono truncate max-w-full"
+                title={card.value}
+              >
                 {card.value}
               </div>
               <div className="flex items-center gap-1.5 mt-1.5">

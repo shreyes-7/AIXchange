@@ -200,8 +200,23 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/85 border-b border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Brand & Desktop Core Nav */}
-        <div className="flex items-center gap-6">
+        {/* Left Side: Explore Hamburger Button + Brand + Desktop Core Nav */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Explore / Hamburger Button at Extreme Left */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all shadow-sm ${
+              menuOpen
+                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300 shadow-cyan-500/20'
+                : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 hover:bg-slate-850'
+            }`}
+            title="Explore all AIXchange tools and portals"
+          >
+            {menuOpen ? <X className="w-4 h-4 text-cyan-400" /> : <Menu className="w-4 h-4 text-cyan-400" />}
+            <span className="font-semibold text-xs">Explore</span>
+          </button>
+
+          {/* AIXchange Logo Brand */}
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-600 to-purple-600 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
               <Cpu className="w-5 h-5 text-cyan-200" />
@@ -218,7 +233,7 @@ export default function Navbar() {
           </Link>
 
           {/* Clean Desktop Navigation (Uncluttered, 4 core items) */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1 ml-2">
             {primaryLinks.map((link) => {
               const active =
                 location.pathname === link.to ||
@@ -243,22 +258,8 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Right Header Actions: Menu, Network, AIX Balance, Wallet & Auth */}
+        {/* Right Header Actions: Network, AIX Balance, Wallet & Auth */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Hamburger / All Features Button */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all shadow-sm ${
-              menuOpen
-                ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
-                : 'bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
-            }`}
-            title="Explore all AIXchange tools and portals"
-          >
-            {menuOpen ? <X className="w-4 h-4 text-cyan-400" /> : <Menu className="w-4 h-4" />}
-            <span className="hidden sm:inline">Explore</span>
-          </button>
-
           {/* Network Indicator */}
           {network && (
             <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-300">
