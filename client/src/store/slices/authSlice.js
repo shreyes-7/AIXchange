@@ -1,12 +1,24 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const token = typeof window !== 'undefined' ? localStorage.getItem('aix_token') : null;
+let savedUser = null;
+let savedRole = 'guest';
+
+try {
+  const userJson = typeof window !== 'undefined' ? localStorage.getItem('aix_user') : null;
+  if (userJson) {
+    savedUser = JSON.parse(userJson);
+    savedRole = savedUser?.role || localStorage.getItem('aix_role') || 'consumer';
+  }
+} catch {
+  savedUser = null;
+}
 
 const initialState = {
-  user: null,
+  user: savedUser,
   token,
-  isAuthenticated: !!token,
-  role: 'guest',
+  isAuthenticated: !!token && !!savedUser,
+  role: savedRole,
   loading: false,
   error: null,
 };
@@ -25,6 +37,10 @@ export const authSlice = createSlice({
       if (token) {
         localStorage.setItem('aix_token', token);
       }
+      if (user) {
+        localStorage.setItem('aix_user', JSON.stringify(user));
+        localStorage.setItem('aix_role', state.role);
+      }
     },
     logout: (state) => {
       state.user = null;
@@ -33,6 +49,8 @@ export const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       localStorage.removeItem('aix_token');
+      localStorage.removeItem('aix_user');
+      localStorage.removeItem('aix_role');
     },
     setLoading: (state, action) => {
       state.loading = action.payload;

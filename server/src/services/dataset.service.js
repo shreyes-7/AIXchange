@@ -14,8 +14,12 @@ const DATASET_REGISTRY_ABI = [
 ];
 const registryInterface = new ethers.Interface(DATASET_REGISTRY_ABI);
 const findDataset = async (id, projection) => {
-    if (!mongoose.isValidObjectId(id)) throw new ApiError(400, "Invalid dataset ID.");
-    return Dataset.findById(id).select(projection || "");
+    if (mongoose.isValidObjectId(id)) {
+        const found = await Dataset.findById(id).select(projection || "");
+        if (found) return found;
+    }
+    // Support querying by numerical on-chain blockchain.datasetId (e.g. "1", "2")
+    return Dataset.findOne({ "blockchain.datasetId": String(id) }).select(projection || "");
 };
 
 export const getDatasetStoragePath = (cid) => {

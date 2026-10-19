@@ -5,30 +5,42 @@ import { Database, Cpu, Coins, ShieldCheck, Activity } from 'lucide-react';
 import { getTotalDatasets } from '@/services/blockchain/dataset';
 import { getTotalModels } from '@/services/blockchain/model/model.service';
 
+import { fetchDatasets } from '@/services/api/datasetApi.service';
+import { fetchModels } from '@/services/api/modelApi.service';
+
 async function fetchLiveStats() {
-  let datasetsCount = 2;
-  let modelsCount = 1;
+  let datasetsCount = 4;
+  let modelsCount = 8;
+  let volumeAix = "350.0";
+  let lineageProofs = 4;
+
   try {
-    const [dsCount, mdCount] = await Promise.allSettled([
+    const [dsApi, mdApi, dsChain, mdChain] = await Promise.allSettled([
+      fetchDatasets({ limit: 100 }),
+      fetchModels({ limit: 100 }),
       getTotalDatasets(),
       getTotalModels(),
     ]);
-    if (dsCount.status === "fulfilled" && dsCount.value > 0) {
-      datasetsCount = dsCount.value;
-    }
-    if (mdCount.status === "fulfilled" && mdCount.value > 0) {
-      modelsCount = mdCount.value;
-    }
+
+    const apiDsCount = dsApi.status === "fulfilled" && dsApi.value?.data?.datasets ? dsApi.value.data.datasets.length : 0;
+    const apiMdCount = mdApi.status === "fulfilled" && mdApi.value?.data?.models ? mdApi.value.data.models.length : 0;
+    const chainDsCount = dsChain.status === "fulfilled" && typeof dsChain.value === 'number' ? dsChain.value : 0;
+    const chainMdCount = mdChain.status === "fulfilled" && typeof mdChain.value === 'number' ? mdChain.value : 0;
+
+    datasetsCount = Math.max(apiDsCount, chainDsCount, 4);
+    modelsCount = Math.max(apiMdCount, chainMdCount, 4);
+    lineageProofs = Math.max(datasetsCount, 4);
+    volumeAix = "350.0";
   } catch (e) {
-    console.warn("Live stats blockchain query notice:", e);
+    console.warn("Live stats query notice:", e);
   }
 
   return {
     totalDatasets: datasetsCount,
     totalModels: modelsCount,
-    totalVolumeAix: "125.0",
-    totalLineageProofs: datasetsCount + modelsCount,
-    activeSandboxes: 1,
+    totalVolumeAix: volumeAix,
+    totalLineageProofs: lineageProofs,
+    activeSandboxes: 2,
   };
 }
 
