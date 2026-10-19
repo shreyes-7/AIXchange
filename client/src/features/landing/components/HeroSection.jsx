@@ -1,15 +1,28 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { connectWallet } from '@/services/blockchain/wallet';
 import { connectStart, connectSuccess } from '@/store/slices/walletSlice';
 import useGsap from '@/hooks/useGsap';
-import { ArrowRight, Wallet, Terminal, Check, Copy, Sparkles, Database, GitBranch } from 'lucide-react';
+import {
+  ArrowRight,
+  Wallet,
+  Terminal,
+  Check,
+  Copy,
+  Sparkles,
+  Database,
+  ShieldCheck,
+  Cpu,
+  Layers,
+} from 'lucide-react';
 
 export default function HeroSection() {
   const dispatch = useDispatch();
   const { isConnected, address } = useSelector((state) => state.wallet);
   const [copied, setCopied] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef(null);
 
   const containerRef = useGsap((gsap) => {
     gsap.from('.hero-anim-item', {
@@ -41,90 +54,140 @@ export default function HeroSection() {
   return (
     <section
       ref={containerRef}
-      className="relative w-full overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 flex flex-col items-center text-center px-4 sm:px-6 lg:px-8"
+      className="relative w-full overflow-hidden min-h-[85vh] lg:min-h-[90vh] flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8 pt-20 pb-24 border-b border-white/[0.06]"
     >
-      {/* Background Radial Glow Mesh */}
+      {/* 
+        ====================================================================
+        HERO VIDEO BACKGROUND
+        Uses client/public/hp_video.mp4 via public URL '/hp_video.mp4'
+        Configured as an ambient, muted, loopable, pointer-events-none layer
+        ====================================================================
+      */}
+      {!videoError && (
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          onError={() => setVideoError(true)}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none -z-20 opacity-40 mix-blend-screen scale-[1.02]"
+        >
+          <source src="/hp_video.mp4" type="video/mp4" />
+        </video>
+      )}
+
+      {/* 
+        Critical Readability Treatment:
+        Dual-direction dark gradients to ensure the headline & copy remain
+        deeply legible while letting the ambient video movement show through.
+      */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[650px] sm:w-[850px] h-[450px] bg-gradient-to-tr from-cyan-500/15 via-indigo-600/10 to-purple-600/10 blur-3xl -z-10 rounded-full"
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-[#05070B] via-[#05070B]/85 to-[#05070B]/60"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-48 left-1/4 w-[350px] h-[300px] bg-cyan-500/10 blur-[100px] -z-10 rounded-full"
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-[#05070B]/30 via-transparent to-[#05070B]"
       />
 
-      {/* Pill Badge */}
-      <div className="hero-anim-item inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/60 shadow-inner mb-6 text-xs text-slate-300 font-medium">
-        <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-        <span>Decentralized AI Marketplace & Provenance Substrate</span>
+      {/* Subtle Electric Blue Ambient Glow */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[720px] h-[460px] bg-gradient-to-tr from-[#3976F6]/15 via-[#4F7DFF]/10 to-[#40D9F2]/10 blur-[140px] -z-10 rounded-full"
+      />
+
+      {/* Eyebrow Pill */}
+      <div className="hero-anim-item inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0F1522]/90 border border-white/10 shadow-inner mb-6 text-xs text-[#A1ACBF] font-mono tracking-wider">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#40D9F2] animate-pulse" />
+        <span className="font-semibold text-[#F4F7FC]">THE DECENTRALIZED AI ECONOMY</span>
       </div>
 
       {/* Display Headline */}
-      <h1 className="hero-anim-item text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-white max-w-4xl leading-[1.15] mb-6">
-        Exchange Datasets.{' '}
-        <span className="text-cyan-400 bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-cyan-400 via-indigo-300 to-purple-400">
-          Train Models.
-        </span>{' '}
-        Verify Provenance.
+      <h1 className="hero-anim-item text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[#F4F7FC] max-w-4xl leading-[1.1] mb-6">
+        Where AI Assets Meet{' '}
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#40D9F2] via-[#4F7DFF] to-[#818CF8]">
+          Trust &amp; Ownership.
+        </span>
       </h1>
 
-      {/* Lead Paragraph */}
-      <p className="hero-anim-item text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mb-8 leading-relaxed px-2">
-        The Web3 infrastructure protocol for AI assets. Monetize datasets with automated smart contract royalties, train in confidential sandboxes, and anchor model lineage to the blockchain.
+      {/* Explanatory Paragraph */}
+      <p className="hero-anim-item text-[#A1ACBF] text-sm sm:text-base md:text-lg max-w-2xl mb-10 leading-relaxed px-2 font-sans">
+        A unified marketplace for AI datasets and models, powered by verifiable ownership, transparent provenance, and blockchain-enabled transactions.
       </p>
 
       {/* Call to Actions */}
-      <div className="hero-anim-item flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 mb-10 w-full max-w-md sm:max-w-none">
+      <div className="hero-anim-item flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3.5 mb-10 w-full max-w-md sm:max-w-none">
         <Link
           to="/datasets"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-cyan-400 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold text-sm shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#3976F6] hover:bg-[#4F7DFF] text-white font-semibold text-sm shadow-lg shadow-[#3976F6]/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
-          <Database className="w-4 h-4 text-slate-950" />
-          <span>Explore Datasets</span>
-          <ArrowRight className="w-4 h-4 text-slate-950" />
+          <Database className="w-4 h-4 text-white" />
+          <span>Explore Marketplace</span>
+          <ArrowRight className="w-4 h-4 text-white" />
+        </Link>
+
+        <Link
+          to="/inference"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#0F1522]/90 hover:bg-[#0F1522] text-[#F4F7FC] font-semibold text-sm border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <Sparkles className="w-4 h-4 text-[#40D9F2]" />
+          <span>Launch AI Studio</span>
         </Link>
 
         {isConnected ? (
           <Link
-            to="/wallet-test"
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-850 text-cyan-300 font-semibold text-sm border border-slate-700 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+            to="/wallet"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#0A0E16] hover:bg-[#0F1522] text-[#40D9F2] font-mono text-xs font-semibold border border-white/10 shadow-sm transition-all"
           >
-            <Wallet className="w-4 h-4 text-cyan-400" />
+            <Wallet className="w-4 h-4 text-[#40D9F2]" />
             <span>
-              Connected ({address?.substring(0, 6)}...{address?.substring(address.length - 4)})
+              {address?.substring(0, 6)}...{address?.substring(address.length - 4)}
             </span>
           </Link>
         ) : (
           <button
             onClick={handleConnect}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 font-semibold text-sm border border-slate-700 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-[#0A0E16] hover:bg-[#0F1522] text-[#A1ACBF] hover:text-[#F4F7FC] font-semibold text-xs border border-white/10 shadow-sm transition-all"
           >
-            <Wallet className="w-4 h-4 text-cyan-400" />
-            <span>Connect Web3 Wallet</span>
+            <Wallet className="w-4 h-4 text-[#40D9F2]" />
+            <span>Connect Wallet</span>
           </button>
         )}
-
-        <Link
-          to="/provenance"
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-slate-300 font-medium text-sm border border-slate-800 transition-colors"
-        >
-          <GitBranch className="w-4 h-4 text-indigo-400" />
-          <span>Live Lineage DAG</span>
-        </Link>
       </div>
 
       {/* Terminal Command Snippet */}
-      <div className="hero-anim-item flex items-center gap-3 px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-mono text-slate-300 shadow-sm">
-        <Terminal className="w-4 h-4 text-cyan-400 shrink-0" />
-        <span className="text-slate-500 select-none">$</span>
-        <span className="text-cyan-300">npx @aixchange/sandbox start</span>
+      <div className="hero-anim-item flex items-center gap-3 px-4 py-2 rounded-xl bg-[#0A0E16]/90 border border-white/10 text-xs font-mono text-[#A1ACBF] shadow-sm mb-10">
+        <Terminal className="w-4 h-4 text-[#40D9F2] shrink-0" />
+        <span className="text-[#737F93] select-none">$</span>
+        <span className="text-[#F4F7FC]">npx @aixchange/sandbox start</span>
         <button
           onClick={handleCopyCli}
           aria-label="Copy CLI command"
-          className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition-colors ml-1"
+          className="p-1 rounded hover:bg-[#0F1522] text-[#737F93] hover:text-[#F4F7FC] transition-colors ml-1"
         >
           {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
+      </div>
+
+      {/* Trust & Capability Indicators */}
+      <div className="hero-anim-item flex flex-wrap items-center justify-center gap-6 text-xs text-[#737F93] font-mono">
+        <span className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <span>SHA-256 Verified Lineage</span>
+        </span>
+        <span className="hidden sm:inline text-slate-700">•</span>
+        <span className="flex items-center gap-2">
+          <Cpu className="w-4 h-4 text-[#40D9F2]" />
+          <span>Confidential Sandboxes</span>
+        </span>
+        <span className="hidden sm:inline text-slate-700">•</span>
+        <span className="flex items-center gap-2">
+          <Layers className="w-4 h-4 text-[#4F7DFF]" />
+          <span>Zero-Leakage Royalties</span>
+        </span>
       </div>
     </section>
   );

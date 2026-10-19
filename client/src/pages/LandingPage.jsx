@@ -2,37 +2,61 @@ import PublicShell from '@/layouts/PublicShell';
 import ErrorBoundary from '@/components/feedback/ErrorBoundary';
 import HeroSection from '@/features/landing/components/HeroSection';
 import LiveStatsBanner from '@/features/landing/components/LiveStatsBanner';
-import FeatureMatrix from '@/features/landing/components/FeatureMatrix';
-import ProvenanceTeaser from '@/features/landing/components/ProvenanceTeaser';
-import RecentDatasetsCarousel from '@/features/landing/components/RecentDatasetsCarousel';
-import CallToActionCard from '@/features/landing/components/CallToActionCard';
+import MarketplacePreview from '@/features/landing/components/MarketplacePreview';
+import HowItWorks from '@/features/landing/components/HowItWorks';
+import PlatformFeatures from '@/features/landing/components/PlatformFeatures';
+import ProvenanceShowcase from '@/features/landing/components/ProvenanceShowcase';
+import TokenEconomySection from '@/features/landing/components/TokenEconomySection';
+import ArchitectureTrustSection from '@/features/landing/components/ArchitectureTrustSection';
+import DeveloperCTA from '@/features/landing/components/DeveloperCTA';
 
 export default function LandingPage() {
   return (
     <PublicShell>
       <div className="w-full flex flex-col items-center">
+        {/* 1. Video-Backed Hero Section */}
         <ErrorBoundary>
           <HeroSection />
         </ErrorBoundary>
 
+        {/* 2. Real Telemetry & On-Chain Metrics */}
         <ErrorBoundary>
           <LiveStatsBanner />
         </ErrorBoundary>
 
+        {/* 3. Marketplace Preview with Real Datasets & Models */}
         <ErrorBoundary>
-          <FeatureMatrix />
+          <MarketplacePreview />
         </ErrorBoundary>
 
+        {/* 4. How AIXchange Works (4-Step Workflow) */}
         <ErrorBoundary>
-          <ProvenanceTeaser />
+          <HowItWorks />
         </ErrorBoundary>
 
+        {/* 5. Core Differentiators & Platform Features */}
         <ErrorBoundary>
-          <RecentDatasetsCarousel />
+          <PlatformFeatures />
         </ErrorBoundary>
 
+        {/* 6. Dedicated Cryptographic Provenance Section */}
         <ErrorBoundary>
-          <CallToActionCard />
+          <ProvenanceShowcase />
+        </ErrorBoundary>
+
+        {/* 7. AIX Token Economy & Value Flow */}
+        <ErrorBoundary>
+          <TokenEconomySection />
+        </ErrorBoundary>
+
+        {/* 8. Architecture, Trust & Security Pillars */}
+        <ErrorBoundary>
+          <ArchitectureTrustSection />
+        </ErrorBoundary>
+
+        {/* 9. Developer Call-To-Action & CLI Sandbox Launcher */}
+        <ErrorBoundary>
+          <DeveloperCTA />
         </ErrorBoundary>
       </div>
     </PublicShell>

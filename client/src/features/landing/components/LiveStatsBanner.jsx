@@ -101,39 +101,39 @@ export default function LiveStatsBanner() {
   ];
 
   return (
-    <section ref={bannerRef} className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+    <section ref={bannerRef} className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-b border-white/[0.06]">
       <div className="flex items-center justify-between gap-4 mb-4">
-        <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-          <Activity className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-          <span className="uppercase tracking-wider">Live On-Chain & Substrate Telemetry</span>
+        <div className="flex items-center gap-2 text-xs font-mono text-[#737F93]">
+          <Activity className="w-3.5 h-3.5 text-[#40D9F2] animate-pulse" />
+          <span className="uppercase tracking-wider">LIVE ON-CHAIN &amp; SUBSTRATE TELEMETRY</span>
         </div>
         <span className="text-[11px] font-mono text-emerald-400/90 hidden sm:inline-block">
           ● Hardhat Substrate (Chain ID 31337) Synced
         </span>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((m, idx) => {
           const Icon = m.icon;
           return (
             <div
               key={idx}
-              className={`stat-card p-4 sm:p-5 rounded-2xl bg-slate-900 border ${m.border} relative overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-850 shadow-md`}
+              className="stat-card p-5 rounded-2xl bg-[#0A0E16] border border-white/[0.08] hover:border-[#4F7DFF]/40 relative overflow-hidden transition-all duration-200 shadow-lg shadow-black/40"
             >
-              <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center justify-between mb-3">
                 <div className={`w-8 h-8 rounded-lg ${m.bg} flex items-center justify-center ${m.accent}`}>
                   <Icon className="w-4 h-4" />
                 </div>
                 <span className={`w-2 h-2 rounded-full ${m.indicator} animate-pulse`} />
               </div>
-              <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight mb-1">
+              <div className="text-xl sm:text-2xl font-extrabold text-[#F4F7FC] tracking-tight mb-1 font-mono">
                 {isLoading ? (
                   <div className="h-7 w-20 bg-slate-800 animate-pulse rounded" />
                 ) : (
                   m.value
                 )}
               </div>
-              <div className="text-xs text-slate-300 font-medium">{m.label}</div>
+              <div className="text-xs text-[#A1ACBF] font-medium">{m.label}</div>
             </div>
           );
         })}

@@ -3,20 +3,20 @@ import { ShieldCheck, Terminal, Cpu, Database, GitBranch, ExternalLink } from 'l
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-slate-950 border-t border-slate-800/80 text-slate-400 text-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer className="w-full bg-[#05070B] border-t border-white/[0.08] text-[#A1ACBF] text-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {/* Column 1: Brand & Identity */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2 group inline-flex">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20">
-                <Cpu className="w-4 h-4 text-cyan-200" />
+            <Link to="/" className="flex items-center gap-2.5 group inline-flex">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#40D9F2] via-[#3976F6] to-[#4F7DFF] flex items-center justify-center font-bold text-white shadow-md shadow-[#3976F6]/20">
+                <Cpu className="w-4 h-4 text-white" />
               </div>
-              <span className="font-extrabold text-lg tracking-tight text-white">
-                AIX<span className="text-cyan-400">change</span>
+              <span className="font-extrabold text-lg tracking-tight text-[#F4F7FC]">
+                AIX<span className="text-[#40D9F2]">change</span>
               </span>
             </Link>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-[#A1ACBF] leading-relaxed">
               Decentralized AI asset marketplace, verifiable model lineage, and confidential containerized execution substrate powered by Ethereum smart contracts and IPFS.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 w-fit">
@@ -27,103 +27,102 @@ export default function Footer() {
 
           {/* Column 2: Marketplace Navigation */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-200 mb-4 flex items-center gap-1.5">
-              <Database className="w-3.5 h-3.5 text-cyan-400" />
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-[#F4F7FC] mb-4 flex items-center gap-1.5 font-mono">
+              <Database className="w-3.5 h-3.5 text-[#40D9F2]" />
               Asset Marketplace
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link to="/datasets" className="hover:text-cyan-400 transition-colors">
+                <Link to="/datasets" className="hover:text-[#40D9F2] transition-colors">
                   Dataset Discovery Catalog
                 </Link>
               </li>
               <li>
-                <Link to="/datasets/register" className="hover:text-cyan-400 transition-colors">
+                <Link to="/datasets/register" className="hover:text-[#40D9F2] transition-colors">
                   Register New Dataset (10-Stage)
                 </Link>
               </li>
               <li>
-                <Link to="/models" className="hover:text-cyan-400 transition-colors">
+                <Link to="/models" className="hover:text-[#40D9F2] transition-colors">
                   Verified Model Weights
                 </Link>
               </li>
               <li>
-                <Link to="/sandboxes" className="hover:text-cyan-400 transition-colors">
-                  Docker Training Sandboxes
+                <Link to="/models/register" className="hover:text-[#40D9F2] transition-colors">
+                  Register Model Weights
                 </Link>
               </li>
               <li>
-                <Link to="/wallet-test" className="hover:text-cyan-400 transition-colors">
-                  Web3 Developer Testbed
+                <Link to="/my-assets" className="hover:text-[#40D9F2] transition-colors">
+                  My Purchased Assets
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Governance & Lineage */}
+          {/* Column 3: AI Studio & Lineage */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-200 mb-4 flex items-center gap-1.5">
-              <GitBranch className="w-3.5 h-3.5 text-indigo-400" />
-              Provenance & Royalties
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-[#F4F7FC] mb-4 flex items-center gap-1.5 font-mono">
+              <GitBranch className="w-3.5 h-3.5 text-[#4F7DFF]" />
+              AI Studio &amp; Provenance
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link to="/provenance" className="hover:text-indigo-400 transition-colors">
+                <Link to="/inference" className="hover:text-[#40D9F2] transition-colors">
+                  Inference Playground
+                </Link>
+              </li>
+              <li>
+                <Link to="/sandboxes" className="hover:text-[#40D9F2] transition-colors">
+                  Docker Training Sandboxes
+                </Link>
+              </li>
+              <li>
+                <Link to="/provenance" className="hover:text-[#40D9F2] transition-colors">
                   Lineage DAG Visualizer
                 </Link>
               </li>
               <li>
-                <Link to="/royalties" className="hover:text-indigo-400 transition-colors">
+                <Link to="/royalties" className="hover:text-[#40D9F2] transition-colors">
                   Automated Royalty Splits
                 </Link>
               </li>
               <li>
-                <Link to="/analytics" className="hover:text-indigo-400 transition-colors">
-                  Platform Telemetry & Gas
+                <Link to="/analytics" className="hover:text-[#40D9F2] transition-colors">
+                  Platform Telemetry &amp; Gas
                 </Link>
-              </li>
-              <li>
-                <a
-                  href="https://github.com/shreyes-7/AIXchange"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-indigo-400 transition-colors inline-flex items-center gap-1"
-                >
-                  Contract Source Code <ExternalLink className="w-3 h-3 opacity-60" />
-                </a>
               </li>
             </ul>
           </div>
 
           {/* Column 4: Substrate Quickstart */}
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-200 mb-4 flex items-center gap-1.5">
-              <Terminal className="w-3.5 h-3.5 text-purple-400" />
-              AI Substrate SDK
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-[#F4F7FC] mb-4 flex items-center gap-1.5 font-mono">
+              <Terminal className="w-3.5 h-3.5 text-[#818CF8]" />
+              Developer Terminal
             </h4>
-            <p className="text-xs text-slate-400 mb-2">
-              Execute sandboxed model training via client CLI:
+            <p className="text-xs text-[#A1ACBF] mb-2.5">
+              Launch local unprivileged training container:
             </p>
-            <div className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-[11px] text-cyan-300 select-all overflow-x-auto">
+            <div className="bg-[#0A0E16] border border-white/10 rounded-xl p-3 font-mono text-[11px] text-[#40D9F2] select-all overflow-x-auto shadow-inner">
               <code>npx @aixchange/sandbox start</code>
             </div>
-            <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Sepolia / Hardhat Substrate Operational</span>
+            <div className="mt-3.5 flex items-center gap-2 text-[11px] font-mono text-[#737F93]">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Hardhat Chain 31337 Synced</span>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-slate-800/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© 2026 AIXchange Protocol. Built for decentralized AI research & commercial monetization.</p>
-          <div className="flex items-center gap-4 text-xs">
-            <span className="text-slate-600">•</span>
-            <span>WCAG 2.1 AA Compliant</span>
-            <span className="text-slate-600">•</span>
+        <div className="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#737F93]">
+          <p>© 2026 AIXchange Protocol. Built for decentralized AI research &amp; commercial monetization.</p>
+          <div className="flex items-center gap-4 text-xs font-mono">
+            <span>EIP-191 Auth</span>
+            <span className="text-slate-700">•</span>
             <span>Solidity ^0.8.28</span>
-            <span className="text-slate-600">•</span>
-            <span>React 19 + Vite 8</span>
+            <span className="text-slate-700">•</span>
+            <span>IPFS Content Addressed</span>
           </div>
         </div>
       </div>
