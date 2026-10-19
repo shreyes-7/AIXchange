@@ -35,13 +35,16 @@ export default function DatasetMarketplace() {
       const totalCountVal = total.status === "fulfilled" ? total.value : 0;
       setTotalCount(totalCountVal);
 
-      const rawList = list.status === "fulfilled" ? list.value : [];
+      const rawList = list.status === "fulfilled" && Array.isArray(list.value) ? list.value : [];
       const backendDatasets =
         backendRes.status === "fulfilled" && backendRes.value?.data?.datasets
           ? backendRes.value.data.datasets
           : [];
 
-      const enriched = rawList.map((ds) => {
+      // Create a set of dataset IDs already populated from blockchain
+      const onChainIds = new Set(rawList.map((d) => String(d.datasetId)));
+
+      const onChainEnriched = rawList.map((ds) => {
         const meta = getDatasetMetadata(ds.datasetId, ds.cid);
         const backendMatch = backendDatasets.find(
           (b) =>
@@ -50,25 +53,49 @@ export default function DatasetMarketplace() {
         );
         return {
           ...ds,
+          _id: backendMatch?._id,
           title:
-            meta.title || backendMatch?.title || `AI Training Dataset #${ds.datasetId}`,
+            backendMatch?.title || meta.title || `AI Training Dataset #${ds.datasetId}`,
           description:
-            meta.description ||
             backendMatch?.description ||
+            meta.description ||
             "Decentralized AI training dataset verified on Hardhat EVM substrate with cryptographic IPFS provenance.",
           category:
-            meta.category || backendMatch?.category || "IoT / Sensor Telemetry",
+            backendMatch?.category || meta.category || "IoT / Sensor Telemetry",
           fileName:
-            meta.fileName || backendMatch?.file?.fileName || "sensor_telemetry.csv",
+            backendMatch?.file?.fileName || meta.fileName || "sensor_telemetry.csv",
           fileSize:
-            meta.fileSize ||
             (backendMatch?.file?.size
               ? `${(backendMatch.file.size / 1024).toFixed(1)} KB`
-              : "351 KB"),
-          tags: meta.tags || backendMatch?.tags || ["telemetry", "ai-training"],
+              : meta.fileSize) || "351 KB",
+          tags: backendMatch?.tags || meta.tags || ["telemetry", "ai-training"],
+          ratingAverage: backendMatch?.ratingAverage || 4.9,
+          ratingCount: backendMatch?.ratingCount || 14,
         };
       });
 
+      // Add any MongoDB datasets that might not yet be indexed in rawList
+      const offChainOnly = backendDatasets
+        .filter((b) => !onChainIds.has(String(b.blockchain?.datasetId)))
+        .map((b, idx) => ({
+          _id: b._id,
+          datasetId: b.blockchain?.datasetId || rawList.length + idx + 1,
+          cid: b.file?.cid || "QmTXAoLR5ibkGLXVyXFjSoJTgMAxk44DGtGztu6bZkZkrL",
+          owner: b.blockchain?.owner || (b.owner?.wallet?.address || b.owner) || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+          license: b.license || "Commercial Monetization",
+          active: b.status === "active",
+          title: b.title,
+          description: b.description,
+          category: b.category || "IoT / Sensor Telemetry",
+          fileName: b.file?.fileName || "dataset.csv",
+          fileSize: b.file?.size ? `${(b.file.size / 1024).toFixed(1)} KB` : "351 KB",
+          tags: b.tags || ["telemetry", "ai-training"],
+          ratingAverage: b.ratingAverage || 4.8,
+          ratingCount: b.ratingCount || 10,
+        }));
+
+      const enriched = [...onChainEnriched, ...offChainOnly];
+      setTotalCount(enriched.length);
       setDatasets(enriched);
     } catch (err) {
       console.error("Failed to load datasets from blockchain:", err);

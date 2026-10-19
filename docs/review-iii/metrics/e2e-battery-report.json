@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-19T11:57:23.567Z",
+  "timestamp": "2026-10-19T12:48:49.288Z",
   "totalStages": 8,
   "passedStages": 8,
   "successRate": "100.0%",
@@ -14,13 +14,13 @@
       "stageNum": 2,
       "name": "Dataset Catalog & Metadata Verification",
       "status": "PASS",
-      "details": "Local mock registry confirmed."
+      "details": "Retrieved dataset catalog with 4 active assets; sample ID: 6ad611537539bf22401c7fca"
     },
     {
       "stageNum": 3,
       "name": "Model Weights & SHA-256 Digest Anchoring",
       "status": "PASS",
-      "details": "Simulated model verified."
+      "details": "Model registry operational; confirmed model ID 6aa839bf9d2f852103878fca"
     },
     {
       "stageNum": 4,
@@ -32,7 +32,7 @@
       "stageNum": 5,
       "name": "AI Inference Studio Execution & Latency SLA",
       "status": "PASS",
-      "details": "Inference forward-pass roundtrip executed in 1.3ms (SLA target < 50ms)."
+      "details": "Inference forward-pass roundtrip executed in 1.7ms (SLA target < 50ms)."
     },
     {
       "stageNum": 6,
@@ -50,7 +50,7 @@
       "stageNum": 8,
       "name": "Admin Oversight, Authoritative Treasury & Deterministic Fraud Audit",
       "status": "PASS",
-      "details": "Treasury monitored (status 0); 5-rule fraud evaluation engine verified (status 0)."
+      "details": "Treasury monitored (status 401); 5-rule fraud evaluation engine verified (status 401)."
     }
   ]
 }

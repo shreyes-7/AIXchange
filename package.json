@@ -7,6 +7,7 @@
     "test": "node scripts/e2e-master-battery.mjs",
     "test:e2e": "node scripts/e2e-master-battery.mjs",
     "test:all": "node scripts/run-all-tests.js",
+    "seed:demo": "node scripts/seed-demo-ecosystem.mjs",
     "sandbox:jupyter": "cd python-services && .\\venv\\Scripts\\jupyter-lab.exe --config=./jupyter_server_config.py --ServerApp.root_dir=./workspace",
     "sandbox:docker": "docker compose -f docker/docker-compose.sandbox.yml up -d"
   },

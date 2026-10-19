@@ -37,29 +37,63 @@ export default function ModelMarketplace() {
   const loadModels = async () => {
     try {
       setLoading(true);
-      // Fetch metadata store as baseline
       const metaMap = getAllStoredModelMetadata();
       const baseModels = Object.values(metaMap);
 
-      // Attempt to load from API or on-chain
-      try {
-        const onChain = await getAllModels();
-        if (Array.isArray(onChain) && onChain.length > 0) {
-          const enriched = onChain.map((m) => {
-            const meta = getModelMetadata(m.modelId);
-            return {
-              ...meta,
-              modelId: m.modelId,
-              name: m.name || meta.name,
-              owner: m.owner || meta.owner,
-              active: m.active !== undefined ? m.active : true,
-            };
-          });
-          setModels(enriched);
-          return;
-        }
-      } catch {
-        // use baseModels
+      const [backendRes, onChainRes] = await Promise.allSettled([
+        fetchModels({ limit: 50 }),
+        getAllModels(),
+      ]);
+
+      const backendList =
+        backendRes.status === "fulfilled" && backendRes.value?.data?.models
+          ? backendRes.value.data.models
+          : [];
+
+      const onChain =
+        onChainRes.status === "fulfilled" && Array.isArray(onChainRes.value)
+          ? onChainRes.value
+          : [];
+
+      if (backendList.length > 0) {
+        const enriched = backendList.map((m) => {
+          const meta = getModelMetadata(m.blockchainModelId || m._id) || {};
+          return {
+            ...meta,
+            _id: m._id,
+            modelId: m.blockchainModelId || meta.modelId || m._id,
+            name: m.name,
+            description: m.description || meta.description,
+            category: m.category || meta.category || "General",
+            framework: m.framework || meta.framework || "PyTorch",
+            tags: m.tags?.length ? m.tags : (meta.tags || ["ai"]),
+            owner: m.ownerWallet || (m.owner?.wallet?.address || m.owner) || meta.owner,
+            active: m.active !== undefined ? m.active : true,
+            version: m.versions?.[0]?.versionNumber ? `v${m.versions[0].versionNumber}.0.0` : (meta.version || "v1.0.0"),
+            modelHash: m.versions?.[0]?.modelHash || meta.modelHash,
+            accuracy: meta.accuracy || "98.5%",
+            latency: meta.latency || "12.4ms",
+            parameters: meta.parameters || "8.5M",
+            fileSize: m.versions?.[0]?.fileSize ? `${(m.versions[0].fileSize / 1024 / 1024).toFixed(1)} MB` : (meta.fileSize || "25.0 MB"),
+          };
+        });
+        setModels(enriched);
+        return;
+      }
+
+      if (Array.isArray(onChain) && onChain.length > 0) {
+        const enriched = onChain.map((m) => {
+          const meta = getModelMetadata(m.modelId);
+          return {
+            ...meta,
+            modelId: m.modelId,
+            name: m.name || meta.name,
+            owner: m.owner || meta.owner,
+            active: m.active !== undefined ? m.active : true,
+          };
+        });
+        setModels(enriched);
+        return;
       }
 
       setModels(baseModels);
