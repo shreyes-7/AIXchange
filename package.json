@@ -4,7 +4,9 @@
   "description": "A Blockchain-Powered Marketplace for AI Datasets, Models, and AI Services with AI Provenance and Automated Royalty Distribution.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node scripts/e2e-master-battery.mjs",
+    "test:e2e": "node scripts/e2e-master-battery.mjs",
+    "test:all": "node scripts/run-all-tests.js",
     "sandbox:jupyter": "cd python-services && .\\venv\\Scripts\\jupyter-lab.exe --config=./jupyter_server_config.py --ServerApp.root_dir=./workspace",
     "sandbox:docker": "docker compose -f docker/docker-compose.sandbox.yml up -d"
   },
