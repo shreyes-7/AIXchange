@@ -232,7 +232,11 @@ export default function Navbar() {
           {/* User Auth Status / Sign In / Out */}
           {isAuthenticated ? (
             <div className="hidden md:flex items-center gap-2 pl-1 border-l border-slate-800/80">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+              <Link
+                to="/profile"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs hover:border-cyan-500/50 hover:bg-slate-850 transition-all"
+                title="Account Profile & Settings"
+              >
                 <User className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="text-slate-200 font-medium max-w-[100px] truncate">
                   {user?.name || user?.email?.split('@')[0] || 'Member'}
@@ -240,7 +244,7 @@ export default function Navbar() {
                 <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
                   {role || 'user'}
                 </span>
-              </div>
+              </Link>
               <button
                 onClick={handleLogout}
                 title="Sign Out"

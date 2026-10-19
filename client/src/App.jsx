@@ -1,4 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
+import ErrorBoundary from "./components/feedback/ErrorBoundary";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -17,54 +19,63 @@ import InferencePlayground from "./pages/InferencePlayground";
 import RoyaltyDashboard from "./pages/RoyaltyDashboard";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import UserProfileSettings from "./pages/UserProfileSettings";
 import WalletTest from "./pages/WalletTest";
 import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/wallet" element={<WalletPage />} />
-        <Route path="/my-assets" element={<MyAssets />} />
-        
-        {/* Datasets */}
-        <Route path="/datasets" element={<DatasetMarketplace />} />
-        <Route path="/datasets/register" element={<RegisterDataset />} />
-        <Route path="/datasets/:id" element={<DatasetDetails />} />
-        
-        {/* Models */}
-        <Route path="/models" element={<ModelMarketplace />} />
-        <Route path="/models/register" element={<RegisterModel />} />
-        <Route path="/models/:id" element={<ModelDetails />} />
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/my-assets" element={<MyAssets />} />
+          <Route path="/my-purchases" element={<MyAssets defaultTab="receipts" />} />
+          
+          {/* User Profile & Account Settings */}
+          <Route path="/profile" element={<UserProfileSettings />} />
+          <Route path="/settings" element={<UserProfileSettings />} />
 
-        {/* Sandboxes & Compute */}
-        <Route path="/sandboxes" element={<SandboxDashboard />} />
+          {/* Datasets */}
+          <Route path="/datasets" element={<DatasetMarketplace />} />
+          <Route path="/datasets/register" element={<RegisterDataset />} />
+          <Route path="/datasets/:id" element={<DatasetDetails />} />
+          
+          {/* Models */}
+          <Route path="/models" element={<ModelMarketplace />} />
+          <Route path="/models/register" element={<RegisterModel />} />
+          <Route path="/models/:id" element={<ModelDetails />} />
 
-        {/* Provenance Lineage DAG */}
-        <Route path="/provenance" element={<ProvenanceExplorer />} />
-        <Route path="/provenance/graph/:modelId" element={<LineageGraphView />} />
+          {/* Sandboxes & Compute */}
+          <Route path="/sandboxes" element={<SandboxDashboard />} />
 
-        {/* Real-time Inference Playground */}
-        <Route path="/inference" element={<InferencePlayground />} />
+          {/* Provenance Lineage DAG */}
+          <Route path="/provenance" element={<ProvenanceExplorer />} />
+          <Route path="/provenance/graph/:modelId" element={<LineageGraphView />} />
 
-        {/* Secondary Royalty Engine */}
-        <Route path="/royalties" element={<RoyaltyDashboard />} />
+          {/* Real-time Inference Playground */}
+          <Route path="/inference" element={<InferencePlayground />} />
 
-        {/* Analytics & Benchmarks */}
-        <Route path="/analytics" element={<AnalyticsDashboard />} />
+          {/* Secondary Royalty Engine */}
+          <Route path="/royalties" element={<RoyaltyDashboard />} />
 
-        {/* Phase 12: Admin & Fraud Oversight */}
-        <Route path="/admin" element={<AdminDashboard />} />
+          {/* Analytics & Benchmarks */}
+          <Route path="/analytics" element={<AnalyticsDashboard />} />
 
-        {/* Dev & Wallet Testbed */}
-        <Route path="/wallet-test" element={<WalletTest />} />
-        
-        {/* 404 Fallback */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          {/* Phase 12: Admin & Fraud Oversight */}
+          <Route path="/admin" element={<AdminDashboard />} />
+
+          {/* Dev & Wallet Testbed */}
+          <Route path="/wallet-test" element={<WalletTest />} />
+          
+          {/* 404 Fallback */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+        <Toaster position="top-right" theme="dark" richColors />
+      </ErrorBoundary>
     </Router>
   );
 }
