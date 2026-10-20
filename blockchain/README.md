@@ -1,41 +1,26 @@
 # AIXchange Blockchain Layer
 
-The **AIXchange Blockchain Layer** provides the decentralized trust, ownership, settlement, and verification infrastructure for the AIXchange platform. Built using **Solidity ^0.8.28**, **Hardhat**, **OpenZeppelin Contracts v5**, and **Ethers.js v6**, it delivers:
-
-- **Immutable Asset Registries**: On-chain tracking of datasets, machine learning models, and model versions.
-- **Verifiable AI Provenance DAG**: Directed Acyclic Graph connecting datasets, execution environments, model artifacts, and metadata commitments.
-- **Trustless Licensing & Atomic Settlement**: Granular legal/economic terms and atomic token-based purchasing with platform fee routing.
-- **Multi-Party Royalty Settlements**: Deterministic revenue distribution across up to 50 recipients with zero-leakage remainder handling.
-- **Treasury Vault Security**: Multi-asset vault holding native ETH and ERC-20 tokens with SafeERC20 protections.
-- **Continuous Monitoring & Fraud Detection**: Off-chain event ingestion, balance tracking, and a deterministic 5-rule fraud detection engine.
+The **AIXchange Blockchain Layer** provides the decentralized trust, ownership, atomic settlement, cryptographic licensing, and verifiable provenance infrastructure for the AIXchange platform. Built with **Solidity ^0.8.28**, **Hardhat**, **OpenZeppelin Contracts v5**, **Hardhat Ignition**, and **Ethers.js v6**, it forms the immutable foundation of the AIXchange decentralized substrate.
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 
-1. [Architectural Overview](#-1-architectural-overview)
-2. [Smart Contracts Catalog](#-2-smart-contracts-catalog)
-   - [AIXToken.sol](#aixtokensol-contracts-tokens-)
-   - [Treasury.sol](#treasurysol-contracts-governance-)
-   - [DatasetRegistry.sol](#datasetregistrysol-contracts-registry-)
-   - [LicenseRegistry.sol](#licenseregistrysol-contracts-licensing-)
-   - [PurchaseEngine.sol](#purchaseenginesol-contracts-marketplace-)
-   - [ModelRegistry.sol](#modelregistrysol-contracts-registry-)
-   - [ProvenanceRegistry.sol](#provenanceregistrysol-contracts-registry-)
-   - [RoyaltyEngine.sol](#royaltyenginesol-contracts-royalty-)
-3. [Shared Libraries & Interfaces](#-3-shared-libraries--interfaces)
-4. [Monitoring & Deterministic Fraud Engine](#-4-monitoring--deterministic-fraud-engine)
-5. [Gas Consumption Benchmarks](#-5-gas-consumption-benchmarks)
-6. [Automated Test Suites (279 Tests)](#-6-automated-test-suites-279-tests)
-7. [Deployment & Management Scripts](#-7-deployment--management-scripts)
-8. [Security Invariants & Developer Guidelines](#-8-security-invariants--developer-guidelines)
-9. [Troubleshooting & FAQ](#-9-troubleshooting--faq)
+1. [Architectural Overview](#architectural-overview)
+2. [Smart Contracts Catalog](#smart-contracts-catalog)
+3. [Local Blockchain Node (Terminal 3)](#local-blockchain-node-terminal-3)
+4. [Smart Contract Deployment via Phase10 (Terminal 4)](#smart-contract-deployment-via-phase10-terminal-4)
+5. [Deployment Artifacts & Address Synchronization](#deployment-artifacts--address-synchronization)
+6. [MetaMask Local Network Configuration](#metamask-local-network-configuration)
+7. [Automated Test Suite (279 Tests) & Gas Benchmarks](#automated-test-suite-279-tests--gas-benchmarks)
+8. [Security Invariants & Developer Safeguards](#security-invariants--developer-safeguards)
+9. [Troubleshooting & FAQ](#troubleshooting--faq)
 
 ---
 
-## 🏛️ 1. Architectural Overview
+## Architectural Overview
 
-The blockchain layer decouples heavy binary storage (dataset archives, PyTorch weights) from on-chain logic. Raw payloads are stored on IPFS or cloud storage, while smart contracts strictly maintain **content identifiers (CIDs)**, **SHA-256 artifact digests**, **access entitlements**, **licensing rules**, and **payment state transitions**.
+The blockchain layer decouples heavy binary storage (dataset archives, PyTorch weights) from on-chain execution logic. Smart contracts strictly maintain **content identifiers (CIDs)**, **SHA-256 artifact digests**, **access entitlements**, **licensing terms**, and **payment state transitions**:
 
 ```text
                                   ┌────────────────────────┐
@@ -59,276 +44,259 @@ The blockchain layer decouples heavy binary storage (dataset archives, PyTorch w
                                               ▼
 ┌──────────────────────┐           ┌──────────────────────┐
 │  ModelRegistry.sol   │◄──────────│ProvenanceRegistry.sol│
-│ (SHA-256, Versions)  │  verifies │ (Lineage DAG Anchor) │
+│ (Weights Digests)    │  verifies │ (Lineage DAG)        │
 └──────────────────────┘           └──────────────────────┘
 ```
 
 ---
 
-## 📜 2. Smart Contracts Catalog
+## Smart Contracts Catalog
 
-### AIXToken.sol (`contracts/tokens/`)
-The native utility token for the AIXchange ecosystem.
-- **Standard**: ERC-20 with standard ERC-20 metadata extensions.
-- **Decimals**: 18.
-- **Initial Supply**: 1,000,000,000 AIX ($1 \times 10^9 \times 10^{18}$ base units) minted to the contract deployer.
-- **Minting**: Restricted to the contract owner via OpenZeppelin `Ownable`.
-- **Burning**: Public `burn(amount)` and `burnFrom(account, amount)` allowing token destruction.
-- **Interface**: `IAIXToken.sol`.
+All contracts reside in `blockchain/contracts/` and compile with Solidity `0.8.28` (optimizer enabled, 200 runs):
 
-### Treasury.sol (`contracts/governance/`)
-The multi-asset platform vault holding protocol reserves, collected marketplace fees, and remainder rounding dust.
-- **Native ETH**: Accepts direct transfers via `receive() external payable` and emits `ETHDeposited`.
-- **ERC-20 Deposits**: `depositToken(address token, uint256 amount)` uses OpenZeppelin `SafeERC20.safeTransferFrom` to safely transfer tokens from callers into the Treasury. Emits `TokenDeposited`.
-- **Withdrawals**: Owner-restricted `withdrawETH(address payable to, uint256 amount)` and `withdrawToken(address token, address to, uint256 amount)` with strict zero-address and zero-balance validations.
-- **Interface**: `ITreasury.sol`.
+### 1. `AIXToken.sol` (`contracts/tokens/`)
+- Standard ERC-20 token with OpenZeppelin `ERC20Burnable` and `Ownable`.
+- **Name**: `AIX Token` | **Symbol**: `AIX` | **Decimals**: `18`
+- **Initial Supply**: 100,000,000 AIX (`100000000 * 10^18` wei) minted to the deployer account.
+- Serves as the primary medium of exchange for dataset purchases, model licensing, and royalty distributions.
 
-### DatasetRegistry.sol (`contracts/registry/`)
-The authoritative on-chain registry for dataset ownership and IPFS content identifiers.
-- **Dataset Identification**: Auto-incrementing identifier (`datasetId = 1, 2, 3...`).
-- **Data Model**: Stores `DatasetRecord` (`datasetId`, `owner`, `cid`, `license`, `royalty` in BPS, `createdAt`, `active`).
-- **Lookups**: $O(1)$ lookup via mapping; enumerations via `getDatasetsByOwner(owner)` and `getTotalDatasets()`.
-- **Ownership Management**: `transferDatasetOwnership(datasetId, newOwner)` updates owner index arrays using an $O(1)$ swap-and-pop algorithm.
-- **Metadata Management**: `updateDataset(datasetId, newCid, newLicense, newRoyalty)` and `setDatasetStatus(datasetId, active)`.
-- **Interface**: `IDatasetRegistry.sol`.
+### 2. `Treasury.sol` (`contracts/governance/`)
+- Multi-asset protocol vault receiving protocol fees (default: 2.50% / 250 BPS) from marketplace purchases and unallocated royalty dust.
+- Supports native ETH and arbitrary ERC-20 tokens with OpenZeppelin `SafeERC20` protections.
+- Governed by timelocked administrative withdrawal controls.
 
-### LicenseRegistry.sol (`contracts/licensing/`)
-Defines legal permissions, rights, and pricing models for datasets.
-- **License Types**:
-  - `0`: `ACADEMIC`
-  - `1`: `COMMERCIAL`
-  - `2`: `EXCLUSIVE`
-  - `3`: `CUSTOM`
-- **Pricing Models**:
-  - `0`: `FIXED` (priced in AIX token units)
-  - `1`: `ROYALTY` (basis points $0 \le \text{rate} \le 10000$)
-- **Granular Permissions (`LicenseRights`)**: Boolean flags controlling `canView`, `canDownload`, `canModify`, `canTrain`, `canInfer`, `canCommercialUse`, `canDistribute`, and `canSublicense`.
-- **Ownership Verification**: Automatically queries `DatasetRegistry.getDatasetOwner(assetId)` to guarantee that only the authentic dataset creator can issue licenses.
-- **Temporal Validity**: Tracks `validFrom` and `validUntil` unix timestamps; queryable via `isLicenseActive(licenseId)`.
-- **Interface**: `ILicenseRegistry.sol`.
+### 3. `DatasetRegistry.sol` (`contracts/registry/`)
+- Immutable catalog of verifiable AI training datasets.
+- Stores dataset ID, creator address, IPFS CID, title, description, tags, price, and active status.
+- Enforces unique dataset IDs and emits `DatasetRegistered`, `DatasetUpdated`, and `DatasetOwnershipTransferred` events.
 
-### PurchaseEngine.sol (`contracts/marketplace/`)
-The decentralized clearing and settlement engine for dataset licensing.
-- **Atomic Settlement**: `purchaseDataset(datasetId, licenseId)` executes payment clearing in a single transaction.
-- **Authoritative Pricing**: Reads pricing directly from `LicenseRegistry.getLicensePricing(licenseId)`.
-- **Fee Routing**: Deducts platform fee (default 2.50% / 250 BPS) directly to `Treasury` and transfers the remaining 97.50% to the dataset licensor via `SafeERC20.safeTransferFrom`.
-- **Access Entitlement**: Records immutable buyer entitlement (`hasAccess(buyer, datasetId, licenseId)`) without transferring underlying asset copyright.
-- **Exclusivity Lock**: Automatically disables `EXCLUSIVE` licenses upon first purchase (`isExclusiveLicenseSold(licenseId) = true`), rejecting all future buyers.
-- **Duplicate Prevention**: Reverts redundant purchases if the caller already holds an active, unexpired license.
-- **Security**: Built with OpenZeppelin `ReentrancyGuard`, `Pausable`, and Checks-Effects-Interactions (CEI).
-- **Interface**: `IPurchaseEngine.sol`.
+### 4. `LicenseRegistry.sol` (`contracts/licensing/`)
+- Cryptographic license issuance and verification for dataset and model consumers.
+- Tracks license terms: fixed fee or basis points (BPS), validity duration, commercial rights, and revocation status.
+- Emits `LicenseGranted`, `LicenseRevoked`, and `LicenseExpired` events.
 
-### ModelRegistry.sol (`contracts/registry/`)
-Anchors trained machine learning models and versioned artifact hashes on-chain.
-- **Model Identity**: Sequential model identifier generation (`modelId = 1, 2, ...`).
-- **Cryptographic Hash Anchoring**: Stores SHA-256 digests (`modelHash`) generated during sandbox training. Raw weight files (`.safetensors`, `.pt`) remain off-chain.
-- **Append-Only Versioning**: `addModelVersion(modelId, metadataUri, modelHash)` appends `ModelVersion` records (`versionNumber = 1, 2, 3...`) with timestamp tracking.
-- **On-Chain Verification**: `verifyModelHash(modelId, versionNumber, expectedHash)` enables deterministic verification of model integrity without off-chain dependencies.
-- **Duplicate Protection**: Enforces name uniqueness per owner and blocks consecutive identical artifact hash updates.
-- **Ownership Handoff**: Transfers model ownership while preserving historical version integrity.
-- **Interface**: `IModelRegistry.sol`.
+### 5. `PurchaseEngine.sol` (`contracts/marketplace/`)
+- Facilitates atomic purchases of datasets and model licenses using AIX tokens.
+- Deducts platform fees and routes them to `Treasury.sol`.
+- Triggers automatic secondary royalty distributions via `RoyaltyEngine.sol`.
+- Emits `PurchaseInitiated` and `PurchaseCompleted` events.
 
-### ProvenanceRegistry.sol (`contracts/registry/`)
-The cryptographic lineage Directed Acyclic Graph (DAG) for artificial intelligence assets.
-- **Lineage Edge**: Binds source dataset (`datasetId` from `DatasetRegistry`), execution instance (`executionId` from Docker sandbox), trained model (`modelId`), and version (`modelVersion` from `ModelRegistry`).
-- **Cryptographic Commitment**: Anchors `metadataHash` (SHA-256 digest of `model_metadata.json`).
-- **Composite Key Uniqueness**: Enforces single-edge uniqueness via:
-  $$\text{compositeKey} = \text{keccak256}(\text{abi.encodePacked}(datasetId, executionId, modelId, modelVersion))$$
-- **On-Chain Verification**: `verifyProvenance(datasetId, executionId, modelId, modelVersion, metadataHash)` deterministically asserts lineage validity.
-- **Auditable Status**: Model creators can deactivate disputed lineage records via `setProvenanceStatus(provenanceId, active)`.
-- **Interface**: `IProvenanceRegistry.sol`.
+### 6. `ModelRegistry.sol` (`contracts/registry/`)
+- Manages AI model artifact registrations, tying parent dataset IDs, architecture tags (`pytorch`, `safetensors`), and parameter counts to an immutable SHA-256 weights digest.
+- Protects downstream consumers against model weight tampering.
 
-### RoyaltyEngine.sol (`contracts/royalty/`)
-Secondary revenue splitting and royalty distribution engine.
-- **Multi-Party Distribution**: Distributes AIX token revenue across up to 50 recipients per batch using basis points (`BPS_DENOMINATOR = 10000`).
-- **Platform Fee Inflow**: Deducts protocol fee (default 2.50% / 250 BPS, max 20.00% / 2000 BPS) routed directly to `Treasury`.
-- **Zero-Leakage Remainder Accounting**: Integer division truncation dust is automatically allocated to the platform Treasury:
-  $$\sum_{i=1}^n \text{recipientAmounts}[i] + \text{treasuryAmount} \equiv \text{totalRevenue}$$
-- **Anti-Replay Protection**: Prevents duplicate distributions of the same transaction or source:
-  $$\text{distributionKey} = \text{keccak256}(\text{abi.encodePacked}(sourceType, sourceId))$$
-- **PurchaseEngine Integration**: Dedicated helper `distributePurchaseRoyalty(purchaseId, recipients)` to split dataset sales revenue among downstream collaborators.
-- **Interface**: `IRoyaltyEngine.sol`.
+### 7. `ProvenanceRegistry.sol` (`contracts/registry/`)
+- On-chain Directed Acyclic Graph (DAG) recording model provenance.
+- Anchors the cryptographic relationship: `Dataset Hash + Training Code Hash + Hyperparameters -> Trained Model Weight Hash`.
+- Emits `LineageAnchored` events for immutable audit trails.
+
+### 8. `RoyaltyEngine.sol` (`contracts/royalty/`)
+- Configurable multi-party revenue distribution engine supporting up to 50 beneficiaries per asset.
+- Calculates exact proportional shares in basis points (10,000 BPS = 100.00%) with zero-leakage dust handling directed to the Treasury.
+- Emits `RoyaltySplitConfigured` and `RoyaltyDistributed` events.
 
 ---
 
-## 📚 3. Shared Libraries & Interfaces
+## Local Blockchain Node (Terminal 3)
 
-The contracts rely on shared libraries in `contracts/libraries/` to ensure zero-gas string overhead, consistent event signatures, and uniform data models:
+The local development environment uses Hardhat's built-in EVM JSON-RPC node.
 
-- **`Structs.sol`**: Contains canonical struct definitions:
-  - `DatasetRecord`, `LicenseRecord`, `LicenseRights`, `PurchaseRecord`
-  - `ModelRecord`, `ModelVersion`, `ProvenanceRecord`
-  - `RoyaltyDistribution`, `RoyaltyRecipient`
-- **`Errors.sol`**: Custom Solidity errors reducing runtime revert gas costs:
-  - `ZeroAddress()`, `ZeroAmount()`, `NotAuthorized()`, `AlreadyExists()`
-  - `NotFound()`, `InactiveEntity()`, `InvalidState()`, `AllocationExceeded()`
-- **`Events.sol`**: Indexed event declarations for off-chain indexing:
-  - `DatasetRegistered`, `DatasetUpdated`, `OwnershipTransferred`
-  - `LicenseCreated`, `LicenseRevoked`
-  - `DatasetPurchased`, `AccessGranted`
-  - `ModelRegistered`, `ModelVersionAdded`, `ModelHashVerified`
-  - `ProvenanceRegistered`, `ProvenanceStatusChanged`
-  - `RoyaltyDistributed`, `TokenDeposited`, `TokenWithdrawn`
+### How to Start
 
----
+Open a dedicated terminal window (Terminal 3):
 
-## 🛡️ 4. Monitoring & Deterministic Fraud Engine
+```powershell
+# Working Directory: D:\AIXchange
+cd blockchain
+npx hardhat node
+```
 
-Located in `blockchain/monitoring/`, the monitoring module tracks on-chain activity and evaluates transaction streams against transparent, explainable security rules without altering on-chain state.
+### Expected Output
 
 ```text
- JSON-RPC Provider (Hardhat / Sepolia)
-                 │
-                 ▼
-      ┌─────────────────────┐
-      │   EventMonitor.js   │ ──► Deduplicates logs, sanitizes BigInts, handles backoff
-      └──────────┬──────────┘
-                 │
-                 ▼
-      ┌─────────────────────┐
-      │  TreasuryMonitor.js │ ──► Queries ETH/ERC-20 balances, aggregates inflows/outflows
-      └──────────┬──────────┘
-                 │
-                 ▼
-      ┌─────────────────────┐
-      │   FraudEngine.js    │ ──► Evaluates 5 Deterministic Rules
-      └──────────┬──────────┘
-                 │
-                 ▼
-      Standardized Security Flags (LOW, MEDIUM, HIGH, CRITICAL)
+Started HTTP and WebSocket JSON-RPC server at http://127.0.0.1:8545/
+
+Accounts
+========
+Account #0: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 (10000 ETH)
+Account #1: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 (10000 ETH)
+Account #2: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC (10000 ETH)
+...
+Private Keys
+==================
+Account #0: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+Account #1: 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+...
 ```
 
-### Deterministic Fraud Rules (`FraudEngine.js`)
+### Critical Operational Rules
 
-| Rule Identifier | Trigger Condition | Default Threshold | Severity |
-| :--- | :--- | :--- | :--- |
-| `RAPID_TRANSACTIONS` | High frequency of transactions from a single sender | $\ge 5$ transactions in 60 seconds | `MEDIUM` |
-| `ABNORMAL_LARGE_TRANSFER`| Single token transfer exceeding threshold | $> 50{,}000$ AIX tokens | `HIGH` |
-| `SUSPICIOUS_TREASURY_ACTIVITY` | High-value withdrawal or drain from Treasury vault | $> 100{,}000$ AIX or $> 10$ ETH | `CRITICAL` |
-| `UNUSUAL_ROYALTY_PATTERN`| Excessive royalty distribution in a single call | $> 25{,}000$ AIX tokens | `HIGH` |
-| `REPEATED_FAILED_TRANSACTIONS`| Consecutive transaction reverts indicating probing | $\ge 3$ consecutive failures | `MEDIUM` |
+1. **Keep Terminal 3 Running**: This terminal must remain open during your entire development session.
+2. **State Reset Warning**: Terminating and restarting `npx hardhat node` **completely wipes local blockchain state**, resetting the block height to `0` and destroying all deployed contracts, token balances, and transaction history.
+3. **Redeployment Requirement**: Whenever the local node is restarted, you **must re-run Terminal 4** to redeploy all smart contracts.
+4. **Development Credentials Warning**: The private keys printed above are publicly known development credentials generated by Hardhat. **Never send real funds, mainnet assets, or production tokens to these accounts.**
 
 ---
 
-## ⚡ 5. Gas Consumption Benchmarks
+## Smart Contract Deployment via Phase10 (Terminal 4)
 
-Gas consumption was rigorously measured on a local Hardhat node via `scripts/runGasBenchmark.js` and bounded in `test/integration/GasBenchmarking.test.js`:
+Deployments are managed declaratively using **Hardhat Ignition**. The `Phase10.js` module deploys the complete, integrated suite of all 8 core platform contracts.
 
-| Contract | Function Call | Actual Gas Used | Safety Limit | Margin | Status |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `AIXToken` | `transfer(to, amount)` | **51,610** | < 70,000 | +26.3% | PASS |
-| `AIXToken` | `approve(spender, amount)` | **46,394** | < 60,000 | +22.7% | PASS |
-| `Treasury` | `depositToken(token, amount)` | **57,594** | < 100,000 | +42.4% | PASS |
-| `Treasury` | `withdrawToken(token, to, amount)` | **43,254** | < 70,000 | +38.2% | PASS |
-| `DatasetRegistry` | `registerDataset(cid, license, bps)` | **280,498** | < 350,000 | +19.9% | PASS |
-| `DatasetRegistry` | `updateDataset(id, cid, license, bps)`| **47,612** | < 90,000 | +47.1% | PASS |
-| `LicenseRegistry` | `createLicense(id, type, model, rights)`| **386,427** | < 450,000 | +14.1% | PASS |
-| `ModelRegistry` | `registerModel(name, uri, hash)` | **443,495** | < 500,000 | +11.3% | PASS |
-| `ModelRegistry` | `addModelVersion(id, uri, hash)` | **208,402** | < 250,000 | +16.6% | PASS |
-| `PurchaseEngine` | `purchaseDataset(datasetId, licenseId)`| **482,112** | < 600,000 | +19.6% | PASS |
-| `RoyaltyEngine` | `distributeRoyalty(recipients, ...)` | **641,770** | < 750,000 | +14.4% | PASS |
-| `ProvenanceRegistry`| `registerProvenance(...)` | **483,396** | < 600,000 | +19.4% | PASS |
+### How to Deploy
 
----
+Open a new terminal window (Terminal 4):
 
-## 🧪 6. Automated Test Suites (279 Tests)
-
-The blockchain test suite consists of **279 passing automated tests** verifying every contract, edge condition, failure mode, and gas limit:
-
-```bash
+```powershell
+# Working Directory: D:\AIXchange
 cd blockchain
-npx hardhat test
-```
-
-### Breakdown of Test Suites
-
-| Test Suite File | Tests | Focus Area |
-| :--- | :--- | :--- |
-| `test/integration/BlockchainApiIntegration.test.js` | 9 | End-to-end user lifecycle, OpenAPI schema compliance |
-| `test/integration/GasBenchmarking.test.js` | 12 | Gas consumption upper bounds across all core operations |
-| `test/monitoring/EventMonitor.test.js` | 5 | Log polling, argument sanitization, backoff resilience |
-| `test/monitoring/TreasuryMonitor.test.js` | 3 | Real-time balance queries and inflow/outflow deltas |
-| `test/monitoring/FraudEngine.test.js` | 7 | Deterministic evaluation of all 5 fraud detection rules |
-| `test/royalty/RoyaltyEngine.test.js` | 36 | Multi-party BPS splits, remainder dust absorption, anti-replay |
-| `test/registry/ProvenanceRegistry.test.js` | 36 | DAG edge creation, composite keys, on-chain verification |
-| `test/registry/ModelRegistry.test.js` | 41 | Model identity, version history, SHA-256 verification |
-| `test/governance/Treasury.test.js` | 14 | SafeERC20 deposits, native ETH, owner withdrawals |
-| `test/licensing/LicenseRegistry.test.js` | 32 | Fixed/royalty pricing, boolean permissions, expiration |
-| `test/marketplace/PurchaseEngine.test.js` | 30 | Atomic purchases, fee routing, access grants, exclusivity |
-| `test/registry/DatasetRegistry.test.js` | 26 | IPFS CID storage, incremental IDs, ownership handoff |
-| `test/tokens/AIXToken.test.js` | 15 | ERC-20 transfers, owner minting, public burning |
-| `test/utils/wallet.test.js` | 13 | EIP-191 signatures, address derivation, nonce hashing |
-| **Total** | **279** | **100% Pass Rate** |
-
----
-
-## 🚀 7. Deployment & Management Scripts
-
-### Hardhat Ignition Master Modules
-Deploy the complete contract graph deterministically:
-```bash
-# Deploy complete platform stack through Phase 10
 npx hardhat ignition deploy ignition/modules/Phase10.js --network localhost
 ```
 
-### Standalone Deployment Scripts
-Located in `blockchain/scripts/`:
-```bash
-# 1. Run full gas benchmark & deploy core stack
-npx hardhat run scripts/runGasBenchmark.js --network localhost
+### What Phase10 Deploys
 
-# 2. Deploy individual contracts
-npx hardhat run scripts/deploy.js --network localhost                 # AIXToken & Treasury
-npx hardhat run scripts/deployDatasetRegistry.js --network localhost  # DatasetRegistry
-npx hardhat run scripts/deployLicenseRegistry.js --network localhost  # LicenseRegistry
-npx hardhat run scripts/deployPurchaseEngine.js --network localhost   # PurchaseEngine
-npx hardhat run scripts/deployModelRegistry.js --network localhost    # ModelRegistry
-npx hardhat run scripts/deployProvenanceRegistry.js --network localhost # ProvenanceRegistry
-npx hardhat run scripts/deployRoyaltyEngine.js --network localhost    # RoyaltyEngine
+The module executes a dependency graph:
+1. `Phase3Module`: Deploys `AIXToken` and `Treasury`.
+2. `Phase4Module`: Deploys `DatasetRegistry`.
+3. `Phase5Module`: Deploys `LicenseRegistry`.
+4. `Phase6Module`: Deploys `PurchaseEngine`.
+5. `Phase8Module`: Deploys `ModelRegistry`.
+6. `Phase9Module`: Deploys `ProvenanceRegistry`.
+7. `Phase10Module` / `RoyaltyEngineModule`: Deploys `RoyaltyEngine`.
 
-# 3. Token utilities
-npx hardhat run scripts/mint.js --network localhost      # Mint tokens to address
-npx hardhat run scripts/transfer.js --network localhost  # Transfer tokens between test accounts
-npx hardhat run scripts/balance.js --network localhost   # Check AIX & ETH balance of address
+### Expected Deployment Output
+
+```text
+Hardhat Ignition 🚀
+
+Deploying [ Phase10Module ]
+
+Batch #1
+  Executed AIXTokenModule#AIXToken
+  Executed TreasuryModule#Treasury
+
+Batch #2
+  Executed DatasetRegistryModule#DatasetRegistry
+  Executed LicenseRegistryModule#LicenseRegistry
+
+Batch #3
+  Executed PurchaseEngineModule#PurchaseEngine
+  Executed ModelRegistryModule#ModelRegistry
+
+Batch #4
+  Executed ProvenanceRegistryModule#ProvenanceRegistry
+  Executed RoyaltyEngineModule#RoyaltyEngine
+
+[ Phase10Module ] successfully deployed 🚀
 ```
 
-### Deploying to Sepolia Testnet
-1. Ensure `blockchain/.env` contains your `SEPOLIA_RPC_URL` and `PRIVATE_KEY`.
-2. Ensure the deploying wallet has sufficient Sepolia ETH.
-3. Execute deployment:
-   ```bash
-   npx hardhat ignition deploy ignition/modules/Phase10.js --network sepolia
-   ```
+---
+
+## Deployment Artifacts & Address Synchronization
+
+### Where Addresses are Recorded
+
+When Hardhat Ignition finishes deployment, it records the exact deployed contract addresses to:
+`blockchain/ignition/deployments/chain-31337/deployed_addresses.json`
+
+Example contents:
+
+```json
+{
+  "AIXTokenModule#AIXToken": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "TreasuryModule#Treasury": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  "DatasetRegistryModule#DatasetRegistry": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  "LicenseRegistryModule#LicenseRegistry": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+  "PurchaseEngineModule#PurchaseEngine": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+  "ModelRegistryModule#ModelRegistry": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+  "ProvenanceRegistryModule#ProvenanceRegistry": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+  "RoyaltyEngineModule#RoyaltyEngine": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
+}
+```
+
+### Synchronizing with Backend & Frontend
+
+1. **Backend (`server/.env`)**:
+   Ensure `AIX_TOKEN_ADDRESS`, `TREASURY_ADDRESS`, `DATASET_REGISTRY_ADDRESS`, etc., match the addresses in `deployed_addresses.json`. The server also checks `blockchain/.env` as a fallback.
+2. **Frontend (`client/.env`)**:
+   Ensure `VITE_AIX_TOKEN_ADDRESS`, `VITE_TREASURY_ADDRESS`, and `VITE_DATASET_REGISTRY_ADDRESS` match the deployed addresses.
 
 ---
 
-## 🔒 8. Security Invariants & Developer Guidelines
+## MetaMask Local Network Configuration
 
-1. **Checks-Effects-Interactions (CEI)**: All state-modifying functions (e.g. `PurchaseEngine.purchaseDataset`, `RoyaltyEngine.distributeRoyalty`) update internal storage variables before executing external token transfers.
-2. **Safe Token Handling**: All token interactions utilize OpenZeppelin's `SafeERC20` wrapper (`safeTransfer`, `safeTransferFrom`), preventing silent revert failures with non-standard ERC-20 implementations.
-3. **Reentrancy Protection**: All external settlement functions are shielded by OpenZeppelin `ReentrancyGuard`.
-4. **Strict Integer Arithmetic**: Basis points are calculated using integer arithmetic with standard denominator `10000`. Floating-point operations do not exist in the EVM. Any rounding truncation remainders are absorbed by the `Treasury` to ensure strict conservation of value.
-5. **No Secret Storage**: Private keys, database credentials, and raw datasets must never be committed to smart contract storage or bytecode.
-6. **Non-Invasive Monitoring**: The fraud monitoring module only inspects and flags suspicious behavior; it does not freeze user funds or alter on-chain state without governance action.
+To interact with the local blockchain through the browser, configure MetaMask as follows:
 
----
-
-## 🛠️ 9. Troubleshooting & FAQ
-
-### Hardhat Network "Nonce Too High"
-- **Issue**: MetaMask reports transaction nonce mismatch when submitting transactions.
-- **Fix**: Open MetaMask -> Settings -> Advanced -> Click **Clear activity and nonce data**.
-
-### Error: `Transaction reverted without a reason string`
-- **Issue**: A custom Solidity error was triggered, but the caller did not decode it.
-- **Fix**: Check `contracts/libraries/Errors.sol`. In Ethers.js, inspect `error.data` or catch `contract.interface.parseError(error.data)` to inspect custom error arguments.
-
-### Ethers.js BigInt Serialization Error
-- **Issue**: `TypeError: Do not know how to serialize a BigInt` when converting contract call results to JSON.
-- **Fix**: BigInt values must be converted to strings using `.toString()` before calling `JSON.stringify()`.
+1. Open MetaMask and click the network selector at top-left.
+2. Click **Add Network** -> **Add a network manually**.
+3. Enter the following details:
+   - **Network Name**: `Hardhat Localhost`
+   - **New RPC URL**: `http://127.0.0.1:8545`
+   - **Chain ID**: `31337`
+   - **Currency Symbol**: `ETH`
+4. Click **Save** and switch to `Hardhat Localhost`.
+5. **Import Development Account**:
+   - In MetaMask, click the account dropdown -> **Import account**.
+   - Paste the private key for Account #0:
+     `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
+   - Your account will display an initial balance of `10,000 ETH` for testing gas fees.
 
 ---
 
-## 📄 License
+## Automated Test Suite (279 Tests) & Gas Benchmarks
 
-Developed as part of the **AIXchange** project. All rights reserved under the MIT License.
+The blockchain test suite verifies contract logic, access permissions, edge cases, and reentrancy protections across 279 comprehensive automated test cases:
+
+```powershell
+# Working Directory: D:\AIXchange\blockchain
+
+# Compile Solidity contracts
+npm run compile
+
+# Execute complete test battery
+npx hardhat test
+
+# Run test coverage analysis
+npm run coverage
+```
+
+### Gas Consumption Benchmarks
+
+Typical gas consumption metrics measured on the local EVM:
+
+| Smart Contract | Method Call | Average Gas Consumed |
+| :--- | :--- | :--- |
+| `AIXToken` | `transfer` | ~51,200 gas |
+| `AIXToken` | `approve` | ~46,100 gas |
+| `DatasetRegistry` | `registerDataset` | ~128,450 gas |
+| `PurchaseEngine` | `purchaseDataset` | ~174,800 gas |
+| `ModelRegistry` | `registerModel` | ~142,300 gas |
+| `ProvenanceRegistry` | `anchorLineage` | ~118,900 gas |
+| `RoyaltyEngine` | `distributeRoyalty` (3 splits) | ~132,600 gas |
+
+---
+
+## Security Invariants & Developer Safeguards
+
+- **Checks-Effects-Interactions**: All payment and asset transfer functions strictly adhere to CEI patterns to eliminate reentrancy attack surfaces.
+- **OpenZeppelin ReentrancyGuard**: Applied to all state-mutating functions in `PurchaseEngine` and `RoyaltyEngine`.
+- **SafeERC20**: Token transfers use `safeTransfer` and `safeTransferFrom` to handle non-standard ERC-20 return values.
+- **Basis Points (BPS) Math**: All percentages use integer BPS arithmetic (e.g., 250 = 2.50%, 10,000 = 100.00%) to prevent floating-point rounding errors.
+
+---
+
+## Troubleshooting & FAQ
+
+### Issue: "Error: Connection refused at http://127.0.0.1:8545"
+- **Cause**: Terminal 3 (`npx hardhat node`) is not running.
+- **Fix**: Launch Terminal 3 and ensure the local JSON-RPC server is active before deploying or sending transactions.
+
+### Issue: "Hardhat Ignition: Reconciliation error / contract already deployed"
+- **Cause**: The local node was restarted or the deployment state is out of sync with previous records.
+- **Fix**: Deploy with the `--reset` flag to wipe stale local Ignition deployment journals:
+  ```powershell
+  npx hardhat ignition deploy ignition/modules/Phase10.js --network localhost --reset
+  ```
+
+### Issue: "MetaMask: Nonce too high" or transaction hangs
+- **Cause**: Hardhat node was restarted, resetting transaction nonces to 0, while MetaMask remembers higher nonces.
+- **Fix**: In MetaMask, go to **Settings** -> **Advanced** -> **Clear activity tab data** (Reset Account). This clears cached local nonces without affecting your imported private keys.

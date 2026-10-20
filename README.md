@@ -1,713 +1,715 @@
-# AIXchange
+# AIXchange — A Blockchain-Powered Marketplace for AI Datasets and Models
 
-**AIXchange** is a decentralized, blockchain-powered marketplace and execution substrate for artificial intelligence (AI) datasets, machine learning models, and automated AI workflows. It establishes verifiable on-chain asset ownership, trustless licensing, atomic cryptocurrency settlement using the native **AIX token**, decentralized IPFS storage, verifiable AI provenance, automated multi-party royalty distribution, real-time blockchain analytics, and containerized Docker execution sandboxes for secure model training, Jupyter development, and inference.
+**AIXchange** is an enterprise-grade, decentralized marketplace and execution substrate connecting dataset creators, machine learning engineers, and decentralized organizations. It brings transparency, cryptographic ownership, verifiable dataset-to-model lineage (provenance), atomic cryptocurrency settlement using the **AIX ERC-20 token**, and automated secondary royalty distributions to the modern artificial intelligence lifecycle.
+
+The platform decouples compute-heavy model training and binary storage from on-chain logic: raw datasets and Safetensors model weights are encrypted and stored via decentralized IPFS pinning, while **Ethereum smart contracts (Solidity ^0.8.28)** govern immutable ownership records, access licensing, purchase settlement, lineage DAG anchoring, and multi-party revenue splits.
 
 ---
 
 ## 📖 Table of Contents
 
-1. [Project Overview](#-1-project-overview)
-   - [The Problem AIXchange Solves](#the-problem-aixchange-solves)
-   - [Why AIXchange Exists](#why-aixchange-exists)
-   - [Target Users & Value Proposition](#target-users--value-proposition)
-   - [Core Concepts & Platform Economy](#core-concepts--platform-economy)
-   - [What Makes AIXchange Different?](#what-makes-aixchange-different)
-2. [Core Project Workflow](#-2-core-project-workflow)
-   - [End-to-End System Lifecycle](#end-to-end-system-lifecycle)
-   - [Execution Substrate Architecture: On-Chain vs. Off-Chain](#execution-substrate-architecture-on-chain-vs-off-chain)
-3. [Architecture & Component Breakdown](#-3-architecture--component-breakdown)
-   - [Directory Structure Matrix](#directory-structure-matrix)
-   - [Component Catalog](#component-catalog)
-4. [Environment Configuration](#-4-environment-configuration)
-   - [Root Environment Template](#root-environment-template)
-   - [Server Environment Configuration](#server-environment-configuration)
-   - [Blockchain Environment Configuration](#blockchain-environment-configuration)
-   - [AI Sandbox Environment Configuration](#ai-sandbox-environment-configuration)
-5. [Local Setup & Execution Guide](#-5-local-setup--execution-guide)
-   - [Prerequisites](#prerequisites)
-   - [Step-by-Step Multi-Terminal Launch](#step-by-step-multi-terminal-launch)
-6. [Automated Testing Suites](#-6-automated-testing-suites)
-   - [1. Blockchain Smart Contracts & Integration (279 Tests)](#1-blockchain-smart-contracts--integration-279-tests)
-   - [2. Backend Server & Engine Integrations (110 Tests)](#2-backend-server--engine-integrations-110-tests)
-   - [3. Python AI Execution Substrate (22 Tests)](#3-python-ai-execution-substrate-22-tests)
-   - [4. Sandbox Client SDK (10 Tests)](#4-sandbox-client-sdk-10-tests)
-   - [On-Chain Gas Benchmarks](#on-chain-gas-benchmarks)
-7. [Service Ports & API Reference](#-7-service-ports--api-reference)
-   - [Service Port Matrix](#service-port-matrix)
-   - [Core REST Endpoints](#core-rest-endpoints)
-8. [Troubleshooting & Frequently Asked Questions](#-8-troubleshooting--frequently-asked-questions)
+1. [Project Overview](#1-project-overview)
+2. [Key Features](#2-key-features)
+3. [System Architecture](#3-system-architecture)
+4. [Technology Stack](#4-technology-stack)
+5. [Repository Structure](#5-repository-structure)
+6. [System Requirements & Prerequisites](#6-system-requirements--prerequisites)
+7. [Environment Configuration](#7-environment-configuration)
+8. [First-Time Installation & Setup](#8-first-time-installation--setup)
+9. [Running the Complete Project Locally (The Exact Five-Terminal Workflow)](#9-running-the-complete-project-locally-the-exact-five-terminal-workflow)
+10. [Accessing the Application](#10-accessing-the-application)
+11. [Smart Contract Deployment via Hardhat Ignition](#11-smart-contract-deployment-via-hardhat-ignition)
+12. [Wallet & MetaMask Setup](#12-wallet--metamask-setup)
+13. [Backend API Documentation](#13-backend-api-documentation)
+14. [AI Training, Provenance & Inference Workflow](#14-ai-training-provenance--inference-workflow)
+15. [Blockchain, Dataset Ownership & Lineage DAG](#15-blockchain-dataset-ownership--lineage-dag)
+16. [Automated Testing & Validation](#16-automated-testing--validation)
+17. [Troubleshooting & FAQ](#17-troubleshooting--faq)
+18. [Security Invariants & Safeguards](#18-security-invariants--safeguards)
+19. [Academic & Research Context](#19-academic--research-context)
+20. [Project Roadmap & Phase Progress](#20-project-roadmap--phase-progress)
+21. [Contribution Guidelines](#21-contribution-guidelines)
+22. [License & Acknowledgements](#22-license--acknowledgements)
 
 ---
 
-## 🌟 1. Project Overview
+## 1. Project Overview
 
-### The Problem AIXchange Solves
-Modern artificial intelligence depends heavily on high-quality datasets and pre-trained weights. However, today's AI ecosystem suffers from deep structural issues:
-1. **Lack of Verifiable Provenance**: Model developers rarely have cryptographic proof of the exact datasets, pipeline code, and hyperparameter environments used to train a model artifact.
-2. **Centralized Data Exploitation**: Dataset creators and domain specialists upload proprietary data to centralized platforms without ongoing licensing controls, attribution, or guaranteed compensation.
-3. **Opaque and Disconnected Royalty Flows**: When downstream models generate revenue or are commercialized, upstream data contributors receive zero residual royalties due to the absence of auditable lineage.
-4. **Security Risks in AI Code Execution**: Executing user-submitted training scripts, Jupyter notebooks, or model pipelines exposes local infrastructure to malware, data exfiltration, and resource starvation.
+### The Challenges AIXchange Addresses
 
-### Why AIXchange Exists
-AIXchange bridges the gap between decentralized finance (DeFi), smart contract registries, decentralized file storage (IPFS), and containerized AI execution environments. It guarantees that:
-- Every dataset and model version has an **immutable, cryptographically verifiable identity**.
-- Access rights and commercial licenses are enforced directly by **smart contracts** without intermediary platform lock-in.
-- Payment settlements occur **atomically in AIX tokens**, with automated platform fee deductions and direct creator compensation.
-- Upstream contributors can receive automated **multi-party royalty distributions** whenever derivative assets or downstream purchases transact.
-- Model training and inference execute inside **hardened, unprivileged container sandboxes** that isolate compute and cryptographically hash all outputs.
+1. **Unattributed Data Exploitation**: Machine learning practitioners and companies routinely harvest open-source datasets without attribution, persistent licensing constraints, or fair economic compensation to original contributors.
+2. **Missing Model Lineage (Provenance)**: Downstream AI consumers have no cryptographic guarantee of which datasets, training code versions, and hyperparameters produced a specific set of model weights.
+3. **Broken Royalty Attribution**: When proprietary models monetize downstream, upstream data curators receive zero residual compensation due to disconnected economic pipelines.
+4. **Untrusted Code Execution**: Running arbitrary training scripts or Jupyter notebooks on local infrastructure introduces serious security risks, including malware execution and data exfiltration.
 
-### Target Users & Value Proposition
+### The AIXchange Solution
 
-| User Role | Problems Faced | AIXchange Solution |
-| :--- | :--- | :--- |
-| **Dataset Creators** | Uncompensated data scraping, no license enforcement, lack of attribution. | Retain ownership on-chain, anchor metadata on IPFS, define granular licensing rights (Academic, Commercial, Exclusive), and earn automated royalties. |
-| **AI Model Developers** | Untrusted data quality, difficulty proving model originality, complex monetization. | Purchase verified datasets via atomic token swaps, train models in isolated sandboxes, anchor artifact SHA-256 hashes on-chain, and register immutable provenance DAGs. |
-| **AI Consumers & Businesses** | Opaque model lineage, legal uncertainty around training data copyright, unreliable inference. | Verify on-chain cryptographic provenance before purchasing or consuming models; run certified inference on verified model weights. |
-| **Platform Operators & Auditors** | Fraudulent transfers, opaque treasury flows, platform abuse, financial manipulation. | Monitor on-chain events via real-time indexers, query gas and token analytics, and flag suspicious activities using a deterministic 5-rule fraud engine. |
+AIXchange establishes an end-to-end decentralized substrate:
 
-### Core Concepts & Platform Economy
+- **Immutable Ownership**: Datasets and models are registered on Ethereum smart contracts with SHA-256 cryptographic digests and IPFS Content Identifiers (CIDs).
+- **Atomic Settlement**: Purchases and license acquisitions settle trustlessly in native **AIX tokens** via the `PurchaseEngine` contract.
+- **Automated Royalty Engine**: Multi-party revenue splits distribute secondary transaction proceeds to up to 50 upstream contributors with zero-leakage basis points (BPS) math.
+- **Verifiable Provenance DAG**: Training operations anchor immutable DAG links (`Dataset Hash + Training Code Hash -> Model Weight Hash`) directly on-chain.
+- **Containerized AI Sandbox**: Training and notebook exploration execute inside hardened, unprivileged Docker sandboxes with memory, CPU, and PID limits.
 
-- **The Marketplace Concept**: AIXchange operates a two-sided decentralized marketplace. Creators register datasets with verifiable IPFS Content Identifiers (CIDs) and bind them to customizable licensing agreements. Buyers acquire non-custodial usage entitlements without transferring underlying dataset copyright.
-- **The AIX Utility Token**: The economic engine of AIXchange is the **AIX Token** (`AIX`), an ERC-20 token built with OpenZeppelin standards. It features 18 decimals and a fixed initial supply of 1,000,000,000 AIX. All marketplace purchases, license grants, and royalty settlements are transacted in AIX.
-- **Platform Treasury Vault**: Platform fees (default 2.50% / 250 basis points) from dataset sales and secondary distributions are automatically routed to the platform `Treasury` contract. The Treasury supports native ETH and ERC-20 token storage with strict owner-restricted withdrawals.
-- **Blockchain-Backed Ownership**: Dataset and Model ownership is enforced by smart contract mappings. Creators can transfer ownership, update metadata URIs, or toggle active status with guaranteed $O(1)$ state lookups.
-- **IPFS & Decentralized Storage**: Large dataset archives, training payloads, and model metadata are stored off-chain on IPFS (or local IPFS gateways). Only cryptographic content hashes (CIDs) and SHA-256 digests are stored on-chain, eliminating prohibitive gas costs while maintaining byte-for-byte data integrity.
-- **AI Provenance DAG**: The `ProvenanceRegistry` establishes a Directed Acyclic Graph (DAG) linking a dataset (`datasetId`), execution environment (`executionId`), resulting model (`modelId`), model version (`modelVersion`), and metadata cryptographic commitment (`metadataHash`).
-- **Automated Royalty Distribution**: The `RoyaltyEngine` contract allows creators to define multi-party revenue splits across up to 50 recipients using basis point allocations ($1 \text{ BPS} = 0.01\%$). Platform fees are deducted first, recipients are paid atomically, and integer rounding remainders are absorbed by the Treasury to guarantee strict zero-leakage accounting.
-- **Blockchain Analytics & Event Indexing**: A robust indexing pipeline polls on-chain contract events across all 8 contracts, storing normalized logs in MongoDB with unique compound indexes for replay idempotency, tracking gas metrics and token velocity.
-- **Monitoring & Fraud Detection**: The blockchain layer incorporates a deterministic 5-rule fraud engine that continuously evaluates on-chain transaction flows, identifying rapid bursts, whale transfers, treasury drains, anomalous royalties, and repeated execution failures.
+---
 
-### What Makes AIXchange Different?
+## 2. Key Features
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           AIXchange Unique Value Matrix                         │
-├──────────────────────────┬──────────────────────────────────────────────────────┤
-│ Dual-Layer Architecture  │ Blockchain for trust/ownership + Containers for AI   │
-├──────────────────────────┼──────────────────────────────────────────────────────┤
-│ Zero-Weight On-Chain     │ Heavy weights (.safetensors/.pt) stay off-chain;     │
-│ Integrity Anchoring      │ only SHA-256 hashes and metadata commitments live on │
-│                          │ Ethereum to guarantee zero byte forgery.             │
-├──────────────────────────┼──────────────────────────────────────────────────────┤
-│ Atomic Settlement        │ Payment, 2.5% treasury fee deduction, and licensor   │
-│                          │ payout occur in a single atomic transaction.         │
-├──────────────────────────┼──────────────────────────────────────────────────────┤
-│ Cryptographic Provenance │ Full pipeline lineage DAG (Data -> Code -> Model)    │
-│                          │ queryable and verifiable directly on-chain.          │
-├──────────────────────────┼──────────────────────────────────────────────────────┤
-│ Hardened Sandboxes       │ Docker execution substrate enforces unprivileged     │
-│                          │ user UID 1000, no-new-privileges, and tmpfs locks.   │
-├──────────────────────────┼──────────────────────────────────────────────────────┤
-│ Deterministic Fraud Rules│ Zero black-box ML; 5 transparent, explainable on-     │
-│                          │ chain monitoring rules protect the Treasury.         │
-└──────────────────────────┴──────────────────────────────────────────────────────┘
+### Implemented Functionality
+
+- **Dual Authentication**: Traditional JWT sessions (access + refresh tokens) alongside Web3 EIP-191 cryptographic wallet signature verification.
+- **Dataset Marketplace**: Searchable catalog, metadata tagging, license tiering, and client-side AES-256-GCM encryption with Pinata IPFS pinning.
+- **Model Marketplace**: Verified model weights catalog with SHA-256 weight digests, framework tags (`pytorch`, `safetensors`), and parameter metrics.
+- **AIX ERC-20 Token Engine**: Full-featured token implementation with 100,000,000 supply, allowance management, and protocol Treasury fee routing.
+- **Secondary Royalty Engine**: Configurable revenue split trees allocating percentage shares to multiple creators on secondary market sales.
+- **Interactive Provenance DAG**: Node-link visualization of model lineage trees connecting datasets, hyperparameter commitments, and trained weights.
+- **Interactive Inference Playground**: Real-time forward-pass tensor inference with dynamic schema sliders and latency monitoring.
+- **JupyterLab AI Sandbox**: Containerized JupyterLab environment embedded inside the frontend with token authentication and iframe CSP headers.
+- **Continuous Blockchain Event Indexers**: 8 asynchronous background workers ingesting on-chain purchase, license, model, and royalty events into MongoDB.
+- **Automated Fraud Review & Admin Deck**: Deterministic monitoring flags, platform transaction volume charts, and gas consumption telemetry.
+
+---
+
+## 3. System Architecture
+
+The AIXchange platform is composed of six distinct, coordinated subsystems:
+
+```mermaid
+flowchart TB
+    subgraph Frontend ["Frontend Layer (client/)"]
+        UI["React 19 + Vite SPA<br/>http://localhost:5173"]
+        Redux["Redux Toolkit Store<br/>(Wallet & Auth Slices)"]
+        EthersClient["Ethers.js v6 Provider<br/>(MetaMask Signer)"]
+        UI --> Redux
+        UI --> EthersClient
+    end
+
+    subgraph Backend ["Backend API Layer (server/)"]
+        Express["Express 5 REST API<br/>http://localhost:5000/api/v1"]
+        AuthService["Auth & EIP-191 Verifier"]
+        Indexers["8x Background Event Indexers<br/>(Token, Purchase, Royalty, etc.)"]
+        Express --> AuthService
+        Express --> Indexers
+    end
+
+    subgraph Blockchain ["Blockchain Layer (blockchain/)"]
+        Hardhat["Hardhat EVM Node<br/>http://127.0.0.1:8545 (Chain 31337)"]
+        AIX["AIXToken.sol (ERC-20)"]
+        Purchase["PurchaseEngine.sol"]
+        Treasury["Treasury.sol (Vault)"]
+        DatasetReg["DatasetRegistry.sol"]
+        LicenseReg["LicenseRegistry.sol"]
+        ModelReg["ModelRegistry.sol"]
+        ProvReg["ProvenanceRegistry.sol"]
+        RoyaltyReg["RoyaltyEngine.sol"]
+
+        Hardhat --- AIX
+        Hardhat --- Purchase
+        Hardhat --- Treasury
+        Hardhat --- DatasetReg
+        Hardhat --- LicenseReg
+        Hardhat --- ModelReg
+        Hardhat --- ProvReg
+        Hardhat --- RoyaltyReg
+    end
+
+    subgraph AISubstrate ["AI Execution Layer (python-services/ & sandbox/)"]
+        FastAPI["FastAPI Execution API<br/>http://localhost:8000"]
+        PyTorchTrainer["PyTorch Training Loop<br/>(DynamicMLP, Safetensors)"]
+        Jupyter["Interactive JupyterLab<br/>http://127.0.0.1:8888"]
+        Workspace["Structured Workspace<br/>(/workspace/{exec_id})"]
+        FastAPI --> PyTorchTrainer
+        FastAPI --> Workspace
+        Jupyter --> Workspace
+    end
+
+    subgraph DataStorage ["Persistence & Decentralized Storage"]
+        Mongo[("MongoDB Database<br/>mongodb://localhost:27017/aixchange")]
+        IPFS["Decentralized IPFS Pinning<br/>(Pinata Cloud Gateway)"]
+    end
+
+    %% Cross-Subsystem Interactions
+    UI -->|HTTP REST API| Express
+    EthersClient -->|JSON-RPC Transactions| Hardhat
+    Express -->|Mongoose ODM| Mongo
+    Express -->|JSON-RPC Event Polling| Hardhat
+    Express -->|Execution Contract Client| FastAPI
+    UI -.->|iframe embed| Jupyter
+    Express -->|Encrypted Dataset Pinning| IPFS
 ```
 
 ---
 
-## 🔄 2. Core Project Workflow
+## 4. Technology Stack
 
-### End-to-End System Lifecycle
-
-```text
-[1. User & Wallet]
-  │  Register account (MongoDB) & authenticate via EIP-191 personal_sign nonce
-  ▼
-[2. AIX Token Economy]
-  │  Receive or transfer AIX utility tokens (ERC-20, 18 decimals)
-  ▼
-[3. Dataset Creation & Staging]
-  │  Upload dataset files -> Calculate SHA-256 -> Pin to IPFS (obtain CID)
-  ▼
-[4. Dataset On-Chain Registration]
-  │  Call DatasetRegistry.registerDataset(cid, license, royaltyBps) -> Get datasetId
-  ▼
-[5. Licensing Definition]
-  │  Call LicenseRegistry.createLicense(datasetId, licenseType, pricingModel, rights, price, royaltyRate)
-  ▼
-[6. Atomic Marketplace Purchase]
-  │  Buyer approves AIXToken -> Calls PurchaseEngine.purchaseDataset(datasetId, licenseId)
-  │  ├── 2.50% Fee routed to Treasury.sol
-  │  ├── 97.5% Payout routed to Dataset Licensor
-  │  └── Immutable Access Entitlement recorded (hasAccess = true)
-  ▼
-[7. Sandbox AI Execution Substrate]
-  │  Backend verifies hasAccess -> Stages code & data into /workspace (code/, data/, input/)
-  │  FastAPI /train runs DynamicMLP under unprivileged aixuser (UID 1000)
-  │  Generates checkpoints, exports model.safetensors / model.pt + model_metadata.json
-  │  Computes SHA-256 artifact digest
-  ▼
-[8. Model On-Chain Registration]
-  │  Call ModelRegistry.registerModel(name, metadataUri, modelHash) -> Get modelId
-  │  Append new versions via addModelVersion(modelId, metadataUri, modelHash)
-  ▼
-[9. Provenance DAG Linkage]
-  │  Call ProvenanceRegistry.registerProvenance(datasetId, executionId, modelId, version, metadataHash)
-  │  On-chain composite key validation: keccak256(datasetId, executionId, modelId, version)
-  ▼
-[10. Model Inference]
-  │  FastAPI /infer executes standalone predictions against verified model weights
-  ▼
-[11. Secondary Royalty Distribution]
-  │  Call RoyaltyEngine.distributeRoyalty(...) or distributePurchaseRoyalty(purchaseId, recipients)
-  │  Multi-recipient BPS splits settled in AIX; remainder rounding dust sent to Treasury
-  ▼
-[12. Continuous Indexing, Analytics & Fraud Detection]
-  │  BlockchainAnalyticsIndexer saves normalized events & gas costs into MongoDB
-  │  EventMonitor, TreasuryMonitor & FraudEngine evaluate 5 deterministic security rules
-```
-
-### Execution Substrate Architecture: On-Chain vs. Off-Chain
-
-| Operation / Asset | Execution Substrate | Primary Storage / Engine | Cryptographic Guarantees |
+| Layer | Subsystem | Technologies & Libraries | Port / Protocol |
 | :--- | :--- | :--- | :--- |
-| **User Identity & Auth** | Off-Chain & On-Chain | MongoDB + Node.js Express + Ethers.js | Web3 cryptographic signature verification (EIP-191) against server nonce |
-| **Token Transfers & Treasury** | On-Chain | Ethereum Virtual Machine (EVM) | ERC-20 SafeERC20 balances, hardhat-tested access control |
-| **Dataset Raw Files** | Off-Chain | Decentralized IPFS Storage | Immutable content addressing (CIDv0 / CIDv1) |
-| **Dataset Ownership & Metadata** | On-Chain | `DatasetRegistry.sol` | Incremental IDs, $O(1)$ owner lookup, on-chain CID anchor |
-| **License Terms & Rights** | On-Chain | `LicenseRegistry.sol` | Verifiable pricing (AIX tokens or BPS), boolean rights bitmask, expiration timestamps |
-| **Payment Clearing & Entitlement** | On-Chain | `PurchaseEngine.sol` | Atomic checks-effects-interactions, reentrancy guards, exclusivity locks |
-| **Training & Jupyter Execution** | Off-Chain Isolated Substrate | Docker Sandbox Container (`python-services`) | Non-root `aixuser` UID 1000, 4 CPU / 8GB RAM cgroups, tmpfs `/tmp:noexec`, zero network egress |
-| **Model Weights (`.safetensors`, `.pt`)**| Off-Chain Storage | Local Workspace / S3 / IPFS | Byte-for-byte SHA-256 artifact checksum verification |
-| **Model Version Identity** | On-Chain | `ModelRegistry.sol` | Append-only version history, on-chain hash verification (`verifyModelHash`) |
-| **Lineage Relationship (DAG)** | On-Chain | `ProvenanceRegistry.sol` | Composite key duplicate prevention, on-chain `verifyProvenance` |
-| **Model Inference API** | Off-Chain Server | FastAPI (`/api/v1/execution/infer`) | `SafeModelLoader` with `weights_only=True` execution protection |
-| **Royalty Settlement** | On-Chain | `RoyaltyEngine.sol` | Immutable basis point accounting, zero dust loss, anti-replay hash checks |
-| **Event Indexing & History** | Off-Chain Ingestion | MongoDB (`server/src/jobs`) | Compound unique index `{ transactionHash, logIndex }` ensuring idempotent replays |
-| **Monitoring & Fraud Detection** | Off-Chain Engine | Node.js (`blockchain/monitoring`) | Deterministic mathematical rule evaluation across on-chain event streams |
+| **Frontend** | `client/` | React 19, Vite 8, Tailwind CSS v4, Redux Toolkit, Ethers.js v6, Sonner, Lucide React | `5173` (HTTP) |
+| **Backend** | `server/` | Node.js (>=22.0.0), Express 5, Mongoose 9, Ethers.js v6, Swagger UI, Joi, Winston | `5000` (HTTP) |
+| **Blockchain** | `blockchain/` | Solidity ^0.8.28, Hardhat 2.22, OpenZeppelin Contracts v5, Hardhat Ignition | `8545` (JSON-RPC) |
+| **AI Substrate** | `python-services/` | Python 3.10/3.11, FastAPI, Uvicorn, PyTorch 2.4, Safetensors, JupyterLab 4 | `8000` & `8888` (HTTP) |
+| **Sandbox SDK**| `sandbox/` | Node.js ES Module (`@aixchange/sandbox`), path containment, workspace staging | In-process SDK |
+| **Database** | `database/` | MongoDB Community Server (>=6.0), MongoDB Atlas | `27017` (TCP) |
+| **Storage** | Off-chain | Local AES-256-GCM Encryption, Pinata Cloud IPFS Pinning, Public IPFS Gateways | HTTPS / Gateway |
 
 ---
 
-## 🏛️ 3. Architecture & Component Breakdown
-
-### Directory Structure Matrix
+## 5. Repository Structure
 
 ```text
-AIXchange/
-├── blockchain/          # Hardhat environment, Solidity ^0.8.28 contracts, deployment scripts & monitoring
-├── client/              # React 19, Vite, Tailwind CSS SPA web frontend
-├── database/            # Database migration scripts, Mongoose schemas, and seeders
-├── docker/              # Docker configurations, sandbox images, and compose services
-├── docs/                # Architectural diagrams, API specs, UML, meeting notes, and research papers
-├── knowledge/           # Obsidian knowledge base documenting design decisions and technical specifications
-├── python-services/     # Python 3.12 FastAPI execution substrate, PyTorch training, and inference
-├── sandbox/             # @aixchange/sandbox client SDK and workspace staging package
-├── scripts/             # System integration and live verification scripts
-├── server/              # Node.js 22 + Express 5 REST API, Web3 controllers, models, and background indexers
-├── shared/              # Shared cross-service constants, TypeScript/JSDoc types, and utilities
-├── .env.example         # Master environment variables template
-└── package.json         # Root package file for workspace linting and formatting
-```
-
-### Component Catalog
-
-#### 1. Blockchain Layer (`blockchain/`)
-Built with Solidity `^0.8.28`, Hardhat, OpenZeppelin Contracts, and Ethers.js v6.
-- **`contracts/tokens/AIXToken.sol`**: ERC-20 utility token with 18 decimals, 1 Billion initial supply, burning, and owner-only minting.
-- **`contracts/governance/Treasury.sol`**: Vault holding native ETH and ERC-20 tokens with `depositToken` (SafeERC20) and owner withdrawals.
-- **`contracts/registry/DatasetRegistry.sol`**: Decentralized dataset catalog tracking IPFS CIDs, ownership, and active statuses.
-- **`contracts/licensing/LicenseRegistry.sol`**: Flexible legal and economic terms registry (Academic, Commercial, Exclusive, Custom) with Fixed or Royalty pricing.
-- **`contracts/marketplace/PurchaseEngine.sol`**: Atomic settlement engine splitting 2.50% platform fee to Treasury and 97.50% to licensors.
-- **`contracts/registry/ModelRegistry.sol`**: Model identity and append-only version history anchoring SHA-256 weight digests on-chain.
-- **`contracts/registry/ProvenanceRegistry.sol`**: Directed Acyclic Graph (DAG) tying datasets, executions, models, and metadata commitments on-chain.
-- **`contracts/royalty/RoyaltyEngine.sol`**: Secondary multi-party revenue splitting engine with anti-replay hash protection and remainder dust absorption.
-- **`monitoring/`**: Real-time Node.js event observation (`EventMonitor.js`), balance tracking (`TreasuryMonitor.js`), and deterministic fraud detection (`FraudEngine.js`).
-- **`ignition/modules/`**: Hardhat Ignition declarative deployment modules for all contracts.
-- **`test/`**: 279 automated tests across unit, integration, monitoring, and gas benchmarking suites.
-
-#### 2. Backend Server (`server/`)
-Built with Node.js 22, Express 5, Mongoose 9, Ethers.js v6, Joi, and Winston.
-- **Authentication (`routes/auth.routes.js`, `routes/wallet.route.js`)**: Traditional bcrypt + JWT authentication alongside Web3 cryptographic nonce verification (EIP-191).
-- **Marketplace & Registry APIs (`routes/dataset.route.js`, `routes/license.route.js`, `routes/purchase.route.js`)**: Endpoints managing off-chain dataset metadata, license attachments, purchase transaction synchronization, and file uploads via Multer.
-- **Sandbox Orchestration (`routes/sandbox.route.js`)**: Verifies buyer access entitlements before provisioning local sandbox workspaces and dispatching tasks to FastAPI.
-- **Blockchain Analytics (`routes/blockchain-analytics.routes.js`)**: Serves historical on-chain events, token transfer volumes, unique participant metrics, and gas consumption costs.
-- **Background Jobs (`jobs/`)**: `blockchain-analytics.job.js` queries JSON-RPC logs across all 8 contracts, storing events in MongoDB with idempotent compound keys. `sandbox-monitor.job.js` synchronizes container execution progress.
-- **Swagger Documentation (`config/swagger.js`)**: Interactive OpenAPI 3.0 UI mounted at `/api-docs` and `/api/v1/docs`.
-
-#### 3. Web Client (`client/`)
-Built with React 19, Vite, Tailwind CSS, and Ethers.js v6.
-- **Dataset Marketplace (`pages/DatasetMarketplace.jsx`)**: Live catalog displaying datasets, licensing terms, pricing filters, search, and IPFS preview modals.
-- **Dataset Details (`pages/DatasetDetails.jsx`)**: Deep-dive view showing dataset metadata, creator controls, active status toggles, and purchase triggers.
-- **Register Dataset (`pages/RegisterDataset.jsx`)**: Multi-step creator onboarding wizard for uploading files, specifying licensing, and executing on-chain registration.
-- **Wallet Developer Dashboard (`pages/WalletTest.jsx`)**: Interactive sandbox for testing MetaMask connections, network switching, nonce signing, and AIX token transfers.
-- **Blockchain Services (`services/blockchain/`)**: Client-side Ethers.js wrappers interfacing with `AIXToken`, `DatasetRegistry`, `LicenseRegistry`, and `PurchaseEngine`.
-
-#### 4. Python AI Services & Execution Substrate (`python-services/`)
-Built with Python 3.12, FastAPI, PyTorch, Safetensors, and Pydantic.
-- **API Router (`app/api/execution.py`)**: Endpoints implementing the AI Execution Contract (`/train`, `/infer`, `/validate-model`, `/jupyter/*`, `/{execution_id}/status`).
-- **PyTorch Training Loop (`app/training/trainer.py`)**: Implements `DynamicMLP` neural network training with Adam/AdamW/SGD/RMSprop optimizers, StepLR schedulers, gradient clipping, and live metrics emission.
-- **Checkpoint Manager (`app/training/checkpoint.py`)**: Top-$k$ lowest-loss atomic model checkpoint persistence.
-- **Model Exporter (`app/models/exporter.py`)**: Exports weights to Hugging Face `.safetensors` and PyTorch `.pt` formats while generating `model_metadata.json` with execution lineage.
-- **Model Validator (`app/models/validator.py`)**: Validates SHA-256 checksums, enforces safe weight loading (`weights_only=True`), and performs dummy tensor forward-pass smoke tests.
-- **Inference Engine (`app/inference/engine.py`)**: Standalone, low-latency prediction engine with probability scoring.
-- **JupyterLab Manager (`app/core/jupyter.py`)**: Programmatically spins up and tears down token-authenticated JupyterLab instances locked to `/workspace`.
-
-#### 5. Sandbox Client SDK (`sandbox/`)
-ES module npm package (`@aixchange/sandbox`) that provides an interface between the Express backend and the Python execution engine.
-- **`SandboxClient`**: Typed HTTP client for dispatching training, fetching status, and controlling JupyterLab.
-- **`WorkspaceLayout`**: Deterministic directory hierarchy generator creating `code/`, `data/`, `input/`, `output/`, and `checkpoints/`.
-- **`stageWorkspaceFiles`**: Secure file copy utility with strict path-traversal prevention (`validateContainedPath`).
-
-#### 6. Docker & Infrastructure (`docker/`)
-- **`docker/sandbox/Dockerfile`**: Hardened container running Python 3.12, PyTorch, JupyterLab, and the execution API under non-root user `aixuser` (UID 1000).
-- **`docker/docker-compose.sandbox.yml`**: Resource-capped service definition enforcing limits: 4 CPUs, 8GB RAM, 100 PIDs, `no-new-privileges:true`, and `tmpfs` `/tmp:noexec,nosuid,size=512m`.
-
-#### 7. Shared Libraries, Database & Documentation (`shared/`, `database/`, `docs/`, `knowledge/`)
-- **`shared/`**: Common status enums, execution states, error constants, and TypeScript/JSDoc types.
-- **`database/`**: Mongoose schemas and seed scripts for initial deployment.
-- **`docs/` & `knowledge/`**: Comprehensive system documentation, sequence diagrams, and architecture specifications.
-
----
-
-## ⚙️ 4. Environment Configuration
-
-### Root Environment Template
-Create a master `.env` file in the project root:
-
-```bash
-cp .env.example .env
-```
-
-```ini
-# Environment
-NODE_ENV=development
-
-# Express Backend Server
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/aixchange
-JWT_SECRET=replace-with-a-secure-secret-32-chars-minimum
-JWT_EXPIRES_IN=7d
-FRONTEND_URL=http://localhost:5173
-BACKEND_URL=http://localhost:5000
-
-# Blockchain & RPC
-ETH_RPC_URL=http://127.0.0.1:8545
-PRIVATE_KEY=your-wallet-private-key
-ETH_NETWORK=localhost
-BLOCKCHAIN_CONFIRMATIONS=1
-
-# IPFS & Storage
-IPFS_API_URL=http://127.0.0.1:5001
-IPFS_GATEWAY=https://ipfs.io/ipfs
-
-# AI Services & Sandboxes
-MODEL_API_URL=http://localhost:8000
-WORKSPACE_ROOT_DIR=./workspaces
-```
-
-### Server Environment Configuration (`server/.env`)
-Ensure `server/.env` contains the required database, JWT, and contract addresses (populated after contract deployment):
-
-```ini
-PORT=5000
-NODE_ENV=development
-MONGODB_URI=mongodb://localhost:27017/aixchange
-ACCESS_TOKEN_SECRET=<secret>
-REFRESH_TOKEN_SECRET=<secret>
-BLOCKCHAIN_RPC_URL=http://127.0.0.1:8545
-BLOCKCHAIN_CHAIN_ID=31337
-AIX_TOKEN_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
-TREASURY_ADDRESS=0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
-DATASET_REGISTRY_ADDRESS=0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
-MODEL_REGISTRY_ADDRESS=0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
-PROVENANCE_REGISTRY_ADDRESS=0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
-ROYALTY_ENGINE_ADDRESS=0x8A791620dd6260079BF849Dc5567aDC3F2FdC318
-BLOCKCHAIN_CONFIRMATIONS=1
-BLOCKCHAIN_START_BLOCK=0
-```
-
-### Blockchain Environment Configuration (`blockchain/.env`)
-```ini
-HARDHAT_NETWORK=localhost
-SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/your-project-id
-SEPOLIA_PRIVATE_KEY=your-private-key-without-0x
-REPORT_GAS=true
-```
-
-### AI Sandbox Environment Configuration (`python-services/.env`)
-```ini
-AI_SERVICE_PORT=8000
-JUPYTER_PORT=8888
-JUPYTER_TOKEN=aixchange_sandbox_token
-WORKSPACE_DIR=./workspaces
-LOG_LEVEL=INFO
-MAX_TRAINING_EPOCHS=1000
-DEFAULT_TIMEOUT_SECONDS=3600
+D:\AIXchange/
+├── client/                 # React 19 + Vite frontend application
+│   ├── public/             # Static assets (official logo, banner, SVGs, favicon)
+│   ├── src/                # Components, pages, Redux slices, blockchain services
+│   ├── package.json        # Frontend scripts and dependencies
+│   └── vite.config.js      # Vite build and proxy configuration
+├── server/                 # Express 5 backend coordination server
+│   ├── src/                # Controllers, routes, models, middleware, background indexers
+│   ├── tests/              # Automated backend test suites
+│   ├── package.json        # Backend scripts and dependencies
+│   └── .env.example        # Backend environment template
+├── blockchain/             # Smart contracts and Hardhat development network
+│   ├── contracts/          # Solidity source files (tokens, registry, marketplace, royalty)
+│   ├── ignition/modules/   # Hardhat Ignition deployment modules (Phase10.js)
+│   ├── test/               # Comprehensive smart contract test battery (279 tests)
+│   └── hardhat.config.js   # EVM network and compiler settings
+├── python-services/        # Python AI execution substrate
+│   ├── app/                # FastAPI routers, PyTorch trainer, model validator, inference
+│   ├── workspace/          # Isolated training directory (/input, /code, /output, /logs)
+│   ├── requirements.txt    # Pinned Python package dependencies
+│   ├── jupyter_server_config.py # Embedded JupyterLab server security settings
+│   └── main.py             # FastAPI service entrypoint
+├── sandbox/                # Node.js workspace staging and containment SDK (@aixchange/sandbox)
+├── database/               # Database schemas, migrations, and maintenance documentation
+├── docker/                 # Container sandbox definitions and Docker Compose configurations
+├── scripts/                # Master test runners, seed scripts, and benchmarking suites
+├── package.json            # Root workspace scripts (sandbox:jupyter, test:all, seed:demo)
+└── README.md               # Master technical documentation (this file)
 ```
 
 ---
 
-## 🚀 5. Local Setup & Execution Guide
+## 6. System Requirements & Prerequisites
 
-### Prerequisites
-Before running AIXchange, verify that your machine has the following tools installed:
-- **Node.js**: `v20.0.0` or higher (Node 22 recommended)
-- **npm**: `v10.0.0` or higher
-- **Python**: `v3.12` or higher
-- **MongoDB**: `v6.0` or higher (running locally on port `27017`)
-- **Docker Desktop**: Running with WSL2 or native Linux containers (for sandbox execution)
-- **MetaMask Browser Extension**: Configured for local development
+### Minimum Hardware
+- **CPU**: 4 cores (8 cores recommended for local neural training)
+- **RAM**: 8 GB minimum (16 GB recommended)
+- **Storage**: 10 GB free disk space
 
-### Step-by-Step Multi-Terminal Launch
+### Software Prerequisites
+- **Operating System**: Windows 10/11 (PowerShell), macOS, or Ubuntu 22.04 LTS
+- **Node.js**: Version `>=22.0.0` (LTS recommended)
+- **npm**: Version `>=10.0.0`
+- **Python**: Version `3.10` or `3.11` (with `venv` and `pip`)
+- **MongoDB**: Active instance running on `localhost:27017` or MongoDB Atlas URI
+- **MetaMask Extension**: Installed in your web browser
+- **Docker Desktop** *(Optional for basic development; recommended for isolated training)*
 
-Follow this sequence across separate terminal windows to launch the entire AIXchange platform:
+---
+
+## 7. Environment Configuration
+
+The application reads configuration from specific `.env` files in each subsystem:
 
 ```text
-Terminal 1: Blockchain Node  ──►  Terminal 2: Contract Deployment
-                                          │
-    ┌─────────────────────────────────────┴─────────────────────────────────────┐
-    ▼                                     ▼                                     ▼
-Terminal 3: Express Server           Terminal 4: React Client             Terminal 5: AI Sandbox
+D:\AIXchange/
+├── .env.example            # Master root reference template
+├── client/.env             # Frontend browser-safe configuration
+├── server/.env             # Backend secrets, database URI, and contract addresses
+├── blockchain/.env         # Deployer keys and RPC provider configuration
+└── python-services/.env    # Optional Python execution settings
 ```
 
-#### Terminal 1: Start the Local Blockchain Node
-```bash
-cd blockchain
-npx hardhat node
-```
-*Starts a local Ethereum JSON-RPC node at `http://127.0.0.1:8545` (Chain ID `31337`) with 20 pre-funded accounts (10,000 ETH each).*
+### Master Environment Variables Reference
 
-#### Terminal 2: Deploy All Smart Contracts
-In a new terminal, compile and deploy the smart contracts to the local network:
-```bash
-cd blockchain
+| Variable | Location | Required | Default / Example Value | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | `client/.env` | **Yes** | `http://localhost:5000/api/v1` | Backend API URL |
+| `VITE_BLOCKCHAIN_RPC_URL`| `client/.env` | **Yes** | `http://127.0.0.1:8545` | Hardhat local node RPC endpoint |
+| `VITE_CHAIN_ID` | `client/.env` | **Yes** | `31337` | Local Hardhat chain ID |
+| `VITE_AIX_TOKEN_ADDRESS` | `client/.env` | **Yes** | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | Deployed address of `AIXToken` |
+| `VITE_TREASURY_ADDRESS` | `client/.env` | **Yes** | `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512` | Deployed address of `Treasury` |
+| `VITE_DATASET_REGISTRY_ADDRESS`| `client/.env`| **Yes**| `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0` | Deployed address of `DatasetRegistry` |
+| `PORT` | `server/.env` | No | `5000` | Port for Express backend server |
+| `MONGODB_URI` | `server/.env` | **Yes** | `mongodb://localhost:27017/aixchange` | Connection string for MongoDB |
+| `ACCESS_TOKEN_SECRET` | `server/.env` | **Yes** | `your_access_token_secret_32_chars` | Secret key for signing JWTs |
+| `REFRESH_TOKEN_SECRET` | `server/.env` | **Yes** | `your_refresh_token_secret_32_chars`| Secret key for refresh tokens |
+| `BLOCKCHAIN_RPC_URL` | `server/.env` | **Yes** | `http://127.0.0.1:8545` | Blockchain RPC for event indexers |
+| `BLOCKCHAIN_CHAIN_ID` | `server/.env` | **Yes** | `31337` | Target chain ID (must be configured) |
+| `AIX_TOKEN_ADDRESS` | `server/.env` | **Yes** | `0x5FbDB2315678afecb367f032d93F642f64180aa3` | Deployed address of `AIXToken` |
+| `TREASURY_ADDRESS` | `server/.env` | **Yes** | `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512` | Deployed address of `Treasury` |
+| `DATASET_REGISTRY_ADDRESS`| `server/.env`| **Yes**| `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0`| Deployed address of `DatasetRegistry` |
+| `PURCHASE_ENGINE_ADDRESS` | `server/.env`| **Yes**| `0x0165878A594ca255338adfa4d48449f69242Eb8F`| Deployed address of `PurchaseEngine` |
+| `LICENSE_REGISTRY_ADDRESS`| `server/.env`| **Yes**| `0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9`| Deployed address of `LicenseRegistry` |
+| `MODEL_REGISTRY_ADDRESS` | `server/.env` | **Yes**| `0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0`| Deployed address of `ModelRegistry` |
+| `PROVENANCE_REGISTRY_ADDRESS`| `server/.env`| **Yes**| `0x5FC8d32690cc91D4c39d9d3abcBD16989F875707`| Deployed address of `ProvenanceRegistry` |
+| `ROYALTY_ENGINE_ADDRESS` | `server/.env` | **Yes**| `0xa513E6E4b8f2a923D98304ec87F64353C4D5C853`| Deployed address of `RoyaltyEngine` |
+| `DATASET_ENCRYPTION_KEY` | `server/.env` | No | `your_base64_32_byte_aes_key` | Key for encrypting uploaded datasets |
+| `PINATA_JWT` | `server/.env` | No | `your_pinata_jwt_token` | Pinata IPFS pinning credential |
+| `AI_SERVICE_URL` | `server/.env` | No | `http://localhost:8000` | URL of the Python execution service |
 
-# Option A: Deploy complete stack through Phase 10 via Hardhat Ignition
-npx hardhat ignition deploy ignition/modules/Phase10.js --network localhost
+> **Security Rule:** Never commit real secrets, private keys, or database credentials to version control. Keep `.env` files strictly gitignored.
 
-# Option B: Run gas benchmarks and deploy standalone contracts
-npx hardhat run scripts/runGasBenchmark.js --network localhost
-```
-*Take note of the deployed contract addresses printed to the console and ensure they match your configuration in `server/src/config/contracts.config.js`.*
+---
 
-#### Terminal 3: Start the Backend Express Server
-```bash
-cd server
+## 8. First-Time Installation & Setup
+
+Perform this one-time setup upon cloning the repository:
+
+### Step 1: Install Subsystem Node Dependencies
+
+```powershell
+# Working Directory: D:\AIXchange (Workspace Root)
+
+# 1. Install root toolchain
 npm install
-npm run dev
-```
-*Express API initializes at `http://localhost:5000`. Connects to MongoDB, starts background indexers, and serves OpenAPI Swagger docs at `http://localhost:5000/api-docs`.*
 
-#### Terminal 4: Start the Frontend Client
-```bash
+# 2. Install client dependencies
 cd client
 npm install
-npm run dev
+
+# 3. Install server dependencies
+cd ../server
+npm install
+
+# 4. Install blockchain dependencies
+cd ../blockchain
+npm install
+
+# 5. Install sandbox SDK dependencies
+cd ../sandbox
+npm install
+
+cd ..
 ```
-*Vite compiles and serves the React application at `http://localhost:5173`. Open your browser and navigate to the UI.*
 
-#### Terminal 5: Start the AI Execution Substrate
-You can run the AI execution environment using Docker Compose (recommended) or as a native Python service:
+### Step 2: Configure Python Virtual Environment
 
-```bash
-# Option A: Run via Docker Compose (Isolated Container)
-docker compose -f docker/docker-compose.sandbox.yml up -d
-
-# Option B: Run Native Python FastAPI Service
+```powershell
+# Working Directory: D:\AIXchange
 cd python-services
 python -m venv venv
-
-# Windows (PowerShell):
-.\venv\Scripts\Activate.ps1
-# Linux / macOS:
-# source venv/bin/activate
-
+.\venv\Scripts\activate
+pip install --upgrade pip
 pip install -r requirements.txt
+cd ..
+```
+
+### Step 3: Populate Initial Environment Files
+
+```powershell
+# Working Directory: D:\AIXchange
+Copy-Item client\.env.example client\.env
+Copy-Item server\.env.example server\.env
+Copy-Item blockchain\.env.example blockchain\.env
+```
+
+---
+
+## 9. Running the Complete Project Locally (The Exact Five-Terminal Workflow)
+
+Local development uses **five separate terminal windows**. Follow this startup order precisely.
+
+### Compact Workflow Overview
+
+| Terminal | Service | Working Directory | Command | Purpose | Expected Result |
+| :---: | :--- | :--- | :--- | :--- | :--- |
+| **Terminal 3** | **Hardhat Blockchain** | `D:\AIXchange\blockchain` | `npx hardhat node` | Local EVM JSON-RPC node | Running on `http://127.0.0.1:8545` (Chain ID 31337) |
+| **Terminal 4** | **Contract Deployer** | `D:\AIXchange\blockchain` | `npx hardhat ignition deploy ignition/modules/Phase10.js --network localhost` | Deploys all 8 smart contracts | Deploys `Phase10Module` successfully and exits |
+| **Terminal 2** | **Backend Server** | `D:\AIXchange\server` | `npm run dev` | Express 5 API + Event Indexers | Running on `http://localhost:5000` |
+| **Terminal 5** | **AI Substrate / Sandbox** | `D:\AIXchange` or `python-services` | `npm run sandbox:jupyter` *(or `python main.py` / Docker)* | AI Execution API & JupyterLab IDE | Running on port `8888` (Jupyter) & `8000` (FastAPI) |
+| **Terminal 1** | **Frontend Client** | `D:\AIXchange\client` | `npm run dev` | React 19 + Vite Web Application | Running on `http://localhost:5173` |
+
+---
+
+### Step-by-Step Instructions
+
+#### Step 1: Start Terminal 3 — Local Hardhat Blockchain
+
+Open a new PowerShell terminal:
+
+```powershell
+cd D:\AIXchange\blockchain
+npx hardhat node
+```
+
+*Expected Result:*
+The terminal prints 20 funded accounts (10,000 ETH each) and starts the JSON-RPC provider on `http://127.0.0.1:8545/`.
+
+> **Important:** Keep Terminal 3 open and running continuously. Do not close it.
+
+---
+
+#### Step 2: Start Terminal 4 — Smart Contract Deployment
+
+Open a second PowerShell terminal:
+
+```powershell
+cd D:\AIXchange\blockchain
+npx hardhat ignition deploy ignition/modules/Phase10.js --network localhost
+```
+
+*Expected Result:*
+Hardhat Ignition compiles contracts, analyzes the dependency tree, and deploys all 8 platform contracts in 4 batches:
+```text
+Batch #1: AIXToken, Treasury
+Batch #2: DatasetRegistry, LicenseRegistry
+Batch #3: PurchaseEngine, ModelRegistry
+Batch #4: ProvenanceRegistry, RoyaltyEngine
+[ Phase10Module ] successfully deployed 🚀
+```
+Addresses are recorded to `blockchain/ignition/deployments/chain-31337/deployed_addresses.json`.
+
+> **Note:** Once deployment completes successfully, this terminal window can remain idle or be closed. If you restart Terminal 3, you **must repeat this step**.
+
+---
+
+#### Step 3: Ensure MongoDB is Running
+
+Before launching the backend server, ensure MongoDB Community Server is running:
+
+```powershell
+Start-Service -Name MongoDB -ErrorAction SilentlyContinue
+```
+
+---
+
+#### Step 4: Start Terminal 2 — Backend Server
+
+Open a third PowerShell terminal:
+
+```powershell
+cd D:\AIXchange\server
+npm run dev
+```
+
+*Expected Result:*
+```text
+info: Database connected: localhost:27017/aixchange
+info: Server is running in development mode on port 5000
+info: [TokenEventIndexer] Started successfully.
+info: [PurchaseEventIndexer] Started successfully.
+info: [RoyaltyEventIndexer] Started successfully.
+```
+
+---
+
+#### Step 5: Start Terminal 5 — AI Execution Substrate & Sandbox
+
+You can run the AI execution environment using **Docker Compose** (recommended for full container isolation), as a **native Python FastAPI service** (running both the execution API on port 8000 and JupyterLab on port 8888), or via the **direct Jupyter npm script**:
+
+##### Option A: Run via Docker Compose (Isolated Container)
+```powershell
+# Working Directory: D:\AIXchange
+docker compose -f docker/docker-compose.sandbox.yml up -d
+# Alternatively, via root npm script:
+# npm run sandbox:docker
+```
+*Expected Result:*
+Starts `aixchange-ai-sandbox` in the background, exposing both port `8000` (FastAPI Execution API) and port `8888` (Isolated JupyterLab).
+
+##### Option B: Run Native Python FastAPI Service (Local Dev)
+```powershell
+# Working Directory: D:\AIXchange
+cd python-services
+.\venv\Scripts\activate
 python main.py
 ```
-*FastAPI AI execution endpoints are available at `http://localhost:8000/docs`. The JupyterLab workspace is accessible at `http://localhost:8888/lab?token=aixchange_sandbox_token`.*
+*Expected Result:*
+FastAPI starts on `http://localhost:8000` and automatically launches the embedded JupyterLab server on `http://127.0.0.1:8888/lab?token=aixchange_sandbox_token` via its lifespan manager.
+
+##### Option C: Run Direct Standalone JupyterLab (npm script)
+```powershell
+# Working Directory: D:\AIXchange
+npm run sandbox:jupyter
+```
+*Expected Result:*
+Directly launches JupyterLab on `http://127.0.0.1:8888/lab?token=aixchange_sandbox_token`, rooted at `./python-services/workspace`.
+
+> **Note on Sandbox Modes:**
+> - **Option A (Docker)** or **Option B (`python main.py`)** runs both the **AI Execution REST API (port 8000)** for training dispatch and inference, **AND** the **JupyterLab server (port 8888)**.
+> - **Option C (`npm run sandbox:jupyter`)** runs the **standalone JupyterLab server (port 8888)** for interactive notebook exploration inside the frontend Sandbox Dashboard.
 
 ---
 
-## 🧪 6. Automated Testing Suites
+#### Step 6: Start Terminal 1 — Frontend Client
 
-AIXchange maintains rigorous automated test suites across all layers of the architecture, spanning Solidity contracts, Express services, FastAPI controllers, and client SDKs.
+Open a fifth PowerShell terminal:
 
-### 1. Blockchain Smart Contracts & Integration (279 Tests)
-```bash
-cd blockchain
-npx hardhat test
+```powershell
+cd D:\AIXchange\client
+npm run dev
 ```
+
+*Expected Result:*
+Vite builds the client bundle and serves the application:
 ```text
-  Blockchain API Integration
-    ✔ Should complete end-to-end user lifecycle from wallet to royalty distribution
-    ✔ Should enforce OpenAPI/Swagger schema patterns on on-chain values
-    ✔ (7 additional integration test scenarios)
+VITE v8.1.1  ready in 240 ms
 
-  Gas Benchmarking Suite
-    ✔ AIXToken.transfer gas consumption within budget
-    ✔ AIXToken.approve gas consumption within budget
-    ✔ Treasury.depositToken gas consumption within budget
-    ✔ Treasury.withdrawToken gas consumption within budget
-    ✔ DatasetRegistry.registerDataset gas consumption within budget
-    ✔ DatasetRegistry.updateDataset gas consumption within budget
-    ✔ LicenseRegistry.createLicense gas consumption within budget
-    ✔ ModelRegistry.registerModel gas consumption within budget
-    ✔ ModelRegistry.addModelVersion gas consumption within budget
-    ✔ PurchaseEngine.purchaseDataset gas consumption within budget
-    ✔ RoyaltyEngine.distributeRoyalty gas consumption within budget
-    ✔ ProvenanceRegistry.registerProvenance gas consumption within budget
-
-  Blockchain Monitoring & Fraud Detection (15 Tests)
-    EventMonitor: 5 passing
-    TreasuryMonitor: 3 passing
-    FraudEngine: 7 passing (Rapid Txs, Whale Transfers, Treasury Outflows, Anomalies, Probing)
-
-  Smart Contract Unit Suites
-    RoyaltyEngine Smart Contract: 36 passing
-    ProvenanceRegistry Smart Contract: 36 passing
-    ModelRegistry Smart Contract: 41 passing
-    Treasury Smart Contract: 14 passing
-    LicenseRegistry Smart Contract: 32 passing
-    PurchaseEngine Smart Contract: 30 passing
-    DatasetRegistry Smart Contract: 26 passing
-    AIXToken Smart Contract: 15 passing
-    Wallet & Signature Utilities: 13 passing
-
-  279 passing (9s)
+➜  Local:   http://localhost:5173/
+➜  Network: use --host to expose
 ```
 
-### 2. Backend Server & Engine Integrations (110 Tests)
-```bash
-cd server
+---
+
+## 10. Accessing the Application
+
+| Service | Interface | URL | Credentials / Notes |
+| :--- | :--- | :--- | :--- |
+| **Frontend Web App** | Web UI | `http://localhost:5173/` | Connect with MetaMask |
+| **Backend REST API** | JSON API | `http://localhost:5000/api/v1` | Prefix configured via `API_PREFIX` |
+| **API Health Check** | Status probe | `http://localhost:5000/api/v1/health` | Returns `{ status: "OK" }` |
+| **Swagger OpenAPI Docs** | Documentation | `http://localhost:5000/api-docs` | Interactive OpenAPI 3.0.3 console |
+| **Jupyter AI Sandbox** | Notebook IDE | `http://127.0.0.1:8888/lab?token=aixchange_sandbox_token` | Embedded inside `/sandboxes` |
+| **FastAPI Execution API**| Python Docs | `http://localhost:8000/docs` | If `python-services/main.py` is started |
+| **Hardhat RPC Node** | JSON-RPC | `http://127.0.0.1:8545` | EVM Chain ID `31337` |
+
+---
+
+## 11. Smart Contract Deployment via Hardhat Ignition
+
+The `blockchain/ignition/modules/Phase10.js` deployment script acts as a master aggregator that builds upon preceding module phases:
+
+- `Phase3Module`: `AIXToken` + `Treasury`
+- `Phase4Module`: `DatasetRegistry`
+- `Phase5Module`: `LicenseRegistry`
+- `Phase6Module`: `PurchaseEngine`
+- `Phase8Module`: `ModelRegistry`
+- `Phase9Module`: `ProvenanceRegistry`
+- `Phase10Module`: `RoyaltyEngine`
+
+### Deployment Address Synchronization
+
+Hardhat Ignition writes contract addresses to:
+`blockchain/ignition/deployments/chain-31337/deployed_addresses.json`
+
+The backend server (`server/src/config/env.js`) automatically inspects `blockchain/.env` and environment variables. If you deploy to custom addresses, ensure `server/.env` and `client/.env` match the generated addresses.
+
+### What Happens When Hardhat Node Restarts?
+Terminating Terminal 3 (`npx hardhat node`) wipes in-memory chain state. When restarted:
+1. All deployed contracts vanish from the EVM.
+2. You **must re-run Terminal 4** (`npx hardhat ignition deploy ... --reset`).
+3. In MetaMask, reset your account activity tab data to clear desynchronized transaction nonces.
+
+---
+
+## 12. Wallet & MetaMask Setup
+
+To test Web3 purchases, dataset registration, and AIX token transfers:
+
+1. In MetaMask, add a custom network:
+   - **Network Name**: `Hardhat Local Network`
+   - **RPC URL**: `http://127.0.0.1:8545`
+   - **Chain ID**: `31337`
+   - **Currency**: `ETH`
+2. Import Development Account #0:
+   - **Private Key**: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
+   - This account holds `10,000 ETH` for gas and the initial `100,000,000 AIX` token supply.
+3. Import Development Account #1 (for testing buyer workflows):
+   - **Private Key**: `0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d`
+
+> **Warning:** These private keys are publicly documented in the Hardhat source code. **Never send real assets or mainnet tokens to these addresses.**
+
+---
+
+## 13. Backend API Documentation
+
+The backend server mounts 16 modular route groups under `/api/v1`:
+
+| Route Prefix | Controller File | Functionality | Auth Required |
+| :--- | :--- | :--- | :---: |
+| `/api/v1/health` | `health.routes.js` | Server liveness check | No |
+| `/api/v1/auth` | `auth.routes.js` | User registration, login, logout, refresh | Partial |
+| `/api/v1/wallet` | `wallet.route.js` | EIP-191 nonce challenges and signature validation | No |
+| `/api/v1/token` | `token.route.js` | AIX token balances, transfers, and allowances | No |
+| `/api/v1/treasury` | `treasury.route.js` | Protocol vault balances and collected fees | Admin |
+| `/api/v1/datasets` | `dataset.route.js` | Catalog discovery, registration, file uploads | Partial |
+| `/api/v1/models` | `model.route.js` | Model marketplace, weight digests, licensing | Partial |
+| `/api/v1/licenses` | `license.route.js` | License terms, entitlements, and verification | JWT |
+| `/api/v1/purchases`| `purchase.route.js`| Purchase initiation, confirmations, receipts | JWT |
+| `/api/v1/provenance`| `provenance.route.js`| Lineage DAG retrieval and hash verification | No |
+| `/api/v1/royalties`| `royalty.route.js` | Multi-party split configurations and claim logs | Partial |
+| `/api/v1/sandboxes`| `sandbox.route.js` | Docker training jobs, logs, and container status | JWT |
+| `/api/v1/analytics`| `analytics.routes.js`| Platform metrics, daily volumes, gas telemetry | No |
+| `/api/v1/admin` | `admin.routes.js` | Moderation deck, user roles, and fraud oversight | Admin |
+
+Explore all schema definitions and test endpoints interactively via Swagger at `http://localhost:5000/api-docs`.
+
+---
+
+## 14. AI Training, Provenance & Inference Workflow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Researcher / User
+    participant Frontend as AIXchange Client
+    participant Backend as Express Server
+    participant Substrate as Python Execution / Sandbox
+    participant Blockchain as EVM Smart Contracts
+
+    User->>Frontend: Select Dataset & Launch Training
+    Frontend->>Backend: POST /api/v1/sandboxes/launch
+    Backend->>Substrate: Stage Workspace & POST /api/v1/execution/train
+    activate Substrate
+    Substrate-->>Backend: Training Started (execution_id)
+    Substrate->>Substrate: Execute PyTorch Loop & DynamicMLP
+    Substrate->>Substrate: Export weights to model.safetensors
+    Substrate->>Substrate: Calculate SHA-256 weight hash
+    Substrate-->>Backend: Training Complete (model_metadata.json)
+    deactivate Substrate
+    Backend->>Blockchain: Anchor Lineage DAG (ProvenanceRegistry.sol)
+    Blockchain-->>Backend: LineageAnchored Event Emitted
+    Backend-->>Frontend: Training & Provenance Verified
+    User->>Frontend: Test Forward Inference
+    Frontend->>Substrate: POST /api/v1/execution/infer
+    Substrate-->>Frontend: Class Predictions & Latency (ms)
+```
+
+1. **Dataset Selection**: Researcher selects an on-chain registered dataset.
+2. **Workspace Staging**: Server securely stages dataset inputs and Python training scripts in `python-services/workspace/{execution_id}/`.
+3. **Model Training**: PyTorch runs training loops, rotating checkpoints and generating final `model.safetensors` weights.
+4. **Cryptographic Provenance**: ModelValidator calculates SHA-256 digests and anchors lineage records to `ProvenanceRegistry.sol`.
+5. **Decoupled Inference**: The model is immediately available for real-time forward pass evaluation in the Inference Playground.
+
+---
+
+## 15. Blockchain, Dataset Ownership & Lineage DAG
+
+AIXchange implements true cryptographic ownership without holding custodial control over user assets:
+
+- **Ownership vs. Storage**: Raw dataset archives are encrypted with AES-256-GCM and pinned to IPFS. Smart contracts store only the IPFS CID, creator Ethereum address, and SHA-256 digest.
+- **DAG Lineage**: The `ProvenanceRegistry` stores directed edges connecting parent dataset digests to child model digests. If an upstream dataset is modified or corrupted, its cryptographic hash changes, breaking the on-chain lineage proof.
+- **Atomic Revenue Routing**: When a buyer purchases a model license, `PurchaseEngine` routes payment to `RoyaltyEngine`, which atomically disburses royalties to all upstream dataset contributors according to their configured basis points.
+
+---
+
+## 16. Automated Testing & Validation
+
+AIXchange includes automated testing across all layers:
+
+### Running the Complete Test Battery
+
+To execute all test suites across Blockchain, Python Substrate, Sandbox SDK, and Backend Server:
+
+```powershell
+# Working Directory: D:\AIXchange (Workspace Root)
+npm run test:all
+```
+
+Under the hood, this executes `scripts/run-all-tests.js` and produces quantitative validation telemetry in `docs/review-iii/metrics/test-results.json`.
+
+### Individual Subsystem Test Commands
+
+```powershell
+# 1. Blockchain Smart Contract Suite (279 Tests)
+cd D:\AIXchange\blockchain
+npx hardhat test
+
+# 2. Backend Server API Suite (110 Tests)
+cd D:\AIXchange\server
+npm test
+
+# 3. Python AI Substrate Suite (22 Tests)
+cd D:\AIXchange\python-services
+.\venv\Scripts\activate
+pytest -q
+
+# 4. Sandbox Client SDK Suite (10 Tests)
+cd D:\AIXchange\sandbox
 npm test
 ```
-```text
-  ✔ Blockchain Analytics HTTP API routes, controllers, and error handling (7 tests)
-  ✔ Dataset & Review Validation (3 tests)
-  ✔ Licensing System (6 tests)
-  ✔ Purchase Engine & Indexer (3 tests)
-  ✔ Docker Sandbox Backend Orchestration (10 tests)
-  ✔ Model Marketplace & Blockchain Integration (10 tests)
-  ✔ Provenance Engine, DAG, Timelines & Verification (10 tests)
-  ✔ Royalty Engine Accounting, Calldata & Reconciliation (16 tests)
-  ✔ Backend Analytics Unit Tests: Validators, ISO-8601 Week, Sanitized Errors (7 tests)
-  ✔ Backend Analytics HTTP REST APIs: Auth, Validation, Contracts (8 tests)
-  ✔ Backend Analytics E2E Repository & Aggregation Battery (6 tests)
-  ✔ Admin & Moderation Unit Tests: Self-Suspension, Active Sync, Append-Only Audits (8 tests)
-  ✔ Admin & Moderation HTTP REST APIs: Auth, Role Guard, Ingestion, Audits (8 tests)
-  ✔ Admin & Moderation E2E Lifecycle & Audit Battery (6 tests)
-  ✔ Full regression battery across all previous phases (2 tests)
-
-  110 passing (23.4s)
-```
-
-### 3. Python AI Execution Substrate (22 Tests)
-```bash
-cd python-services
-pytest tests/ -v
-```
-```text
-  tests/test_api_execution.py::test_health_check_endpoint PASSED
-  tests/test_api_execution.py::test_api_training_and_inference_flow PASSED
-  tests/test_container_isolation.py::test_dockerfile_security_hardening PASSED
-  tests/test_container_isolation.py::test_docker_security_spec_flags PASSED
-  tests/test_container_isolation.py::test_container_to_container_workspace_isolation PASSED
-  tests/test_docker_sandbox.py::test_workspace_provisioning PASSED
-  tests/test_docker_sandbox.py::test_path_traversal_prevention PASSED
-  tests/test_docker_sandbox.py::test_deterministic_cleanup PASSED
-  tests/test_e2e_workflow.py::test_full_ai_sandbox_lifecycle PASSED
-  tests/test_inference.py::test_safe_model_loader PASSED
-  tests/test_inference.py::test_inference_prediction_single PASSED
-  tests/test_inference.py::test_inference_prediction_batch PASSED
-  tests/test_jupyter_runtime.py::test_jupyter_manager_lifecycle PASSED
-  tests/test_model_export.py::test_model_export PASSED
-  tests/test_model_export.py::test_model_validator_success PASSED
-  tests/test_model_export.py::test_model_validator_corrupted_file PASSED
-  tests/test_resource_limits.py::test_training_timeout_enforcement PASSED
-  tests/test_resource_limits.py::test_resource_settings_bounds PASSED
-  tests/test_training.py::test_dynamic_mlp_construction PASSED
-  tests/test_training.py::test_pytorch_training_loop PASSED
-  tests/test_training.py::test_checkpoint_rotation PASSED
-  tests/test_training.py::test_training_cancellation PASSED
-
-  22 passed in 4.5s
-```
-
-### 4. Sandbox Client SDK (10 Tests)
-```bash
-cd sandbox
-node --test tests/client.test.js tests/workspace.test.js
-```
-```text
-  ✔ SandboxClient.train sends POST request and returns ExecutionResponse
-  ✔ SandboxClient.getStatus retrieves execution status
-  ✔ SandboxClient handles AI service errors with AIExecutionError
-  ✔ SandboxClient wraps network connection drops in ConnectionError
-  ✔ SandboxClient Jupyter start, stop, and status lifecycle
-  ✔ WorkspaceLayout generates complete directory hierarchy paths
-  ✔ sanitizeExecutionId accepts valid IDs and rejects unsafe inputs
-  ✔ validateContainedPath strictly blocks path traversal escapes
-  ✔ getWorkspaceDestinationForCategory routes to appropriate workspace directories
-  ✔ stageWorkspaceFiles creates workspace and copies files to correct subdirectories
-
-  10 passing (110ms)
-```
-
-### On-Chain Gas Benchmarks
-Gas usage measured across 12 core operations on a local Hardhat node via `scripts/runGasBenchmark.js`:
-
-| Contract & Operation | Actual Gas Used | Safety Budget Limit | Status |
-| :--- | :--- | :--- | :--- |
-| `AIXToken.transfer` | **51,610** | < 70,000 | PASS |
-| `AIXToken.approve` | **46,394** | < 60,000 | PASS |
-| `Treasury.depositToken` | **57,594** | < 100,000 | PASS |
-| `Treasury.withdrawToken` | **43,254** | < 70,000 | PASS |
-| `DatasetRegistry.registerDataset` | **280,498** | < 350,000 | PASS |
-| `DatasetRegistry.updateDataset` | **47,612** | < 90,000 | PASS |
-| `LicenseRegistry.createLicense` | **386,427** | < 450,000 | PASS |
-| `ModelRegistry.registerModel` | **443,495** | < 500,000 | PASS |
-| `ModelRegistry.addModelVersion` | **208,402** | < 250,000 | PASS |
-| `PurchaseEngine.purchaseDataset` | **482,112** | < 600,000 | PASS |
-| `RoyaltyEngine.distributeRoyalty` | **641,770** | < 750,000 | PASS |
-| `ProvenanceRegistry.registerProvenance` | **483,396** | < 600,000 | PASS |
 
 ---
 
-## 📑 7. Service Ports & API Reference
+## 17. Troubleshooting & FAQ
 
-### Service Port Matrix
-
-| Service | Port / Base URL | Technology | Description |
-| :--- | :--- | :--- | :--- |
-| **Frontend Web App** | `http://localhost:5173` | React 19 + Vite | Marketplace catalog, creator tools, wallet tester |
-| **Backend REST API** | `http://localhost:5000/api/v1` | Express 5 + Node.js 22 | Main API gateway, authentication, and indexers |
-| **OpenAPI / Swagger** | `http://localhost:5000/api-docs` | Swagger UI Express | Interactive API testing documentation |
-| **AI Execution Substrate** | `http://localhost:8000` | FastAPI + Python 3.12 | PyTorch training, model inference, validation |
-| **FastAPI Swagger Docs** | `http://localhost:8000/docs` | Swagger UI | Execution contract API specification |
-| **JupyterLab Workspace** | `http://localhost:8888/lab` | JupyterLab | Isolated interactive data science sandbox |
-| **Local Blockchain Node** | `http://127.0.0.1:8545` | Hardhat Network | EVM JSON-RPC provider (Chain ID `31337`) |
-| **MongoDB Database** | `mongodb://localhost:27017`| MongoDB 6.0+ | Document database storing users, jobs, & event logs |
-
-### Core REST Endpoints
-
-#### Authentication & Wallet (`/api/v1/auth`, `/api/v1/wallet`)
-- `POST /api/v1/auth/register` — Register email/password user account.
-- `POST /api/v1/auth/login` — Authenticate user and receive JWT.
-- `GET  /api/v1/auth/wallet/nonce?address=0x...` — Generate cryptographic nonce for EIP-191 personal sign.
-- `POST /api/v1/auth/wallet/verify` — Verify signature and link Ethereum wallet.
-
-#### Dataset & Marketplace APIs (`/api/v1/datasets`, `/api/v1/licenses`, `/api/v1/purchases`)
-- `GET  /api/v1/datasets` — Paginated catalog of public datasets with IPFS CIDs.
-- `POST /api/v1/datasets` — Register off-chain dataset metadata and upload files.
-- `GET  /api/v1/datasets/:id` — Detailed dataset information and owner records.
-- `POST /api/v1/licenses` — Attach commercial or academic licensing terms to a dataset.
-- `POST /api/v1/purchases` — Record on-chain purchase transaction receipt and verify entitlement.
-- `GET  /api/v1/purchases/status/:txHash` — Check purchase status by transaction hash.
-
-#### AI Sandbox Execution (`/api/v1/sandboxes`)
-- `POST /api/v1/sandboxes` — Provision a sandbox execution workspace (requires verified license access).
-- `POST /api/v1/sandboxes/:id/train` — Dispatch PyTorch training pipeline configuration.
-- `GET  /api/v1/sandboxes/:id/status` — Query training epoch metrics, loss curves, and artifact paths.
-- `POST /api/v1/sandboxes/:id/jupyter/start` — Spin up a secured JupyterLab instance.
-
-#### Blockchain Analytics (`/api/v1/analytics/blockchain`)
-- `GET /api/v1/analytics/blockchain/overview` — High-level network transaction count, event volume, AIX velocity, and gas costs.
-- `GET /api/v1/analytics/blockchain/events` — Paginated log explorer with filtering by contract, event name, block range, and sender.
-- `GET /api/v1/analytics/blockchain/token` — AIX token transfer volume, unique participant metrics, and categorized spending.
-- `GET /api/v1/analytics/blockchain/gas` — Gas usage, cost in wei/ETH, contract breakdown, and time aggregation.
-
-#### Model Marketplace (`/api/v1/models`)
-- `GET  /api/v1/models` — Paginated catalog of public models with framework/task filters.
-- `POST /api/v1/models` — Register off-chain model metadata and generate preparation calldata.
-- `GET  /api/v1/models/:id` — Detailed model information and version history.
-- `POST /api/v1/models/:id/versions` — Register additional model version with weights hash.
-- `POST /api/v1/models/:id/verify-hash` — Cryptographic hash verification against on-chain anchor.
-
-#### Provenance Engine (`/api/v1/provenance`)
-- `POST /api/v1/provenance` — Prepare zero-custody transaction for registering dataset-to-model lineage.
-- `POST /api/v1/provenance/sync` — Verify on-chain registration receipt and project into database.
-- `GET  /api/v1/provenance/:id` — Retrieve single provenance record with optional timeline enrichment.
-- `GET  /api/v1/provenance/graph/:modelId` — Directed Acyclic Graph (DAG) showing nodes and edges.
-- `GET  /api/v1/provenance/timeline/:modelId` — Chronological milestone timeline from dataset to deployment.
-- `POST /api/v1/provenance/:id/verify` — Cryptographically verify dataset, model, and metadata integrity.
-
-#### Royalty Engine (`/api/v1/royalties`)
-- `GET  /api/v1/royalties/distributions/:distributionId` — Retrieve single distribution record from MongoDB.
-- `GET  /api/v1/royalties/distributions/:distributionId/allocations` — Retrieve recipient allocations with percentage splits.
-- `GET  /api/v1/royalties/recipients/:address` — Retrieve total claimed earnings and distribution history for a recipient.
-- `GET  /api/v1/royalties/source/:sourceType/:sourceId` — Check if a dataset or model has distributed royalties.
-- `GET  /api/v1/royalties/history` — Paginated distribution history with filters (`recipient`, `sourceType`, `status`, `dateRange`).
-- `GET  /api/v1/royalties/summary` — Aggregate financial metrics (total distributed, platform treasury share, active recipients).
-- `GET  /api/v1/royalties/reports` — Multi-dimensional reporting grouped by recipient, source, or time interval.
-- `POST /api/v1/royalties/calculate-split` — Preview revenue split calculations without modifying on-chain state.
-- `POST /api/v1/royalties/prepare` — Zero-custody calldata encoding for `distributeRoyalty` (JWT authenticated).
-#### Backend Analytics (`/api/v1/analytics`)
-- `GET /api/v1/analytics/overview` — High-performance single-pass executive KPI summary across all 5 dimensions.
-- `GET /api/v1/analytics/revenue` — Off-chain confirmed marketplace revenue, platform fees, creator splits, and ISO-8601 UTC time-series.
-- `GET /api/v1/analytics/transactions` — Marketplace purchase transaction volume, status breakdown (CONFIRMED/PENDING/FAILED), and audit log.
-- `GET /api/v1/analytics/downloads` — Dataset download volume, failure status, unique downloaders, top datasets, and trends.
-- `GET /api/v1/analytics/api-calls` — AI model inference execution metrics, average latency, sanitized error categorization, and trends.
-- `GET /api/v1/analytics/users` — User lifecycle, registration growth, verification statistics, and historically verifiable active users.
-
-#### Reports (`/api/v1/reports`)
-- `POST /api/v1/reports` — Submit report against a User, Dataset, or Model entity (JWT authenticated).
-
-#### Admin & Moderation (`/api/v1/admin`) — *Requires ADMIN Role*
-- `GET   /api/v1/admin/users` — Paginated user listing with search, role, status, and date filters.
-- `GET   /api/v1/admin/users/:userId` — Detailed user profile with activity counts, report history, and audit log.
-- `PATCH /api/v1/admin/users/:userId/status` — Suspend or restore user account (`ACTIVE`, `SUSPENDED`) with self-suspension protection and audit record.
-- `GET   /api/v1/admin/datasets` — Paginated dataset listing with search, category, and status filters.
-- `GET   /api/v1/admin/datasets/:datasetId` — Dataset detail with owner info, report statistics, and moderation audit history.
-- `PATCH /api/v1/admin/datasets/:datasetId/status` — Moderate dataset status (`active`, `hidden`, `under_review`, `removed`) with audit record.
-- `GET   /api/v1/admin/models` — Paginated AI model listing with framework, category, and status filters.
-- `GET   /api/v1/admin/models/:modelId` — Model detail with version history, report statistics, and moderation audit trail.
-- `PATCH /api/v1/admin/models/:modelId/status` — Moderate model status (`active`, `hidden`, `under_review`, `removed`), atomically syncing `active` boolean with audit record.
-- `GET   /api/v1/admin/reports` — Paginated report queue with targetType, category, status, and priority filters.
-- `GET   /api/v1/admin/reports/:reportId` — Detailed report view populated with target summary and resolution audit trail.
-- `PATCH /api/v1/admin/reports/:reportId/assignment` — Assign report to an administrator with audit record.
-- `PATCH /api/v1/admin/reports/:reportId/status` — Update report status (`UNDER_REVIEW`, `RESOLVED`, `REJECTED`) with resolution notes and audit record.
-- `POST  /api/v1/admin/fraud-flags/ingest` — Ingest structured fraud flags emitted by the blockchain monitoring subsystem.
-- `GET   /api/v1/admin/fraud-flags` — Filter and list on-chain fraud flags by ruleId, severity, status, or address.
-- `GET   /api/v1/admin/fraud-flags/:id` — View fraud flag evidence and review history.
-- `PATCH /api/v1/admin/fraud-flags/:id/status` — Review fraud flag (`CONFIRMED`, `DISMISSED`) with audit record (strictly human-in-the-loop, no automatic punishments).
-- `GET   /api/v1/admin/audits` — Query immutable append-only moderation audit log with targetType, moderator, action, and date filters.
-- `GET   /api/v1/admin/treasury` — Authoritative on-chain treasury balances and recent treasury events telemetry.
-
----
-
-## 🛠️ 8. Troubleshooting & Frequently Asked Questions
-
-### 1. MetaMask "Nonce Too High" or "Nonce Mismatch" Error
-- **Cause**: Restarting `npx hardhat node` resets the local blockchain's transaction count to 0, while MetaMask remembers the higher nonce from your previous session.
-- **Solution**: In MetaMask, go to **Settings** -> **Advanced** -> Click **Clear activity and nonce data** (or **Reset Account**). This resets the transaction history cache for the local network without affecting your private keys.
-
-### 2. MetaMask Fails to Connect to Localhost
-- **Cause**: Network settings in MetaMask do not match the Hardhat RPC parameters.
-- **Solution**: Configure the custom network manually in MetaMask:
-  - **Network Name**: Hardhat Localhost
-  - **RPC URL**: `http://127.0.0.1:8545`
-  - **Chain ID**: `31337`
-  - **Currency Symbol**: `ETH`
-
-### 3. MongoDB Connection Refused (`ECONNREFUSED 127.0.0.1:27017`)
-- **Cause**: Local MongoDB service is stopped or not listening on port 27017.
-- **Solution**:
-  - **Windows**: Open `services.msc`, locate **MongoDB Server**, and click **Start**. Alternatively, run `mongod --dbpath <data-path>` in PowerShell.
-  - **Linux / macOS**: Run `sudo systemctl start mongod` or `brew services start mongodb-community`.
-
-### 4. Docker Sandbox Permission Denied / Path Mounting Issues
-- **Cause**: Windows file permissions or Docker Desktop file-sharing settings prevent mounting the workspace directory.
-- **Solution**:
-  - In Docker Desktop, open **Settings** -> **Resources** -> **File Sharing** -> Ensure your project drive (e.g., `D:\`) is enabled.
-  - The container runs under user `aixuser` (UID 1000). If running on Linux, ensure local permissions allow UID 1000 read/write access:
-    ```bash
-    chmod -R 775 workspaces/
-    ```
-
-### 5. Python Virtual Environment Activation Policy on Windows
-- **Cause**: PowerShell restricts executing scripts by default (`PSSecurityException`).
-- **Solution**: In an elevated PowerShell terminal, update the execution policy for your current user:
+### 1. "Port 5173 / 5000 / 8545 / 8888 already in use"
+- **Cause**: An orphaned background process is still bound to the target port.
+- **Fix**: Identify and terminate the occupying process in PowerShell:
   ```powershell
-  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  # Replace 5173 with the conflicting port number
+  Get-Process -Id (Get-NetTCPConnection -LocalPort 5173).OwningProcess | Stop-Process -Force
   ```
 
-### 6. Integer Arithmetic & BigInt Precision in JavaScript
-- **Cause**: JavaScript's native `Number` type loses precision above $2^{53} - 1$, causing rounding corruption on 18-decimal token base units (e.g., $10^{18}$).
-- **Solution**: AIXchange strictly uses native `BigInt` for all token, wei, and basis point calculations across the server, blockchain scripts, and indexers. BigInt values are converted to precision-safe decimal strings before JSON serialization in REST responses.
+### 2. "Hardhat Ignition: Reconciliation error or deployment failure"
+- **Cause**: Hardhat local node was restarted, but Ignition deployment journals retain records from a prior session.
+- **Fix**: Deploy using the `--reset` flag:
+  ```powershell
+  cd D:\AIXchange\blockchain
+  npx hardhat ignition deploy ignition/modules/Phase10.js --network localhost --reset
+  ```
+
+### 3. "MetaMask: Nonce too high / Transaction stuck"
+- **Cause**: Restarting `npx hardhat node` resets EVM nonces to 0, while MetaMask remembers higher transaction counts.
+- **Fix**: In MetaMask, navigate to **Settings** -> **Advanced** -> **Clear activity tab data** (Reset Account).
+
+### 4. "MongooseServerSelectionError: connect ECONNREFUSED 127.0.0.1:27017"
+- **Cause**: MongoDB is not running locally.
+- **Fix**: Launch the service via PowerShell:
+  ```powershell
+  Start-Service -Name MongoDB
+  ```
+
+### 5. "Jupyter iframe refused to connect"
+- **Cause**: JupyterLab was started without CSP headers allowing iframe embedding.
+- **Fix**: Always start Jupyter using `npm run sandbox:jupyter`, which loads `jupyter_server_config.py`.
 
 ---
 
-## 📄 License & Attribution
+## 18. Security Invariants & Safeguards
 
-This project is licensed under the **MIT License**. Developed as part of the **AIXchange** decentralized AI infrastructure platform.
+- **Zero-Custody Keys**: Private keys are never transmitted to or stored on the backend server.
+- **Reentrancy Protection**: OpenZeppelin `ReentrancyGuard` protects all atomic payment and royalty distribution routines.
+- **CEI Compliance**: All smart contracts follow the Checks-Effects-Interactions pattern.
+- **Safe Token Operations**: OpenZeppelin `SafeERC20` guards against non-compliant ERC-20 transfer behavior.
+- **Path Containment**: The Sandbox SDK strictly canonicalizes file paths, rejecting dot-dot traversal attempts (`../`).
+- **Resource Constraints**: Docker sandboxes enforce hard caps on CPU (4.0 cores), RAM (8 GB), and PIDs (100).
+
+---
+
+## 19. Academic & Research Context
+
+AIXchange serves as a research demonstration of **Decentralized AI Asset Governance**:
+
+- **Novelty**: Bridges decentralized finance settlement mechanisms with machine learning model lifecycle tracking.
+- **Lineage Integrity**: Proves how SHA-256 content commitments and Directed Acyclic Graphs prevent data poisoning and credit theft.
+- **Economic Fairness**: Demonstrates algorithmic revenue distribution to upstream dataset creators upon downstream commercialization.
+
+---
+
+## 20. Project Roadmap & Phase Progress
+
+| Phase | Milestone | Status | Key Deliverable |
+| :---: | :--- | :---: | :--- |
+| **1-3** | Architecture, Tokens & Vault | **Complete** | ERC-20 `AIXToken.sol` and `Treasury.sol` governance vault |
+| **4** | Dataset Marketplace | **Complete** | `DatasetRegistry.sol`, Pinata IPFS pinning, and catalog UI |
+| **5** | Cryptographic Licensing | **Complete** | `LicenseRegistry.sol` and permission grants |
+| **6** | Atomic Purchase Engine | **Complete** | `PurchaseEngine.sol` and automated fee deduction |
+| **7** | Container AI Execution | **Complete** | FastAPI substrate, PyTorch loops, and JupyterLab integration |
+| **8** | AI Model Marketplace | **Complete** | `ModelRegistry.sol`, Safetensors weights, parameter metadata |
+| **9** | Verifiable Provenance | **Complete** | `ProvenanceRegistry.sol` and interactive Lineage DAG visualizer |
+| **10** | Dynamic Royalty Engine | **Complete** | `RoyaltyEngine.sol` with multi-party revenue splits |
+| **11** | Real-time Analytics | **Complete** | On-chain gas telemetry and BI analytics dashboard |
+| **12** | Admin & Fraud Review | **Complete** | Moderation review deck and deterministic fraud engine |
+
+---
+
+## 21. Contribution Guidelines
+
+1. **Fork & Branch**: Create a feature branch (`git checkout -b feature/my-feature`).
+2. **Follow Invariants**: Preserve path containment security, reentrancy guards, and zero-custody wallet principles.
+3. **Verify Tests**: Ensure all tests pass before submitting pull requests:
+   ```powershell
+   npm run test:all
+   ```
+4. **Code Quality**: Run linters across client and server (`npm run lint`).
+5. **No Secrets**: Never commit `.env` files or credentials.
+
+---
+
+## 22. License & Acknowledgements
+
+- **License**: MIT License across all core subsystems (`client`, `server`, `blockchain`, `sandbox`). Root workspace licensed under ISC.
+- **Acknowledgements**: Built using OpenZeppelin Contracts, Hardhat, Ethers.js, React, Tailwind CSS, FastAPI, and PyTorch.

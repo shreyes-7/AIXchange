@@ -9,8 +9,8 @@ export default function Footer() {
           {/* Column 1: Brand & Identity */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2.5 group inline-flex">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#40D9F2] via-[#3976F6] to-[#4F7DFF] flex items-center justify-center font-bold text-white shadow-md shadow-[#3976F6]/20">
-                <Cpu className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-xl bg-[#080E1A] border border-cyan-500/30 flex items-center justify-center p-0.5 shadow-md shadow-cyan-500/20 overflow-hidden">
+                <img src="/favicon.svg" alt="AIXchange Logo" className="w-full h-full object-contain" />
               </div>
               <span className="font-extrabold text-lg tracking-tight text-[#F4F7FC]">
                 AIX<span className="text-[#40D9F2]">change</span>

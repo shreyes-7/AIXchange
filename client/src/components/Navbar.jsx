@@ -218,8 +218,12 @@ export default function Navbar() {
 
           {/* AIXchange Logo Brand */}
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#40D9F2] via-[#3976F6] to-[#4F7DFF] flex items-center justify-center font-bold text-white shadow-md shadow-[#3976F6]/20 group-hover:scale-105 transition-transform">
-              <Cpu className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-[#080E1A] border border-cyan-500/30 flex items-center justify-center p-0.5 shadow-md shadow-cyan-500/20 group-hover:scale-105 group-hover:border-cyan-400/60 group-hover:shadow-cyan-400/35 transition-all duration-300 overflow-hidden">
+              <img
+                src="/favicon.svg"
+                alt="AIXchange Logo"
+                className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.45)]"
+              />
             </div>
             <div>
               <span className="font-extrabold text-lg tracking-tight text-[#F4F7FC] flex items-center gap-1">
